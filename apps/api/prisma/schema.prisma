@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CLIENTE
+  PRESTADOR
+  ADMIN
+}
+
+enum Selo {
+  NENHUM
+  PRATA
+  OURO
+  PREMIUM
+}
+
+enum BookingStatus {
+  SOLICITADO
+  ACEITO
+  RECUSADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  role          Role     @default(CLIENTE)
+  avatarUrl     String?
+  city          String?
+  cpf           String?  @unique
+  cnpj          String?  @unique
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  providerProfile ProviderProfile?
+  reviewsWritten  Review[]         @relation("ReviewsByClient")
+  bookingsAsClient Booking[]       @relation("BookingsByClient")
+  messagesSent    Message[]        @relation("MessagesBySender")
+  conversationsA  Conversation[]   @relation("ConversationClient")
+  favorites       Favorite[]
+}
+
+model ProviderProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  specialty     String
+  categories    String[]
+  bio           String?
+  city          String
+  yearsExperience Int    @default(0)
+  selo          Selo     @default(NENHUM)
+  scoreIA       Float    @default(0)
+  ratingAvg     Float    @default(0)
+  servicesDone  Int      @default(0)
+  clientsCount  Int      @default(0)
+  businessHours Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  services      Service[]
+  media         Media[]
+  reviews       Review[]        @relation("ReviewsForProvider")
+  bookings      Booking[]       @relation("BookingsForProvider")
+  conversationsB Conversation[] @relation("ConversationProvider")
+  favoritedBy   Favorite[]
+}
+
+model Service {
+  id            String   @id @default(cuid())
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  category      String
+  priceMin      Float?
+  priceMax      Float?
+  estimatedTime String?
+  active        Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bookings      Booking[]
+}
+
+model Media {
+  id            String   @id @default(cuid())
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  type          String
+  url           String
+  caption       String?
+  beforeUrl     String?
+  afterUrl      String?
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  clientId      String
+  client        User     @relation("ReviewsByClient", fields: [clientId], references: [id])
+
+  providerId    String
+  provider      ProviderProfile @relation("ReviewsForProvider", fields: [providerId], references: [id], onDelete: Cascade)
+
+  rating        Float
+  pontualidade  Float
+  qualidade     Float
+  preco         Float
+  atendimento   Float
+  comment       String?
+  photoUrls     String[]
+  videoUrl      String?
+  audioUrl      String?
+
+  createdAt     DateTime @default(now())
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        User     @relation("BookingsByClient", fields: [clientId], references: [id])
+
+  providerId    String
+  provider      ProviderProfile @relation("BookingsForProvider", fields: [providerId], references: [id])
+
+  serviceId     String?
+  service       Service? @relation(fields: [serviceId], references: [id])
+
+  status        BookingStatus @default(SOLICITADO)
+  scheduledAt   DateTime?
+  address       String?
+  notes         String?
+  priceQuoted   Float?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  review        Review?
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        User     @relation("ConversationClient", fields: [clientId], references: [id])
+
+  providerId    String
+  provider      ProviderProfile @relation("ConversationProvider", fields: [providerId], references: [id])
+
+  createdAt     DateTime @default(now())
+  messages      Message[]
+
+  @@unique([clientId, providerId])
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  conversationId String
+  conversation  Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId      String
+  sender        User     @relation("MessagesBySender", fields: [senderId], references: [id])
+
+  type          String   @default("text")
+  content       String
+  createdAt     DateTime @default(now())
+}
+
+model Favorite {
+  id            String   @id @default(cuid())
+  clientId      String
+  client        User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+
+  @@unique([clientId, providerId])
+}

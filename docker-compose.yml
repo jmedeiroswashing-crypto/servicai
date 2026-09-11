@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: servicai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: servicai
+      POSTGRES_PASSWORD: servicai
+      POSTGRES_DB: servicai
+    ports:
+      - "5432:5432"
+    volumes:
+      - servicai-postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: servicai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  servicai-postgres-data:
