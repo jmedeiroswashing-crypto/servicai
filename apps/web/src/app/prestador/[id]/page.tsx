@@ -3,10 +3,11 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star } from 'lucide-react';
+import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { openRouteToProvider } from '@/lib/maps';
 import type { ProviderProfile } from '@/lib/types';
 
 function formatPhone(raw: string) {
@@ -21,6 +22,7 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
   const { user } = useAuthStore();
   const router = useRouter();
   const [requesting, setRequesting] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const { data: provider, isLoading } = useQuery({
     queryKey: ['provider', id],
@@ -61,6 +63,17 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
             <span className="flex items-center gap-1">
               <MapPin size={14} /> {provider.city}
             </span>
+            <button
+              disabled={locating}
+              onClick={async () => {
+                setLocating(true);
+                await openRouteToProvider(provider);
+                setLocating(false);
+              }}
+              className="flex items-center gap-1 text-accent hover:underline disabled:opacity-50"
+            >
+              <Navigation size={13} /> {locating ? 'Localizando...' : 'Traçar rota'}
+            </button>
             <span className="flex items-center gap-1">
               <Clock size={14} /> {provider.yearsExperience} anos de experiência
             </span>

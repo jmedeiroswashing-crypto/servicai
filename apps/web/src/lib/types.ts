@@ -65,7 +65,16 @@ export interface ProviderProfile {
   servicesDone: number;
   clientsCount: number;
   createdAt: string;
-  user: { name: string; avatarUrl?: string | null; phone?: string | null; verified?: boolean };
+  user: {
+    name: string;
+    avatarUrl?: string | null;
+    phone?: string | null;
+    verified?: boolean;
+    addressStreet?: string | null;
+    addressNumber?: string | null;
+    addressState?: string | null;
+    addressCep?: string | null;
+  };
   media?: MediaItem[];
   services?: ServiceListing[];
   reviews?: Review[];

@@ -25,7 +25,18 @@ export class ProvidersService {
     const provider = await this.prisma.providerProfile.findUnique({
       where: { id },
       include: {
-        user: { select: { name: true, avatarUrl: true, phone: true, verified: true } },
+        user: {
+          select: {
+            name: true,
+            avatarUrl: true,
+            phone: true,
+            verified: true,
+            addressStreet: true,
+            addressNumber: true,
+            addressState: true,
+            addressCep: true,
+          },
+        },
         media: { orderBy: { createdAt: 'desc' } },
         services: { where: { active: true } },
         reviews: { orderBy: { createdAt: 'desc' }, take: 20 },
