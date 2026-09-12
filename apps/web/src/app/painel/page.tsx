@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Star, Briefcase, Users, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
@@ -47,78 +46,63 @@ export default function PainelPage() {
   });
 
   if (!provider) {
-    return <div className="mx-auto max-w-5xl px-4 py-20 text-center text-foreground/50">Carregando painel...</div>;
+    return <div className="mx-auto max-w-5xl px-4 py-20 text-foreground-muted">Carregando painel...</div>;
   }
 
   const stats = [
-    { icon: Star, label: 'Nota média', value: provider.ratingAvg.toFixed(1) },
-    { icon: TrendingUp, label: 'Score IA', value: Math.round(provider.scoreIA) },
-    { icon: Briefcase, label: 'Serviços realizados', value: provider.servicesDone },
-    { icon: Users, label: 'Clientes', value: provider.clientsCount },
+    { label: 'Nota média', value: provider.ratingAvg.toFixed(1) },
+    { label: 'Score', value: Math.round(provider.scoreIA) },
+    { label: 'Serviços realizados', value: provider.servicesDone },
+    { label: 'Clientes', value: provider.clientsCount },
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <h1 className="mb-1 text-2xl font-bold">Painel do vendedor</h1>
-      <p className="mb-8 text-foreground/60">Acompanhe seus resultados e solicitações de serviço.</p>
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+      <h1 className="font-display text-3xl text-ink">Painel do vendedor</h1>
+      <p className="mt-2 text-foreground-muted">Acompanhe seus resultados e solicitações de serviço.</p>
 
       {subscription && (
         <Link
           href="/precos"
-          className="mb-8 flex flex-col gap-3 rounded-2xl gradient-brand p-5 text-white transition-transform hover:scale-[1.01] sm:flex-row sm:items-center sm:justify-between"
+          className="mt-8 flex flex-col gap-2 border border-border p-5 transition-colors hover:border-ink sm:flex-row sm:items-center sm:justify-between"
         >
-          <div className="flex items-center gap-3">
-            <Sparkles size={20} />
-            <div>
-              <p className="font-semibold">Plano {subscription.config.label}</p>
-              <p className="text-sm text-white/80">
-                {subscription.config.aiGenerationsPerMonth >= UNLIMITED
-                  ? 'IA ilimitada'
-                  : `${subscription.aiUsageCount}/${subscription.config.aiGenerationsPerMonth} usos de IA neste mês`}
-                {' · '}
-                {subscription.config.maxListings >= UNLIMITED
-                  ? 'anúncios ilimitados'
-                  : `até ${subscription.config.maxListings} anúncio(s)`}
-              </p>
-            </div>
+          <div>
+            <p className="font-medium text-ink">Plano {subscription.config.label}</p>
+            <p className="mt-0.5 text-sm text-foreground-muted">
+              {subscription.config.aiGenerationsPerMonth >= UNLIMITED
+                ? 'IA ilimitada'
+                : `${subscription.aiUsageCount}/${subscription.config.aiGenerationsPerMonth} usos de IA neste mês`}
+              {' · '}
+              {subscription.config.maxListings >= UNLIMITED
+                ? 'anúncios ilimitados'
+                : `até ${subscription.config.maxListings} anúncio(s)`}
+            </p>
           </div>
-          <span className="flex items-center gap-1 text-sm font-semibold">
+          <span className="flex items-center gap-1 text-sm text-ink">
             Gerenciar plano <ArrowRight size={14} />
           </span>
         </Link>
       )}
 
-      <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-10 grid grid-cols-2 border border-border sm:grid-cols-4">
         {stats.map((s, i) => (
-          <motion.div
-            key={s.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border border-border bg-surface p-5"
-          >
-            <s.icon size={18} className="mb-2 text-brand" />
-            <p className="text-2xl font-bold">{s.value}</p>
-            <p className="text-xs text-foreground/50">{s.label}</p>
-          </motion.div>
+          <div key={s.label} className={`p-5 ${i > 0 ? 'border-l border-border' : ''}`}>
+            <p className="font-display text-2xl text-ink">{s.value}</p>
+            <p className="mt-1 text-xs text-foreground-muted">{s.label}</p>
+          </div>
         ))}
       </div>
 
-      <h2 className="mb-4 text-lg font-semibold">Solicitações recentes</h2>
-      <div className="space-y-3">
-        {bookings && bookings.length === 0 && (
-          <p className="text-foreground/50">Nenhuma solicitação ainda.</p>
-        )}
+      <h2 className="mt-14 mb-4 font-display text-xl text-ink">Solicitações recentes</h2>
+      <div className="divide-y divide-border border-t border-border">
+        {bookings && bookings.length === 0 && <p className="py-6 text-foreground-muted">Nenhuma solicitação ainda.</p>}
         {bookings?.map((b) => (
-          <div
-            key={b.id}
-            className="flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
-          >
+          <div key={b.id} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-medium">{b.client?.name ?? 'Cliente'}</p>
-              {b.service && <p className="text-sm text-foreground/60">{b.service.title}</p>}
+              <p className="font-medium text-ink">{b.client?.name ?? 'Cliente'}</p>
+              {b.service && <p className="text-sm text-foreground-muted">{b.service.title}</p>}
             </div>
-            <span className="w-fit rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+            <span className="w-fit border border-border px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">
               {STATUS_LABEL[b.status] ?? b.status}
             </span>
           </div>

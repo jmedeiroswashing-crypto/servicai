@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { PlanConfig, Subscription } from '@/lib/types';
@@ -53,49 +52,44 @@ export default function PrecosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <div className="mx-auto mb-12 max-w-2xl text-center">
-        <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
-          <Sparkles size={14} /> Planos para vendedores
-        </span>
-        <h1 className="text-3xl font-bold sm:text-4xl">Escolha o plano certo para o seu negócio</h1>
-        <p className="mt-3 text-foreground/60">
-          Clientes usam o ServiçAi de graça, sempre. Vendedores crescem com o plano que fizer sentido para o
-          volume de trabalho de hoje — e mudam quando quiserem.
-        </p>
-      </div>
+    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+      <p className="mb-3 text-sm uppercase tracking-[0.15em] text-foreground-muted">Planos para vendedores</p>
+      <h1 className="font-display max-w-xl text-4xl leading-tight text-ink sm:text-5xl">
+        Escolha o plano certo para o seu negócio
+      </h1>
+      <p className="mt-4 max-w-xl text-foreground-muted">
+        Clientes usam o ServiçAi de graça, sempre. Vendedores crescem com o plano que fizer sentido para o
+        volume de trabalho de hoje.
+      </p>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-16 grid border border-border sm:grid-cols-2 lg:grid-cols-4">
         {plans?.map((plan, i) => {
           const isCurrent = mySubscription?.plan === plan.plan;
           const highlighted = PLAN_HIGHLIGHT[plan.plan];
           return (
-            <motion.div
+            <div
               key={plan.plan}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-              className={`flex flex-col rounded-3xl border p-6 ${
-                highlighted ? 'border-brand bg-surface shadow-lg ring-2 ring-brand/20' : 'border-border bg-surface'
+              className={`flex flex-col border-border p-6 ${i > 0 ? 'border-t sm:border-t-0 sm:border-l' : ''} ${
+                highlighted ? 'relative bg-surface-muted/40' : ''
               }`}
             >
               {highlighted && (
-                <span className="mb-3 w-fit rounded-full gradient-brand px-3 py-1 text-xs font-semibold text-white">
-                  Mais popular
-                </span>
+                <div className="absolute inset-x-0 top-0 h-[3px] bg-accent" />
               )}
-              <h2 className="text-lg font-semibold">{plan.label}</h2>
-              <p className="mt-2 text-3xl font-bold">
-                {formatPrice(plan.priceMonthly)}
-                {plan.priceMonthly > 0 && <span className="text-sm font-normal text-foreground/50">/mês</span>}
+              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
+                {highlighted ? 'Mais popular' : plan.label}
+              </p>
+              {highlighted && <h2 className="mt-1 font-display text-lg text-ink">{plan.label}</h2>}
+              <p className="mt-4 flex items-baseline gap-1">
+                <span className="font-display text-3xl text-ink">{formatPrice(plan.priceMonthly)}</span>
+                {plan.priceMonthly > 0 && <span className="text-sm text-foreground-muted">/mês</span>}
               </p>
 
-              <ul className="mt-6 flex-1 space-y-3 text-sm">
+              <ul className="mt-6 flex-1 space-y-2.5 text-sm">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
-                    <Check size={16} className="mt-0.5 shrink-0 text-brand" />
-                    <span className="text-foreground/70">{f}</span>
+                    <Check size={15} className="mt-0.5 shrink-0 text-accent" />
+                    <span className="text-foreground-muted">{f}</span>
                   </li>
                 ))}
               </ul>
@@ -103,8 +97,8 @@ export default function PrecosPage() {
               <button
                 onClick={() => handleSelect(plan)}
                 disabled={isCurrent || (pendingPlan !== null && changePlan.isPending)}
-                className={`mt-6 rounded-full py-2.5 text-sm font-semibold transition-transform disabled:opacity-60 ${
-                  highlighted ? 'gradient-brand text-white hover:scale-[1.02]' : 'border border-border hover:bg-surface-muted'
+                className={`mt-8 py-2.5 text-sm font-medium transition-opacity disabled:opacity-50 ${
+                  highlighted ? 'bg-ink text-background hover:opacity-85' : 'border border-border hover:border-ink'
                 }`}
               >
                 {isCurrent
@@ -115,13 +109,13 @@ export default function PrecosPage() {
                       ? 'Selecionar plano'
                       : 'Criar conta de vendedor'}
               </button>
-            </motion.div>
+            </div>
           );
         })}
       </div>
 
       {user?.role === 'PRESTADOR' && (
-        <p className="mt-8 text-center text-xs text-foreground/40">
+        <p className="mt-8 text-xs text-foreground-muted/70">
           Pagamento ainda não integrado — a troca de plano é aplicada diretamente para fins de teste.
           Em produção, isso será acionado pela confirmação de um gateway de pagamento (Pix/cartão).
         </p>

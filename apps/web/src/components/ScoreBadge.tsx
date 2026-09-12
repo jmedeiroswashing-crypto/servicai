@@ -1,28 +1,25 @@
-import { Star, ShieldCheck } from 'lucide-react';
+import { Star } from 'lucide-react';
 import type { Selo } from '@/lib/types';
 
-const SELO_STYLES: Record<Selo, { label: string; className: string } | null> = {
+const SELO_LABEL: Record<Selo, string | null> = {
   NENHUM: null,
-  PRATA: { label: 'Selo Prata', className: 'bg-slate-200 text-slate-700' },
-  OURO: { label: 'Selo Ouro', className: 'bg-amber-100 text-amber-700' },
-  PREMIUM: { label: 'Selo Premium', className: 'gradient-brand text-white' },
+  PRATA: 'Prata',
+  OURO: 'Ouro',
+  PREMIUM: 'Premium',
 };
 
 export function ScoreBadge({ rating, scoreIA, selo }: { rating: number; scoreIA: number; selo: Selo }) {
-  const seloInfo = SELO_STYLES[selo];
+  const seloLabel = SELO_LABEL[selo];
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1 text-sm font-medium">
-        <Star size={14} className="fill-amber-400 text-amber-400" />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <span className="flex items-center gap-1 font-medium text-ink">
+        <Star size={13} className="fill-accent text-accent" />
         {rating.toFixed(1)}
       </span>
-      <span className="flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-sm font-semibold text-brand">
-        <ShieldCheck size={14} />
-        Score IA {Math.round(scoreIA)}
-      </span>
-      {seloInfo && (
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${seloInfo.className}`}>
-          {seloInfo.label}
+      <span className="text-foreground-muted">Score {Math.round(scoreIA)}</span>
+      {seloLabel && (
+        <span className="border border-border px-1.5 py-0.5 text-xs font-medium uppercase tracking-wide text-foreground-muted">
+          {seloLabel}
         </span>
       )}
     </div>

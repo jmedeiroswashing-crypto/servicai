@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { User, Building2, ArrowRight, Star } from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
 import { AuthForm } from '@/components/AuthForm';
@@ -16,51 +15,43 @@ import type { ProviderProfile, Role } from '@/lib/types';
 
 function RoleChoice({ onChoose }: { onChoose: (role: Role) => void }) {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-4 py-16 text-center">
-      <motion.span
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-4 rounded-full bg-brand/10 px-4 py-1.5 text-sm font-medium text-brand"
-      >
-        Bem-vindo ao ServiçAi
-      </motion.span>
-      <motion.h1
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="text-4xl font-bold tracking-tight sm:text-5xl"
-      >
+    <div className="mx-auto max-w-4xl px-4 py-20 sm:py-28">
+      <p className="mb-3 text-sm uppercase tracking-[0.15em] text-foreground-muted">ServiçAi</p>
+      <h1 className="font-display max-w-lg text-4xl leading-[1.1] text-ink sm:text-6xl">
         Você quer ser
-      </motion.h1>
+      </h1>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="mt-10 grid w-full gap-5 sm:grid-cols-2"
-      >
+      <div className="mt-14 divide-y divide-border border-y border-border">
         <button
           onClick={() => onChoose('CLIENTE')}
-          className="group flex flex-col items-center gap-4 rounded-3xl border border-border bg-surface p-10 transition-all hover:-translate-y-1 hover:border-brand hover:shadow-lg"
+          className="group flex w-full items-center justify-between py-8 text-left transition-colors hover:bg-surface-muted/50"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand transition-colors group-hover:gradient-brand group-hover:text-white">
-            <User size={28} />
-          </span>
-          <span className="text-xl font-bold">Cliente</span>
-          <span className="text-sm text-foreground/60">Quero contratar um serviço</span>
+          <div>
+            <span className="mb-1 block text-xs text-foreground-muted">01</span>
+            <span className="font-display block text-3xl text-ink sm:text-4xl">Cliente</span>
+            <span className="mt-1 block text-sm text-foreground-muted">Quero contratar um serviço</span>
+          </div>
+          <ArrowUpRight
+            size={28}
+            className="shrink-0 text-foreground-muted transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-accent"
+          />
         </button>
 
         <button
           onClick={() => onChoose('PRESTADOR')}
-          className="group flex flex-col items-center gap-4 rounded-3xl border border-border bg-surface p-10 transition-all hover:-translate-y-1 hover:border-brand hover:shadow-lg"
+          className="group flex w-full items-center justify-between py-8 text-left transition-colors hover:bg-surface-muted/50"
         >
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/10 text-brand transition-colors group-hover:gradient-brand group-hover:text-white">
-            <Building2 size={28} />
-          </span>
-          <span className="text-xl font-bold">Vendedor</span>
-          <span className="text-sm text-foreground/60">Quero oferecer meus serviços</span>
+          <div>
+            <span className="mb-1 block text-xs text-foreground-muted">02</span>
+            <span className="font-display block text-3xl text-ink sm:text-4xl">Vendedor</span>
+            <span className="mt-1 block text-sm text-foreground-muted">Quero oferecer meus serviços</span>
+          </div>
+          <ArrowUpRight
+            size={28}
+            className="shrink-0 text-foreground-muted transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-accent"
+          />
         </button>
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -73,54 +64,33 @@ function ClientHome() {
 
   return (
     <div>
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 gradient-brand opacity-[0.08]" />
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 px-4 pb-16 pt-16 text-center sm:pt-20">
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold tracking-tight sm:text-5xl"
-          >
-            O que você está <span className="text-gradient-brand">procurando?</span>
-          </motion.h1>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-full max-w-2xl"
-          >
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24">
+          <h1 className="font-display text-3xl leading-tight text-ink sm:text-5xl">
+            O que você está procurando?
+          </h1>
+          <div className="mt-8">
             <SearchBar large />
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap items-center justify-center gap-2"
-          >
-            {CATEGORIES.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/buscar?q=${encodeURIComponent(c.label)}`}
-                className="rounded-full border border-border bg-surface px-3.5 py-1.5 text-sm hover:border-brand hover:text-brand transition-colors"
-              >
-                {c.emoji} {c.label}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-foreground-muted">
+            {CATEGORIES.slice(0, 12).map((c) => (
+              <Link key={c.slug} href={`/buscar?q=${encodeURIComponent(c.label)}`} className="link-underline pb-0.5 hover:text-ink">
+                {c.label}
               </Link>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {data && data.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-2xl font-semibold">
-              <Star size={20} className="fill-amber-400 text-amber-400" /> Empresas mais bem avaliadas
-            </h2>
-            <Link href="/buscar" className="flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
+            <h2 className="font-display text-2xl text-ink">Melhor avaliados</h2>
+            <Link href="/buscar" className="flex items-center gap-1 text-sm text-foreground-muted hover:text-ink">
               Ver todas <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {data.map((provider) => (
               <ProviderCard key={provider.id} provider={provider} />
             ))}
