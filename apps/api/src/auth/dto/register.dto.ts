@@ -30,6 +30,10 @@ export class RegisterDto {
   @IsString()
   city?: string;
 
+  @IsOptional()
+  @IsIn(ESTADOS_BR, { message: 'Estado (UF) inválido' })
+  addressState?: string;
+
   // Campos abaixo só se aplicam a vendedores (role = PRESTADOR)
 
   @ValidateIf((o) => o.role === Role.PRESTADOR)
@@ -63,8 +67,4 @@ export class RegisterDto {
   @ValidateIf((o) => o.personType === PersonType.PJ)
   @IsString()
   addressNumber?: string;
-
-  @ValidateIf((o) => o.personType === PersonType.PJ)
-  @IsIn(ESTADOS_BR, { message: 'Estado (UF) inválido' })
-  addressState?: string;
 }

@@ -97,6 +97,7 @@ export function AuthForm({
         password: data.password,
         name: data.name,
         city: data.city,
+        addressState: data.addressState,
         phone: data.phone,
         role,
       };
@@ -111,7 +112,6 @@ export function AuthForm({
           payload.addressCep = data.addressCep;
           payload.addressStreet = data.addressStreet;
           payload.addressNumber = data.addressNumber;
-          payload.addressState = data.addressState;
         }
       }
 
@@ -281,14 +281,44 @@ export function AuthForm({
         )}
 
         {mode === 'cadastro' && !isPJ && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">Cidade</label>
-            <input
-              {...register('city', { required: true })}
-              className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-              placeholder="Ex: São Paulo"
-            />
-            {errors.city && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Estado</label>
+              <select
+                {...register('addressState', { required: true })}
+                defaultValue=""
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 outline-none focus:border-brand"
+              >
+                <option value="" disabled>
+                  UF
+                </option>
+                {ESTADOS_BR.map((e) => (
+                  <option key={e.uf} value={e.uf}>
+                    {e.nome} ({e.uf})
+                  </option>
+                ))}
+              </select>
+              {errors.addressState && <p className="mt-1 text-xs text-red-500">Obrigatório</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Cidade</label>
+              <select
+                {...register('city', { required: true })}
+                defaultValue=""
+                disabled={!selectedState || isFetchingCidades}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 outline-none focus:border-brand disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  {!selectedState ? 'Escolha o estado' : isFetchingCidades ? 'Carregando...' : 'Selecione'}
+                </option>
+                {cidadesDoEstado?.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+              {errors.city && <p className="mt-1 text-xs text-red-500">Obrigatório</p>}
+            </div>
           </div>
         )}
 
