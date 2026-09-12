@@ -126,3 +126,22 @@ export interface SearchIntent {
   urgency: 'baixa' | 'media' | 'alta';
   location: string | null;
 }
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  type: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  clientId: string;
+  providerId: string;
+  createdAt: string;
+  provider?: { id?: string; user: { name: string; avatarUrl?: string | null } };
+  client?: { name: string; avatarUrl?: string | null };
+  messages?: ChatMessage[];
+}

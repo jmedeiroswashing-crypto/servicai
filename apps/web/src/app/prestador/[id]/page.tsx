@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
@@ -8,9 +9,17 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { ProviderProfile } from '@/lib/types';
 
+function formatPhone(raw: string) {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return raw;
+}
+
 export default function ProviderProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuthStore();
+  const router = useRouter();
   const [requesting, setRequesting] = useState(false);
 
   const { data: provider, isLoading } = useQuery({
@@ -28,6 +37,11 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
     },
     onSuccess: () => setRequesting(false),
     onError: () => setRequesting(false),
+  });
+
+  const chatMutation = useMutation({
+    mutationFn: async () => (await api.post('/chat/conversations', { providerId: id })).data,
+    onSuccess: (conversation) => router.push(`/mensagens?c=${conversation.id}`),
   });
 
   if (isLoading || !provider) {
@@ -54,6 +68,15 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
               <Users size={14} /> {provider.clientsCount} clientes atendidos
             </span>
           </div>
+          {provider.user.phone && (
+            <a
+              href={`https://wa.me/55${provider.user.phone.replace(/\D/g, '')}`}
+              target="_blank"
+              className="flex w-fit items-center gap-1.5 text-sm font-medium text-accent hover:underline"
+            >
+              <Phone size={13} /> Entrar em contato · {formatPhone(provider.user.phone)}
+            </a>
+          )}
           <ScoreBadge rating={provider.ratingAvg} scoreIA={provider.scoreIA} selo={provider.selo} />
         </div>
       </div>
@@ -70,18 +93,13 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
           <CalendarCheck size={16} />
           {bookingMutation.isSuccess ? 'Solicitado!' : 'Contratar agora'}
         </button>
-        <button className="flex items-center gap-2 border border-border px-5 py-2.5 text-sm font-medium hover:border-ink">
-          <MessageCircle size={16} /> Enviar mensagem
+        <button
+          disabled={!user || chatMutation.isPending}
+          onClick={() => chatMutation.mutate()}
+          className="flex items-center gap-2 border border-border px-5 py-2.5 text-sm font-medium hover:border-ink disabled:opacity-50"
+        >
+          <MessageCircle size={16} /> {chatMutation.isPending ? 'Abrindo...' : 'Enviar mensagem'}
         </button>
-        {provider.user.phone && (
-          <a
-            href={`https://wa.me/${provider.user.phone.replace(/\D/g, '')}`}
-            target="_blank"
-            className="flex items-center gap-2 border border-border px-5 py-2.5 text-sm font-medium hover:border-ink"
-          >
-            <Phone size={16} /> WhatsApp
-          </a>
-        )}
       </div>
 
       {provider.bio && (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useState } from 'react';
 
@@ -60,6 +60,13 @@ export function Navbar() {
                       </Link>
                     </>
                   )}
+                  <Link
+                    href="/mensagens"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                  >
+                    <MessageCircle size={15} className="text-foreground-muted" /> Mensagens
+                  </Link>
                   <button
                     onClick={() => {
                       logout();
