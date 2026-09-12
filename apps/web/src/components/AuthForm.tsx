@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Building2, User, LogIn, MapPin } from 'lucide-react';
@@ -10,6 +11,25 @@ import { useAuthStore } from '@/store/auth-store';
 import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import type { Role } from '@/lib/types';
+
+interface IbgeMunicipio {
+  id: number;
+  nome: string;
+}
+
+function useCidadesPorEstado(uf: string) {
+  return useQuery({
+    queryKey: ['ibge', 'municipios', uf],
+    enabled: !!uf,
+    staleTime: 1000 * 60 * 60 * 24,
+    queryFn: async () => {
+      const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+      if (!res.ok) throw new Error('Falha ao buscar cidades');
+      const data: IbgeMunicipio[] = await res.json();
+      return data.map((m) => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    },
+  });
+}
 
 type Mode = 'login' | 'cadastro';
 type PersonType = 'PF' | 'PJ';
@@ -47,11 +67,20 @@ export function AuthForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>();
 
   const isVendedor = role === 'PRESTADOR';
   const isPJ = isVendedor && personType === 'PJ';
+
+  const selectedState = watch('addressState');
+  const { data: cidadesDoEstado, isFetching: isFetchingCidades } = useCidadesPorEstado(selectedState);
+
+  useEffect(() => {
+    setValue('city', '');
+  }, [selectedState, setValue]);
 
   async function onSubmit(data: FormValues) {
     setError(null);
@@ -268,6 +297,48 @@ export function AuthForm({
             <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground/70">
               <MapPin size={14} /> Endereço da empresa
             </p>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground/60">Estado</label>
+              <select
+                {...register('addressState', { required: true })}
+                defaultValue=""
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+              >
+                <option value="" disabled>
+                  Selecione o estado
+                </option>
+                {ESTADOS_BR.map((e) => (
+                  <option key={e.uf} value={e.uf}>
+                    {e.nome} ({e.uf})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground/60">Cidade</label>
+              <select
+                {...register('city', { required: true })}
+                defaultValue=""
+                disabled={!selectedState || isFetchingCidades}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand disabled:opacity-50"
+              >
+                <option value="" disabled>
+                  {!selectedState
+                    ? 'Selecione o estado primeiro'
+                    : isFetchingCidades
+                      ? 'Carregando cidades...'
+                      : 'Selecione a cidade'}
+                </option>
+                {cidadesDoEstado?.map((nome) => (
+                  <option key={nome} value={nome}>
+                    {nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-1">
                 <label className="mb-1 block text-xs font-medium text-foreground/60">CEP</label>
@@ -287,41 +358,16 @@ export function AuthForm({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-1">
-                <label className="mb-1 block text-xs font-medium text-foreground/60">Número</label>
-                <input
-                  {...register('addressNumber', { required: true })}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
-                  placeholder="Ex: 1000"
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="mb-1 block text-xs font-medium text-foreground/60">Cidade</label>
-                <input
-                  {...register('city', { required: true })}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
-                  placeholder="Ex: São Paulo"
-                />
-              </div>
-            </div>
+
             <div>
-              <label className="mb-1 block text-xs font-medium text-foreground/60">Estado</label>
-              <select
-                {...register('addressState', { required: true })}
-                defaultValue=""
+              <label className="mb-1 block text-xs font-medium text-foreground/60">Número</label>
+              <input
+                {...register('addressNumber', { required: true })}
                 className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
-              >
-                <option value="" disabled>
-                  Selecione o estado
-                </option>
-                {ESTADOS_BR.map((e) => (
-                  <option key={e.uf} value={e.uf}>
-                    {e.nome} ({e.uf})
-                  </option>
-                ))}
-              </select>
+                placeholder="Ex: 1000"
+              />
             </div>
+
             {(errors.addressCep || errors.addressStreet || errors.addressNumber || errors.city || errors.addressState) && (
               <p className="text-xs text-red-500">Preencha todos os campos do endereço</p>
             )}
