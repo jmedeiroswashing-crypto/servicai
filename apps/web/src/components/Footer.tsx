@@ -10,7 +10,10 @@ export function Footer() {
             Buscar
           </Link>
           <Link href="/cadastro?tipo=PRESTADOR" className="hover:text-foreground">
-            Para prestadores
+            Para vendedores
+          </Link>
+          <Link href="/precos" className="hover:text-foreground">
+            Planos
           </Link>
           <Link href="/login" className="hover:text-foreground">
             Entrar

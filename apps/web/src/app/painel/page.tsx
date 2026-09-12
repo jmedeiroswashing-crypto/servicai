@@ -59,7 +59,7 @@ export default function PainelPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-      <h1 className="mb-1 text-2xl font-bold">Painel do prestador</h1>
+      <h1 className="mb-1 text-2xl font-bold">Painel do vendedor</h1>
       <p className="mb-8 text-foreground/60">Acompanhe seus resultados e solicitações de serviço.</p>
 
       {subscription && (

@@ -42,6 +42,11 @@ enum SubscriptionStatus {
   INADIMPLENTE
 }
 
+enum PersonType {
+  PF
+  PJ
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -53,6 +58,12 @@ model User {
   city          String?
   cpf           String?  @unique
   cnpj          String?  @unique
+  personType    PersonType?
+  razaoSocial   String?
+  nomeFantasia  String?
+  addressCep    String?
+  addressStreet String?
+  addressNumber String?
   verified      Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

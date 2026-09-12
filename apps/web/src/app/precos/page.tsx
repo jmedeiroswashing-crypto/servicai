@@ -56,11 +56,11 @@ export default function PrecosPage() {
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
       <div className="mx-auto mb-12 max-w-2xl text-center">
         <span className="mb-3 inline-flex items-center gap-1 rounded-full bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
-          <Sparkles size={14} /> Planos para prestadores
+          <Sparkles size={14} /> Planos para vendedores
         </span>
         <h1 className="text-3xl font-bold sm:text-4xl">Escolha o plano certo para o seu negócio</h1>
         <p className="mt-3 text-foreground/60">
-          Clientes usam o ServiçAi de graça, sempre. Prestadores crescem com o plano que fizer sentido para o
+          Clientes usam o ServiçAi de graça, sempre. Vendedores crescem com o plano que fizer sentido para o
           volume de trabalho de hoje — e mudam quando quiserem.
         </p>
       </div>
@@ -113,7 +113,7 @@ export default function PrecosPage() {
                     ? 'Ativando...'
                     : user
                       ? 'Selecionar plano'
-                      : 'Criar conta de prestador'}
+                      : 'Criar conta de vendedor'}
               </button>
             </motion.div>
           );

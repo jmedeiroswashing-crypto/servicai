@@ -17,6 +17,15 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('E-mail já cadastrado');
 
+    if (dto.cpf) {
+      const cpfTaken = await this.prisma.user.findUnique({ where: { cpf: dto.cpf } });
+      if (cpfTaken) throw new ConflictException('CPF já cadastrado');
+    }
+    if (dto.cnpj) {
+      const cnpjTaken = await this.prisma.user.findUnique({ where: { cnpj: dto.cnpj } });
+      if (cnpjTaken) throw new ConflictException('CNPJ já cadastrado');
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     const user = await this.prisma.user.create({
@@ -27,6 +36,14 @@ export class AuthService {
         role: dto.role,
         phone: dto.phone,
         city: dto.city,
+        personType: dto.personType,
+        cpf: dto.cpf,
+        cnpj: dto.cnpj,
+        razaoSocial: dto.razaoSocial,
+        nomeFantasia: dto.nomeFantasia,
+        addressCep: dto.addressCep,
+        addressStreet: dto.addressStreet,
+        addressNumber: dto.addressNumber,
       },
     });
 
