@@ -1,0 +1,199 @@
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { RequestStatus } from '../generated/prisma/enums.js';
+import { CreateRequestDto } from './dto/create-request.dto.js';
+import { CreateProposalDto } from './dto/create-proposal.dto.js';
+import { MatchFiltersDto } from './dto/match-filters.dto.js';
+
+const TIME_UNITS: [number, string][] = [
+  [60, 'minuto'],
+  [60, 'hora'],
+  [24, 'dia'],
+  [7, 'semana'],
+  [4.345, 'mês'],
+  [12, 'ano'],
+];
+
+function timeAgo(date: Date): string {
+  let diff = (Date.now() - date.getTime()) / 1000;
+  let unit = 'segundo';
+  for (const [factor, name] of TIME_UNITS) {
+    if (diff < factor) break;
+    diff /= factor;
+    unit = name;
+  }
+  const value = Math.max(1, Math.round(diff));
+  const plural = value > 1 ? (unit === 'mês' ? 'meses' : `${unit}s`) : unit;
+  return `há ${value} ${plural}`;
+}
+
+@Injectable()
+export class RequestsService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(clientId: string, dto: CreateRequestDto) {
+    return this.prisma.serviceRequest.create({
+      data: {
+        clientId,
+        category: dto.category,
+        title: dto.title,
+        description: dto.description,
+        city: dto.city,
+        state: dto.state,
+        budgetMin: dto.budgetMin,
+        budgetMax: dto.budgetMax,
+        desiredDate: dto.desiredDate ? new Date(dto.desiredDate) : undefined,
+        desiredTime: dto.desiredTime,
+      },
+    });
+  }
+
+  async findMineAsClient(clientId: string) {
+    const requests = await this.prisma.serviceRequest.findMany({
+      where: { clientId },
+      include: { _count: { select: { proposals: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return requests.map((r) => ({ ...r, proposalsCount: r._count.proposals }));
+  }
+
+  async listProposalsForRequest(clientId: string, requestId: string) {
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
+
+    return this.prisma.proposal.findMany({
+      where: { requestId },
+      include: {
+        provider: {
+          include: { user: { select: { name: true, avatarUrl: true, phone: true } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Feed de oportunidades do prestador. Por privacidade, NUNCA inclui dados
+   * pessoais do cliente (nome, telefone, e-mail, endereço exato) — apenas o
+   * necessário para o prestador avaliar a oportunidade.
+   */
+  async findMatchesForProvider(userId: string, filters: MatchFiltersDto) {
+    const provider = await this.prisma.providerProfile.findUnique({
+      where: { userId },
+      include: { user: { select: { addressState: true } } },
+    });
+    if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
+
+    const providerCategories = provider.categories.length > 0 ? provider.categories : [provider.specialty];
+    const providerState = provider.user.addressState;
+
+    const distance = filters.distance ?? 'todas';
+    const locationFilter =
+      distance === 'cidade'
+        ? { city: { equals: provider.city, mode: 'insensitive' as const } }
+        : distance === 'estado' && providerState
+          ? { state: providerState }
+          : {};
+
+    const providerProposals = await this.prisma.proposal.findMany({
+      where: { providerId: provider.id },
+      select: { requestId: true },
+    });
+    const proposedRequestIds = new Set(providerProposals.map((p) => p.requestId));
+
+    const requests = await this.prisma.serviceRequest.findMany({
+      where: {
+        status: RequestStatus.ABERTA,
+        category: filters.category
+          ? { equals: filters.category, mode: 'insensitive' }
+          : { in: providerCategories, mode: 'insensitive' },
+        ...locationFilter,
+        ...(filters.budgetMin != null ? { budgetMax: { gte: filters.budgetMin } } : {}),
+        ...(filters.budgetMax != null ? { budgetMin: { lte: filters.budgetMax } } : {}),
+        ...(filters.dateFrom ? { desiredDate: { gte: new Date(filters.dateFrom) } } : {}),
+        ...(filters.dateTo ? { desiredDate: { lte: new Date(filters.dateTo) } } : {}),
+      },
+      include: { _count: { select: { proposals: true } } },
+      take: 100,
+    });
+
+    const enriched = requests.map((r) => {
+      const sameCity = r.city.toLowerCase() === provider.city.toLowerCase();
+      const sameState = !!providerState && r.state === providerState;
+      const categoryExact = providerCategories.some((c) => c.toLowerCase() === r.category.toLowerCase());
+
+      const matchScore =
+        (categoryExact ? 50 : 25) + (sameCity ? 30 : sameState ? 15 : 0) + (r.budgetMin || r.budgetMax ? 5 : 0);
+
+      return {
+        id: r.id,
+        category: r.category,
+        title: r.title,
+        description: r.description,
+        city: r.city,
+        state: r.state,
+        budgetMin: r.budgetMin,
+        budgetMax: r.budgetMax,
+        desiredDate: r.desiredDate,
+        desiredTime: r.desiredTime,
+        createdAt: r.createdAt,
+        publishedAgo: timeAgo(r.createdAt),
+        proposalsCount: r._count.proposals,
+        alreadyProposed: proposedRequestIds.has(r.id),
+        proximityLabel: sameCity ? 'Na sua cidade' : sameState ? 'No seu estado' : 'Fora da sua região',
+        matchScore,
+      };
+    });
+
+    const sort = filters.sort ?? 'recentes';
+    if (sort === 'match') {
+      enriched.sort((a, b) => b.matchScore - a.matchScore);
+    } else if (sort === 'proximos') {
+      const rank = (label: string) => (label === 'Na sua cidade' ? 0 : label === 'No seu estado' ? 1 : 2);
+      enriched.sort((a, b) => rank(a.proximityLabel) - rank(b.proximityLabel));
+    } else {
+      enriched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    return enriched;
+  }
+
+  async createProposal(userId: string, requestId: string, dto: CreateProposalDto) {
+    const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
+    if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
+
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.status !== RequestStatus.ABERTA) {
+      throw new BadRequestException('Esta solicitação não está mais recebendo propostas');
+    }
+
+    const existing = await this.prisma.proposal.findUnique({
+      where: { requestId_providerId: { requestId, providerId: provider.id } },
+    });
+    if (existing) throw new ConflictException('Você já enviou uma proposta para esta solicitação');
+
+    return this.prisma.proposal.create({
+      data: {
+        requestId,
+        providerId: provider.id,
+        price: dto.price,
+        message: dto.message,
+        deadline: dto.deadline,
+        availableAt: dto.availableAt,
+      },
+    });
+  }
+
+  async listMyProposals(userId: string) {
+    const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
+    if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
+
+    return this.prisma.proposal.findMany({
+      where: { providerId: provider.id },
+      include: { request: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+}

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
@@ -60,6 +60,20 @@ export default function PainelPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-3xl text-ink">Painel do vendedor</h1>
       <p className="mt-2 text-foreground-muted">Acompanhe seus resultados e solicitações de serviço.</p>
+
+      <Link
+        href="/painel/oportunidades"
+        className="mt-8 flex items-center justify-between border border-ink bg-ink p-5 text-background transition-opacity hover:opacity-90"
+      >
+        <div className="flex items-center gap-3">
+          <Sparkles size={18} />
+          <div>
+            <p className="font-medium">Oportunidades</p>
+            <p className="text-sm text-background/70">Veja clientes procurando pelos serviços que você oferece</p>
+          </div>
+        </div>
+        <ArrowRight size={16} />
+      </Link>
 
       {subscription && (
         <Link

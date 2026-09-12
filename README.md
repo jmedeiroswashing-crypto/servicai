@@ -76,6 +76,23 @@ npm run dev              # http://localhost:3000
 - **Frontend**: landing, busca, perfil do prestador (estilo "Instagram"), cadastro/login
   com seleção de tipo de conta, painel do prestador (estatísticas, plano atual e
   solicitações), página de preços (`/precos`).
+- **Chat em tempo real** entre cliente e prestador (`/mensagens`, WebSocket namespace `/chat`)
+  e "Traçar rota" no perfil do prestador via Geolocation API + link de directions do
+  Google Maps (sem chave de API paga).
+- **Mural de oportunidades** ("Clientes procurando"): clientes publicam uma solicitação
+  (`/solicitar`) com categoria, descrição, região e orçamento; prestadores veem, em
+  `/painel/oportunidades`, só as solicitações compatíveis com as categorias e a
+  cidade/estado do próprio perfil (`GET /requests/matches`, com filtros de categoria,
+  distância, orçamento e ordenação por mais recentes/mais próximos/melhor
+  correspondência). O prestador demonstra interesse enviando uma proposta (valor, prazo,
+  mensagem) via `POST /requests/:id/proposals`; o cliente acompanha as propostas
+  recebidas em `/minhas-solicitacoes` e pode abrir uma conversa direto com quem propôs.
+  **Privacidade**: a resposta de `/requests/matches` nunca inclui nome, telefone, e-mail
+  ou endereço do cliente — só os dados necessários para avaliar a oportunidade (testado
+  explicitamente). O "match inteligente" hoje compara categoria e cidade/estado; não há
+  geocodificação real, então "mais próximos" é uma aproximação por cidade/estado, não por
+  distância em km, e não há verificação de disponibilidade de agenda (não existe um
+  calendário de disponibilidade do prestador ainda).
 
 ## Roadmap (fora do escopo desta primeira entrega)
 

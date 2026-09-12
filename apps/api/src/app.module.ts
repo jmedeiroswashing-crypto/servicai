@@ -14,6 +14,7 @@ import { ChatModule } from './chat/chat.module.js';
 import { SearchModule } from './search/search.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
+import { RequestsModule } from './requests/requests.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
     SearchModule,
     AiModule,
     SubscriptionsModule,
+    RequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

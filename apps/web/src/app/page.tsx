@@ -79,6 +79,13 @@ function ClientHome() {
               </Link>
             ))}
           </div>
+          <p className="mt-8 text-sm text-foreground-muted">
+            Não achou quem procurava?{' '}
+            <Link href="/solicitar" className="text-accent hover:underline">
+              Publique uma solicitação
+            </Link>{' '}
+            e deixe os profissionais da sua região virem até você.
+          </p>
         </div>
       </section>
 

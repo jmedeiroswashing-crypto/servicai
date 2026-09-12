@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useState } from 'react';
 
@@ -52,11 +52,43 @@ export function Navbar() {
                         <LayoutDashboard size={15} className="text-foreground-muted" /> Meu painel
                       </Link>
                       <Link
+                        href="/painel/oportunidades"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <Sparkles size={15} className="text-foreground-muted" /> Oportunidades
+                      </Link>
+                      <Link
+                        href="/painel/perfil"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <UserCog size={15} className="text-foreground-muted" /> Editar perfil
+                      </Link>
+                      <Link
                         href="/precos"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                       >
                         <CreditCard size={15} className="text-foreground-muted" /> Meu plano
+                      </Link>
+                    </>
+                  )}
+                  {user.role === 'CLIENTE' && (
+                    <>
+                      <Link
+                        href="/solicitar"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <FileText size={15} className="text-foreground-muted" /> Publicar solicitação
+                      </Link>
+                      <Link
+                        href="/minhas-solicitacoes"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <LayoutDashboard size={15} className="text-foreground-muted" /> Minhas solicitações
                       </Link>
                     </>
                   )}

@@ -154,3 +154,43 @@ export interface ChatConversation {
   client?: { name: string; avatarUrl?: string | null };
   messages?: ChatMessage[];
 }
+
+export type RequestStatus = 'ABERTA' | 'EM_ANDAMENTO' | 'FECHADA' | 'CANCELADA';
+export type ProposalStatus = 'ENVIADA' | 'ACEITA' | 'RECUSADA';
+
+export interface ServiceRequestItem {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  city: string;
+  state?: string | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  desiredDate?: string | null;
+  desiredTime?: string | null;
+  status?: RequestStatus;
+  createdAt: string;
+  proposalsCount: number;
+}
+
+export interface OpportunityMatch extends ServiceRequestItem {
+  publishedAgo: string;
+  alreadyProposed: boolean;
+  proximityLabel: string;
+  matchScore: number;
+}
+
+export interface Proposal {
+  id: string;
+  requestId: string;
+  providerId: string;
+  price: number;
+  message: string;
+  deadline?: string | null;
+  availableAt?: string | null;
+  status: ProposalStatus;
+  createdAt: string;
+  provider?: ProviderProfile;
+  request?: ServiceRequestItem;
+}
