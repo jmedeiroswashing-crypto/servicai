@@ -9,12 +9,14 @@ import { CreateListingDto } from './dto/create-listing.dto.js';
 import { UpdateListingDto } from './dto/update-listing.dto.js';
 import { GenerateDescriptionDto, SuggestPriceDto } from './dto/ai-assist.dto.js';
 import { AiService } from '../ai/ai.service.js';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 
 @Controller('listings')
 export class ListingsController {
   constructor(
     private listingsService: ListingsService,
     private aiService: AiService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   @Post()
@@ -27,14 +29,19 @@ export class ListingsController {
   @Post('ai/generate-description')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
-  generateDescription(@Body() dto: GenerateDescriptionDto) {
-    return this.aiService.generateServiceDescription(dto).then((description) => ({ description }));
+  async generateDescription(@CurrentUser() user: AuthUser, @Body() dto: GenerateDescriptionDto) {
+    const providerId = await this.subscriptionsService.findProviderIdByUserId(user.userId);
+    await this.subscriptionsService.consumeAiUsage(providerId);
+    const description = await this.aiService.generateServiceDescription(dto);
+    return { description };
   }
 
   @Post('ai/suggest-price')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
-  suggestPrice(@Body() dto: SuggestPriceDto) {
+  async suggestPrice(@CurrentUser() user: AuthUser, @Body() dto: SuggestPriceDto) {
+    const providerId = await this.subscriptionsService.findProviderIdByUserId(user.userId);
+    await this.subscriptionsService.consumeAiUsage(providerId);
     return this.aiService.suggestPriceRange(dto);
   }
 

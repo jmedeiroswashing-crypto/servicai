@@ -28,6 +28,9 @@ export function Navbar() {
           <Link href="/cadastro?tipo=PRESTADOR" className="hover:text-foreground transition-colors">
             Anuncie seu serviço
           </Link>
+          <Link href="/precos" className="hover:text-foreground transition-colors">
+            Planos
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -45,13 +48,22 @@ export function Navbar() {
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
                   {user.role === 'PRESTADOR' && (
-                    <Link
-                      href="/painel"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-surface-muted"
-                    >
-                      <LayoutDashboard size={16} /> Meu painel
-                    </Link>
+                    <>
+                      <Link
+                        href="/painel"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-surface-muted"
+                      >
+                        <LayoutDashboard size={16} /> Meu painel
+                      </Link>
+                      <Link
+                        href="/precos"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-surface-muted"
+                      >
+                        <Sparkles size={16} /> Meu plano
+                      </Link>
+                    </>
                   )}
                   <button
                     onClick={() => {

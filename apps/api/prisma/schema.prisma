@@ -29,6 +29,19 @@ enum BookingStatus {
   CANCELADO
 }
 
+enum Plan {
+  GRATIS
+  PRO
+  BUSINESS
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ATIVA
+  CANCELADA
+  INADIMPLENTE
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -68,6 +81,7 @@ model ProviderProfile {
   servicesDone  Int      @default(0)
   clientsCount  Int      @default(0)
   businessHours Json?
+  planPriority  Int      @default(0)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -78,6 +92,24 @@ model ProviderProfile {
   bookings      Booking[]       @relation("BookingsForProvider")
   conversationsB Conversation[] @relation("ConversationProvider")
   favoritedBy   Favorite[]
+  subscription  Subscription?
+}
+
+model Subscription {
+  id                String             @id @default(cuid())
+  providerId        String             @unique
+  provider          ProviderProfile    @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  plan              Plan               @default(GRATIS)
+  status            SubscriptionStatus @default(ATIVA)
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean            @default(false)
+
+  aiUsageCount      Int                @default(0)
+  aiUsagePeriod     String             @default("")
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Service {

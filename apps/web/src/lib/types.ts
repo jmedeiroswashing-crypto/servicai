@@ -1,6 +1,36 @@
 export type Role = 'CLIENTE' | 'PRESTADOR' | 'ADMIN';
 export type Selo = 'NENHUM' | 'PRATA' | 'OURO' | 'PREMIUM';
 export type BookingStatus = 'SOLICITADO' | 'ACEITO' | 'RECUSADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+export type Plan = 'GRATIS' | 'PRO' | 'BUSINESS' | 'PREMIUM';
+
+// Mirrors the backend's plans.config.ts sentinel — Infinity doesn't survive JSON,
+// so "unlimited" is represented as this large finite number instead.
+export const UNLIMITED = 999_999;
+export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'INADIMPLENTE';
+
+export interface PlanConfig {
+  plan: Plan;
+  label: string;
+  priceMonthly: number;
+  selo: Selo;
+  planPriority: number;
+  maxListings: number;
+  maxMedia: number;
+  aiGenerationsPerMonth: number;
+  features: string[];
+}
+
+export interface Subscription {
+  id: string;
+  providerId: string;
+  plan: Plan;
+  status: SubscriptionStatus;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd: boolean;
+  aiUsageCount: number;
+  aiUsagePeriod: string;
+  config: PlanConfig;
+}
 
 export interface AuthUser {
   id: string;

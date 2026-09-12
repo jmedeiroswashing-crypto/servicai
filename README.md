@@ -64,8 +64,18 @@ npm run dev              # http://localhost:3000
   (`SOLICITADO → ACEITO/RECUSADO → EM_ANDAMENTO → CONCLUIDO/CANCELADO`).
 - **Favoritos**.
 - **Chat**: REST + WebSocket (namespace `/chat`) para mensagens em tempo real.
+- **Planos de assinatura** (Grátis/Pro/Business/Premium): cada plano define limite de
+  anúncios ativos, limite de itens de mídia, cota mensal de usos de IA e o selo de
+  reputação correspondente (Prata/Ouro/Premium); a troca de plano já atualiza o selo e
+  a prioridade de exposição do prestador na busca (`GET /subscriptions/plans`,
+  `GET/PATCH /subscriptions/me`). **Sem gateway de pagamento integrado ainda** — a troca
+  de plano é aplicada diretamente para fins de teste; em produção deve ser acionada por
+  um webhook de confirmação de pagamento (Pix/cartão via Stripe, Pagar.me, etc.), não
+  diretamente pelo cliente. Preços definidos com base em pesquisa de mercado (GetNinjas,
+  Zaask, Thumbtack, Angi) — ver `apps/api/src/subscriptions/plans.config.ts`.
 - **Frontend**: landing, busca, perfil do prestador (estilo "Instagram"), cadastro/login
-  com seleção de tipo de conta, painel básico do prestador (estatísticas e solicitações).
+  com seleção de tipo de conta, painel do prestador (estatísticas, plano atual e
+  solicitações), página de preços (`/precos`).
 
 ## Roadmap (fora do escopo desta primeira entrega)
 
@@ -77,7 +87,8 @@ npm run dev              # http://localhost:3000
 - **Feed estilo TikTok** com recomendação de conteúdo por IA.
 - **Painel de empresa**: funcionários, filiais, CRM, leads, contratos, campanhas.
 - **Gamificação**: ranking por cidade/bairro/nacional, medalhas, missões.
-- **Planos de monetização** (Gratuito/Pro/Premium) e cobrança recorrente.
+- **Cobrança recorrente real** dos planos de assinatura (a estrutura de planos já existe;
+  falta integrar um gateway de pagamento — Stripe, Pagar.me — via webhook).
 - Infraestrutura de produção: Docker/Kubernetes, CI/CD, ElasticSearch (busca full-text
   em escala) e Pinecone (busca semântica/recomendação via embeddings).
 - Upload de mídia real via **AWS S3** (hoje a API aceita apenas URLs já hospedadas).

@@ -13,6 +13,7 @@ import { MediaModule } from './media/media.module.js';
 import { ChatModule } from './chat/chat.module.js';
 import { SearchModule } from './search/search.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AiModule } from './ai/ai.module.js';
     ChatModule,
     SearchModule,
     AiModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -31,7 +31,7 @@ export class AuthService {
     });
 
     if (dto.role === Role.PRESTADOR) {
-      await this.prisma.providerProfile.create({
+      const provider = await this.prisma.providerProfile.create({
         data: {
           userId: user.id,
           specialty: 'A definir',
@@ -39,6 +39,7 @@ export class AuthService {
           categories: [],
         },
       });
+      await this.prisma.subscription.create({ data: { providerId: provider.id } });
     }
 
     return this.buildAuthResponse(user.id, user.email, user.role, user.name);

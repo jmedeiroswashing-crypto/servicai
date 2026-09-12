@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Star, Briefcase, Users, TrendingUp } from 'lucide-react';
+import { Star, Briefcase, Users, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import type { Booking, ProviderProfile } from '@/lib/types';
+import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
 
 const STATUS_LABEL: Record<string, string> = {
   SOLICITADO: 'Solicitado',
@@ -33,6 +34,12 @@ export default function PainelPage() {
     queryFn: async () => (await api.get<ProviderProfile>('/providers/me')).data,
   });
 
+  const { data: subscription } = useQuery({
+    queryKey: ['subscriptions', 'me'],
+    enabled: !!token,
+    queryFn: async () => (await api.get<Subscription>('/subscriptions/me')).data,
+  });
+
   const { data: bookings } = useQuery({
     queryKey: ['bookings', 'provider'],
     enabled: !!token,
@@ -54,6 +61,32 @@ export default function PainelPage() {
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
       <h1 className="mb-1 text-2xl font-bold">Painel do prestador</h1>
       <p className="mb-8 text-foreground/60">Acompanhe seus resultados e solicitações de serviço.</p>
+
+      {subscription && (
+        <Link
+          href="/precos"
+          className="mb-8 flex flex-col gap-3 rounded-2xl gradient-brand p-5 text-white transition-transform hover:scale-[1.01] sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <Sparkles size={20} />
+            <div>
+              <p className="font-semibold">Plano {subscription.config.label}</p>
+              <p className="text-sm text-white/80">
+                {subscription.config.aiGenerationsPerMonth >= UNLIMITED
+                  ? 'IA ilimitada'
+                  : `${subscription.aiUsageCount}/${subscription.config.aiGenerationsPerMonth} usos de IA neste mês`}
+                {' · '}
+                {subscription.config.maxListings >= UNLIMITED
+                  ? 'anúncios ilimitados'
+                  : `até ${subscription.config.maxListings} anúncio(s)`}
+              </p>
+            </div>
+          </div>
+          <span className="flex items-center gap-1 text-sm font-semibold">
+            Gerenciar plano <ArrowRight size={14} />
+          </span>
+        </Link>
+      )}
 
       <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s, i) => (

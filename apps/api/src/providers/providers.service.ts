@@ -15,7 +15,7 @@ export class ProvidersService {
         ...(category ? { categories: { has: category } } : {}),
       },
       include: { user: { select: { name: true, avatarUrl: true } }, media: { take: 6 } },
-      orderBy: [{ scoreIA: 'desc' }, { ratingAvg: 'desc' }],
+      orderBy: [{ planPriority: 'desc' }, { scoreIA: 'desc' }, { ratingAvg: 'desc' }],
       skip,
       take,
     });

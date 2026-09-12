@@ -27,7 +27,7 @@ export class SearchController {
         ...(intent.location ? { city: { contains: intent.location, mode: 'insensitive' } } : {}),
       },
       include: { user: { select: { name: true, avatarUrl: true } }, media: { take: 3 } },
-      orderBy: [{ scoreIA: 'desc' }, { ratingAvg: 'desc' }],
+      orderBy: [{ planPriority: 'desc' }, { scoreIA: 'desc' }, { ratingAvg: 'desc' }],
       take: 30,
     });
 

@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { CreateListingDto } from './dto/create-listing.dto.js';
 import { UpdateListingDto } from './dto/update-listing.dto.js';
 
@@ -9,10 +10,13 @@ export class ListingsService {
   constructor(
     private prisma: PrismaService,
     private providersService: ProvidersService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(userId: string, dto: CreateListingDto) {
     const provider = await this.providersService.findByUserId(userId);
+    const currentCount = await this.prisma.service.count({ where: { providerId: provider.id, active: true } });
+    await this.subscriptionsService.assertListingLimit(provider.id, currentCount);
     return this.prisma.service.create({
       data: { ...dto, providerId: provider.id },
     });
