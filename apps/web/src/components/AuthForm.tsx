@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Building2, User, LogIn } from 'lucide-react';
+import { Building2, User, LogIn, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
+import { ESTADOS_BR } from '@/lib/estados-brasil';
 import type { Role } from '@/lib/types';
 
 type Mode = 'login' | 'cadastro';
@@ -25,6 +27,7 @@ interface FormValues {
   addressCep: string;
   addressStreet: string;
   addressNumber: string;
+  addressState: string;
 }
 
 export function AuthForm({
@@ -48,6 +51,7 @@ export function AuthForm({
   } = useForm<FormValues>();
 
   const isVendedor = role === 'PRESTADOR';
+  const isPJ = isVendedor && personType === 'PJ';
 
   async function onSubmit(data: FormValues) {
     setError(null);
@@ -78,6 +82,7 @@ export function AuthForm({
           payload.addressCep = data.addressCep;
           payload.addressStreet = data.addressStreet;
           payload.addressNumber = data.addressNumber;
+          payload.addressState = data.addressState;
         }
       }
 
@@ -157,25 +162,25 @@ export function AuthForm({
         {mode === 'cadastro' && (
           <div>
             <label className="mb-1 block text-sm font-medium">
-              {isVendedor && personType === 'PJ' ? 'Nome do responsável' : 'Nome completo'}
+              {isPJ ? 'Nome do responsável' : 'Nome completo'}
             </label>
             <input
               {...register('name', { required: true })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-              placeholder="Seu nome"
+              placeholder="Ex: Maria da Silva"
             />
             {errors.name && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
           </div>
         )}
 
-        {mode === 'cadastro' && isVendedor && personType === 'PJ' && (
+        {mode === 'cadastro' && isPJ && (
           <>
             <div>
               <label className="mb-1 block text-sm font-medium">Razão social</label>
               <input
                 {...register('razaoSocial', { required: true })}
                 className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-                placeholder="Razão social da empresa"
+                placeholder="Ex: Silva Serviços Elétricos LTDA"
               />
               {errors.razaoSocial && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
             </div>
@@ -184,32 +189,42 @@ export function AuthForm({
               <input
                 {...register('nomeFantasia')}
                 className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-                placeholder="Nome fantasia (opcional)"
+                placeholder="Ex: Elétrica Silva (opcional)"
               />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">CNPJ</label>
               <input
-                {...register('cnpj', { required: true })}
+                {...register('cnpj', {
+                  required: true,
+                  validate: (v) => isValidCNPJ(v) || 'CNPJ inválido',
+                })}
                 className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
                 placeholder="00.000.000/0000-00"
+                maxLength={18}
               />
-              {errors.cnpj && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
+              {errors.cnpj && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.cnpj.message || 'Campo obrigatório'}
+                </p>
+              )}
             </div>
           </>
         )}
 
         {mode === 'cadastro' && isVendedor && (
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              CPF {personType === 'PJ' ? 'do responsável' : ''}
-            </label>
+            <label className="mb-1 block text-sm font-medium">CPF {isPJ ? 'do responsável' : ''}</label>
             <input
-              {...register('cpf', { required: true })}
+              {...register('cpf', {
+                required: true,
+                validate: (v) => isValidCPF(v) || 'CPF inválido',
+              })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
               placeholder="000.000.000-00"
+              maxLength={14}
             />
-            {errors.cpf && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
+            {errors.cpf && <p className="mt-1 text-xs text-red-500">{errors.cpf.message || 'Campo obrigatório'}</p>}
           </div>
         )}
 
@@ -219,63 +234,97 @@ export function AuthForm({
             {...register('email', { required: true })}
             type="email"
             className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-            placeholder="voce@email.com"
+            placeholder="Ex: voce@email.com"
           />
           {errors.email && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
         </div>
 
         {mode === 'cadastro' && (
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Telefone{isVendedor && personType === 'PJ' ? '/WhatsApp comercial' : ''}
-            </label>
+            <label className="mb-1 block text-sm font-medium">Telefone{isPJ ? '/WhatsApp comercial' : ''}</label>
             <input
               {...register('phone', { required: true })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-              placeholder="(00) 00000-0000"
+              placeholder="Ex: (11) 98765-4321"
             />
             {errors.phone && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
           </div>
         )}
 
-        {mode === 'cadastro' && isVendedor && personType === 'PJ' && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="col-span-1">
-              <label className="mb-1 block text-sm font-medium">CEP</label>
-              <input
-                {...register('addressCep', { required: true })}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 outline-none focus:border-brand"
-                placeholder="00000-000"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="mb-1 block text-sm font-medium">Rua</label>
-              <input
-                {...register('addressStreet', { required: true })}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 outline-none focus:border-brand"
-                placeholder="Rua/Avenida"
-              />
-            </div>
-            <div className="col-span-1">
-              <label className="mb-1 block text-sm font-medium">Número</label>
-              <input
-                {...register('addressNumber', { required: true })}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 outline-none focus:border-brand"
-                placeholder="123"
-              />
-            </div>
-          </div>
-        )}
-
-        {mode === 'cadastro' && (
+        {mode === 'cadastro' && !isPJ && (
           <div>
             <label className="mb-1 block text-sm font-medium">Cidade</label>
             <input
               {...register('city', { required: true })}
               className="w-full rounded-xl border border-border bg-background px-4 py-2.5 outline-none focus:border-brand"
-              placeholder="São Paulo"
+              placeholder="Ex: São Paulo"
             />
             {errors.city && <p className="mt-1 text-xs text-red-500">Campo obrigatório</p>}
+          </div>
+        )}
+
+        {mode === 'cadastro' && isPJ && (
+          <div className="space-y-3 rounded-2xl border border-border bg-surface-muted/50 p-4">
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground/70">
+              <MapPin size={14} /> Endereço da empresa
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <label className="mb-1 block text-xs font-medium text-foreground/60">CEP</label>
+                <input
+                  {...register('addressCep', { required: true })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs font-medium text-foreground/60">Rua/Avenida</label>
+                <input
+                  {...register('addressStreet', { required: true })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+                  placeholder="Ex: Av. Paulista"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <label className="mb-1 block text-xs font-medium text-foreground/60">Número</label>
+                <input
+                  {...register('addressNumber', { required: true })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+                  placeholder="Ex: 1000"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs font-medium text-foreground/60">Cidade</label>
+                <input
+                  {...register('city', { required: true })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+                  placeholder="Ex: São Paulo"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-foreground/60">Estado</label>
+              <select
+                {...register('addressState', { required: true })}
+                defaultValue=""
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
+              >
+                <option value="" disabled>
+                  Selecione o estado
+                </option>
+                {ESTADOS_BR.map((e) => (
+                  <option key={e.uf} value={e.uf}>
+                    {e.nome} ({e.uf})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {(errors.addressCep || errors.addressStreet || errors.addressNumber || errors.city || errors.addressState) && (
+              <p className="text-xs text-red-500">Preencha todos os campos do endereço</p>
+            )}
           </div>
         )}
 

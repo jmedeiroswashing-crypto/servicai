@@ -64,6 +64,7 @@ model User {
   addressCep    String?
   addressStreet String?
   addressNumber String?
+  addressState  String?
   verified      Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

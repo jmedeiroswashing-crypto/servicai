@@ -44,6 +44,7 @@ export class AuthService {
         addressCep: dto.addressCep,
         addressStreet: dto.addressStreet,
         addressNumber: dto.addressNumber,
+        addressState: dto.addressState,
       },
     });
 

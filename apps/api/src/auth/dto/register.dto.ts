@@ -1,5 +1,12 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
+import { IsEmail, IsEnum, IsIn, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
 import { Role, PersonType } from '../../generated/prisma/enums.js';
+import { IsCPF } from '../../common/validators/is-cpf.decorator.js';
+import { IsCNPJ } from '../../common/validators/is-cnpj.decorator.js';
+
+const ESTADOS_BR = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
+  'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+];
 
 export class RegisterDto {
   @IsEmail()
@@ -30,11 +37,11 @@ export class RegisterDto {
   personType?: PersonType;
 
   @ValidateIf((o) => o.personType === PersonType.PF || o.personType === PersonType.PJ)
-  @IsString()
+  @IsCPF({ message: 'CPF inválido' })
   cpf?: string;
 
   @ValidateIf((o) => o.personType === PersonType.PJ)
-  @IsString()
+  @IsCNPJ({ message: 'CNPJ inválido' })
   cnpj?: string;
 
   @ValidateIf((o) => o.personType === PersonType.PJ)
@@ -45,15 +52,19 @@ export class RegisterDto {
   @IsString()
   nomeFantasia?: string;
 
-  @IsOptional()
+  @ValidateIf((o) => o.personType === PersonType.PJ)
   @IsString()
   addressCep?: string;
 
-  @IsOptional()
+  @ValidateIf((o) => o.personType === PersonType.PJ)
   @IsString()
   addressStreet?: string;
 
-  @IsOptional()
+  @ValidateIf((o) => o.personType === PersonType.PJ)
   @IsString()
   addressNumber?: string;
+
+  @ValidateIf((o) => o.personType === PersonType.PJ)
+  @IsIn(ESTADOS_BR, { message: 'Estado (UF) inválido' })
+  addressState?: string;
 }
