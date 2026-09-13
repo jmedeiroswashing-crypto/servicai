@@ -1,7 +1,7 @@
 'use client';
 
-import { use, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
@@ -17,8 +17,9 @@ function formatPhone(raw: string) {
   return raw;
 }
 
-export default function ProviderProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function ProviderProfileContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get('id') ?? '';
   const { user } = useAuthStore();
   const router = useRouter();
   const [requesting, setRequesting] = useState(false);
@@ -30,6 +31,7 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
       const res = await api.get<ProviderProfile>(`/providers/${id}`);
       return res.data;
     },
+    enabled: !!id,
   });
 
   const bookingMutation = useMutation({
@@ -177,5 +179,13 @@ export default function ProviderProfilePage({ params }: { params: Promise<{ id: 
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProviderProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProviderProfileContent />
+    </Suspense>
   );
 }
