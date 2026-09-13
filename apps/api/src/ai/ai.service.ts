@@ -9,6 +9,33 @@ export interface SearchIntent {
   location: string | null;
 }
 
+export interface RequestDraft {
+  category?: string;
+  title?: string;
+  description?: string;
+  city?: string;
+  state?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  desiredDate?: string;
+  desiredTime?: string;
+}
+
+export interface IntakeResult {
+  draft: RequestDraft;
+  assistantReply: string;
+  readyToPublish: boolean;
+}
+
+const REQUIRED_INTAKE_FIELDS: (keyof RequestDraft)[] = ['category', 'title', 'description', 'city'];
+
+const FALLBACK_CATEGORIES = [
+  'eletricista', 'encanador', 'pedreiro', 'pintor', 'marceneiro', 'advogado',
+  'psicólogo', 'médico', 'mecânico', 'lava rápido', 'estética', 'odontológica',
+  'dentista', 'salão', 'barbeiro', 'limpeza', 'mudança', 'refrigeração',
+  'ar condicionado', 'assistência técnica', 'desenvolvedor', 'designer', 'professor',
+];
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
@@ -130,6 +157,112 @@ export class AiService {
       this.logger.error('Falha ao sugerir preço com IA', err as Error);
       return fallback;
     }
+  }
+
+  /**
+   * Intake conversacional para publicar uma solicitação de serviço: em vez de um
+   * formulário, o cliente descreve em texto livre e a IA vai preenchendo um
+   * rascunho estruturado, mesclando cada nova mensagem com o que já foi dito,
+   * até ter os campos obrigatórios (categoria, título, descrição, cidade).
+   */
+  async parseServiceRequestIntake(message: string, draftSoFar: RequestDraft): Promise<IntakeResult> {
+    if (!this.enabled) return this.fallbackIntake(message, draftSoFar);
+
+    try {
+      const completion = await this.client!.chat.completions.create({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você ajuda um cliente a publicar um pedido de serviço em um marketplace brasileiro através de uma ' +
+              'conversa natural e curta. Você recebe o rascunho já preenchido (JSON) e a nova mensagem do cliente. ' +
+              'Atualize o rascunho combinando as informações novas com as existentes — nunca apague um campo já ' +
+              'preenchido a menos que o cliente peça explicitamente para mudar. Campos possíveis: category ' +
+              '(categoria do serviço, ex: "Eletricista"), title (título curto do pedido), description (o que ' +
+              'precisa, ao menos uma frase), city (cidade), state (sigla UF de 2 letras, se souber), budgetMin e ' +
+              'budgetMax (números em reais, opcionais), desiredDate (formato AAAA-MM-DD, opcional), desiredTime ' +
+              '(período/horário em texto livre, opcional). Campos obrigatórios para publicar: category, title, ' +
+              'description, city. Responda em JSON com: draft (objeto com todos os campos mesclados), ' +
+              'assistantReply (resposta curta e amigável em português perguntando o próximo campo obrigatório que ' +
+              'falta, ou confirmando que está pronto para publicar) e readyToPublish (true só se os 4 campos ' +
+              'obrigatórios estiverem preenchidos).',
+          },
+          {
+            role: 'user',
+            content: `Rascunho atual: ${JSON.stringify(draftSoFar)}\n\nMensagem do cliente: ${message}`,
+          },
+        ],
+      });
+
+      const raw = completion.choices[0]?.message?.content ?? '{}';
+      const parsed = JSON.parse(raw);
+      const draft: RequestDraft = { ...draftSoFar, ...parsed.draft };
+      const readyToPublish = REQUIRED_INTAKE_FIELDS.every((f) => !!draft[f]);
+
+      return {
+        draft,
+        assistantReply: parsed.assistantReply ?? 'Certo!',
+        readyToPublish,
+      };
+    } catch (err) {
+      this.logger.error('Falha no intake de solicitação por IA, usando fallback', err as Error);
+      return this.fallbackIntake(message, draftSoFar);
+    }
+  }
+
+  private fallbackIntake(message: string, draftSoFar: RequestDraft): IntakeResult {
+    const draft: RequestDraft = { ...draftSoFar };
+    const lower = message.toLowerCase();
+
+    if (!draft.category) {
+      const found = FALLBACK_CATEGORIES.find((c) => lower.includes(c));
+      if (found) draft.category = found.charAt(0).toUpperCase() + found.slice(1);
+    }
+
+    if (draft.budgetMin == null && draft.budgetMax == null) {
+      const numbers = [...message.matchAll(/(\d+)/g)].map((m) => Number(m[1])).filter((n) => n >= 10 && n <= 100000);
+      if (numbers.length >= 2) {
+        draft.budgetMin = Math.min(...numbers);
+        draft.budgetMax = Math.max(...numbers);
+      } else if (numbers.length === 1) {
+        draft.budgetMax = numbers[0];
+      }
+    }
+
+    if (!draft.desiredDate) {
+      if (lower.includes('hoje')) {
+        draft.desiredDate = new Date().toISOString().slice(0, 10);
+      } else if (lower.includes('amanh')) {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        draft.desiredDate = d.toISOString().slice(0, 10);
+      }
+    }
+
+    if (!draft.description || draft.description.length < message.length) {
+      draft.description = draft.description ? `${draft.description} ${message}` : message;
+    }
+
+    if (!draft.city) {
+      const cityMatch = message.match(/\bem ([A-ZÀ-Ú][\wÀ-ú]+(?: [A-ZÀ-Ú][\wÀ-ú]+)*)/);
+      if (cityMatch) draft.city = cityMatch[1];
+    }
+
+    let assistantReply: string;
+    if (!draft.category) {
+      assistantReply = 'Entendi! Que tipo de serviço você precisa? (ex: eletricista, encanador, pintor...)';
+    } else if (!draft.city) {
+      assistantReply = `Show, ${draft.category}! Em qual cidade você está?`;
+    } else {
+      if (!draft.title) draft.title = `Preciso de ${draft.category.toLowerCase()}`;
+      assistantReply =
+        'Perfeito, já tenho o essencial! Se quiser, me diga um orçamento ou data desejada — ou já pode revisar e publicar.';
+    }
+
+    const readyToPublish = REQUIRED_INTAKE_FIELDS.every((f) => !!draft[f]);
+    return { draft, assistantReply, readyToPublish };
   }
 
   private fallbackIntent(query: string): SearchIntent {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
 
 export function Navbar() {
@@ -32,6 +33,8 @@ export function Navbar() {
 
         <div className="flex items-center gap-3">
           {user ? (
+            <>
+            <NotificationBell />
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
@@ -112,6 +115,7 @@ export function Navbar() {
                 </div>
               )}
             </div>
+            </>
           ) : (
             <>
               <Link

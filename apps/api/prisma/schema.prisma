@@ -58,6 +58,15 @@ enum RequestStatus {
   CANCELADA
 }
 
+enum NotificationType {
+  NOVA_MENSAGEM
+  NOVA_PROPOSTA
+  PROPOSTA_ACEITA
+  NOVA_OPORTUNIDADE
+  PLANO_EXPIRANDO
+  PLANO_EXPIRADO
+}
+
 enum ProposalStatus {
   ENVIADA
   ACEITA
@@ -93,6 +102,7 @@ model User {
   conversationsA  Conversation[]   @relation("ConversationClient")
   favorites       Favorite[]
   serviceRequests ServiceRequest[] @relation("ServiceRequestsByClient")
+  notifications   Notification[]
 }
 
 model ProviderProfile {
@@ -307,4 +317,20 @@ model Proposal {
   createdAt     DateTime @default(now())
 
   @@unique([requestId, providerId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  read      Boolean          @default(false)
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
 }

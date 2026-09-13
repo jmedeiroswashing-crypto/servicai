@@ -5,19 +5,34 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator.js';
 import { Role } from '../generated/prisma/enums.js';
 import { RequestsService } from './requests.service.js';
+import { AiService } from '../ai/ai.service.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
+import { AiIntakeDto } from './dto/ai-intake.dto.js';
 
 @Controller('requests')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RequestsController {
-  constructor(private requestsService: RequestsService) {}
+  constructor(
+    private requestsService: RequestsService,
+    private aiService: AiService,
+  ) {}
 
   @Post()
   @Roles(Role.CLIENTE)
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateRequestDto) {
     return this.requestsService.create(user.userId, dto);
+  }
+
+  /**
+   * Intake conversacional: em vez do formulário, o cliente descreve em texto
+   * livre e a IA vai devolvendo o rascunho estruturado + a próxima pergunta.
+   */
+  @Post('ai-intake')
+  @Roles(Role.CLIENTE)
+  aiIntake(@Body() dto: AiIntakeDto) {
+    return this.aiService.parseServiceRequestIntake(dto.message, dto.draft ?? {});
   }
 
   @Get('mine')

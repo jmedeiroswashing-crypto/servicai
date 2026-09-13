@@ -15,6 +15,7 @@ import { SearchModule } from './search/search.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { RequestsModule } from './requests/requests.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RequestsModule } from './requests/requests.module.js';
     AiModule,
     SubscriptionsModule,
     RequestsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

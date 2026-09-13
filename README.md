@@ -116,6 +116,22 @@ npm run dev              # http://localhost:3000
   7 dias ao prazo restante em vez de reiniciar. Mesma ressalva dos planos: sem gateway de
   pagamento, ativado direto para fins de teste. Testado que o prestador impulsionado
   aparece antes de um concorrente Premium na listagem pública.
+- **Notificações em tempo real** (`src/notifications`, WebSocket namespace `/notifications`,
+  sino no canto superior direito): avisa sobre nova mensagem no chat, nova proposta
+  recebida numa solicitação e plano prestes a expirar/expirado — sempre com link direto
+  pra tela relevante. Persistidas em banco (`GET /notifications`, marcar como lida/todas)
+  e empurradas ao vivo via socket assim que o evento acontece, além de aparecerem na
+  lista na próxima vez que o usuário abrir o menu. O aviso de "plano expirando" é
+  deduplicado (no máximo 1 a cada 24h) para não virar spam.
+- **Publicar solicitação conversando com a IA** (`/solicitar`, aba "Conversar com a IA"):
+  em vez de preencher o formulário, o cliente descreve em texto livre o que precisa e a
+  IA vai extraindo categoria, título, descrição, cidade/estado, orçamento e data a cada
+  mensagem, mostrando o rascunho ao vivo ao lado da conversa; o formulário manual
+  continua disponível como alternativa. Funciona também **sem `OPENAI_API_KEY`
+  configurada**, com um fallback heurístico (por palavra-chave de categoria, regex de
+  valores em R$, "hoje"/"amanhã") que já testei extraindo corretamente categoria,
+  cidade e orçamento ao longo de duas mensagens — sem chave, a extração é mais simples
+  que com IA generativa, mas o fluxo completo funciona.
 - **Frontend**: landing, busca, perfil do prestador (estilo "Instagram"), cadastro/login
   com seleção de tipo de conta, painel do prestador (estatísticas, plano atual e
   solicitações), página de preços (`/precos`).
@@ -156,6 +172,9 @@ npm run dev              # http://localhost:3000
   de uma tabela de auditoria de mudanças de plano que ainda não existe.
 - **Distância real por coordenadas** no ranking e no mural de oportunidades (hoje é
   aproximação por cidade/estado, sem geocodificação).
+- **Push notification de verdade** (celular/navegador fechado): as notificações hoje só
+  chegam com o app aberto (WebSocket) — push real precisa de service worker + FCM/APNs.
+- **Chat por voz/imagem no intake de IA**: hoje o `/solicitar` com IA é só texto.
 - Infraestrutura de produção: Docker/Kubernetes, CI/CD, ElasticSearch (busca full-text
   em escala) e Pinecone (busca semântica/recomendação via embeddings).
 - Upload de mídia real via **AWS S3** (hoje a API aceita apenas URLs já hospedadas).

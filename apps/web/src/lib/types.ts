@@ -237,3 +237,40 @@ export interface Proposal {
   provider?: ProviderProfile;
   request?: ServiceRequestItem;
 }
+
+export type NotificationType =
+  | 'NOVA_MENSAGEM'
+  | 'NOVA_PROPOSTA'
+  | 'PROPOSTA_ACEITA'
+  | 'NOVA_OPORTUNIDADE'
+  | 'PLANO_EXPIRANDO'
+  | 'PLANO_EXPIRADO';
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  link?: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface RequestDraft {
+  category?: string;
+  title?: string;
+  description?: string;
+  city?: string;
+  state?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  desiredDate?: string;
+  desiredTime?: string;
+}
+
+export interface IntakeResult {
+  draft: RequestDraft;
+  assistantReply: string;
+  readyToPublish: boolean;
+}

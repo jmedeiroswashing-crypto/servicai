@@ -3,9 +3,10 @@ import { SubscriptionsService } from './subscriptions.service.js';
 import { SubscriptionsController } from './subscriptions.controller.js';
 import { ProvidersModule } from '../providers/providers.module.js';
 import { AuthModule } from '../auth/auth.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 @Module({
-  imports: [ProvidersModule, AuthModule],
+  imports: [ProvidersModule, AuthModule, NotificationsModule],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService],
   exports: [SubscriptionsService],

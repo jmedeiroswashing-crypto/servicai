@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Send, Sparkles, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
+import type { IntakeResult, RequestDraft } from '@/lib/types';
 
 interface IbgeMunicipio {
   id: number;
@@ -30,14 +32,122 @@ const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
 const labelClass = 'mb-1.5 block text-xs font-medium text-foreground-muted';
 
-export default function SolicitarPage() {
-  const { user, token } = useAuthStore();
-  const router = useRouter();
+function formatBudget(min?: number, max?: number) {
+  if (min == null && max == null) return undefined;
+  if (min != null && max != null) return `R$ ${min} – R$ ${max}`;
+  return `R$ ${min ?? max}`;
+}
 
-  useEffect(() => {
-    if (!token) router.push('/login');
-    else if (user && user.role !== 'CLIENTE') router.push('/');
-  }, [token, user, router]);
+function DraftField({ label, value }: { label: string; value?: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-foreground-muted">{label}</dt>
+      <dd className={`mt-0.5 text-sm ${value ? 'text-ink' : 'text-foreground-muted/50'}`}>{value ?? 'ainda não informado'}</dd>
+    </div>
+  );
+}
+
+function AiIntake() {
+  const router = useRouter();
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
+    {
+      role: 'assistant',
+      content:
+        'Oi! Me conta o que você precisa que eu te ajudo a publicar. Por exemplo: "preciso de um eletricista amanhã de manhã, tenho uns R$300".',
+    },
+  ]);
+  const [draft, setDraft] = useState<RequestDraft>({});
+  const [input, setInput] = useState('');
+
+  const intakeMutation = useMutation({
+    mutationFn: async (message: string) => (await api.post<IntakeResult>('/requests/ai-intake', { message, draft })).data,
+    onSuccess: (result, message) => {
+      setMessages((m) => [...m, { role: 'user', content: message }, { role: 'assistant', content: result.assistantReply }]);
+      setDraft(result.draft);
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async () => (await api.post('/requests', draft)).data,
+    onSuccess: () => router.push('/minhas-solicitacoes'),
+  });
+
+  function handleSend() {
+    const message = input.trim();
+    if (!message || intakeMutation.isPending) return;
+    setInput('');
+    intakeMutation.mutate(message);
+  }
+
+  const canPublish = !!(draft.category && draft.title && draft.description && draft.city);
+
+  return (
+    <div className="mt-10 grid gap-6 sm:grid-cols-[1fr_300px]">
+      <div className="flex h-[60vh] flex-col border border-border">
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[85%] px-3.5 py-2 text-sm ${
+                  m.role === 'user' ? 'bg-ink text-background' : 'border border-border text-ink'
+                }`}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {intakeMutation.isPending && (
+            <div className="flex justify-start">
+              <div className="border border-border px-3.5 py-2 text-sm text-foreground-muted">Digitando...</div>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2 border-t border-border p-3">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Descreva o que você precisa..."
+            className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-foreground-muted/50"
+          />
+          <button onClick={handleSend} className="p-2 text-ink hover:text-accent" aria-label="Enviar">
+            <Send size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div className="border border-border p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted">Rascunho da solicitação</p>
+        <dl className="mt-4 space-y-3">
+          <DraftField label="Categoria" value={draft.category} />
+          <DraftField label="Título" value={draft.title} />
+          <DraftField label="Descrição" value={draft.description} />
+          <DraftField label="Local" value={draft.city ? `${draft.city}${draft.state ? ` - ${draft.state}` : ''}` : undefined} />
+          <DraftField label="Orçamento" value={formatBudget(draft.budgetMin, draft.budgetMax)} />
+          <DraftField label="Data" value={draft.desiredDate ?? draft.desiredTime} />
+        </dl>
+
+        {publishMutation.isError && <p className="mt-3 text-xs text-danger">Não foi possível publicar. Tente novamente.</p>}
+
+        <button
+          onClick={() => publishMutation.mutate()}
+          disabled={!canPublish || publishMutation.isPending}
+          className="mt-5 w-full bg-ink py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-40"
+        >
+          {publishMutation.isPending ? 'Publicando...' : 'Publicar solicitação'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ManualForm() {
+  const router = useRouter();
 
   const [category, setCategory] = useState('');
   const [title, setTitle] = useState('');
@@ -72,138 +182,155 @@ export default function SolicitarPage() {
   const canSubmit = category && title.length >= 3 && description.length >= 10 && city;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">
+    <div className="mt-10 max-w-xl space-y-5">
+      <div>
+        <label className={labelClass}>Categoria do serviço</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+          <option value="" disabled>
+            Selecione
+          </option>
+          {CATEGORIES.map((c) => (
+            <option key={c.slug} value={c.label}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className={labelClass}>Título da solicitação</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className={inputClass}
+          placeholder="Ex: Instalação elétrica residencial"
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>Descreva o que você precisa</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={4}
+          className={inputClass}
+          placeholder="Ex: Preciso instalar 3 tomadas e verificar alguns pontos elétricos da minha residência."
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Estado</label>
+          <select
+            value={state}
+            onChange={(e) => {
+              setState(e.target.value);
+              setCity('');
+            }}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              UF
+            </option>
+            {ESTADOS_BR.map((e) => (
+              <option key={e.uf} value={e.uf}>
+                {e.nome} ({e.uf})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Cidade (região aproximada)</label>
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            disabled={!state || loadingCidades}
+            className={`${inputClass} disabled:opacity-50`}
+          >
+            <option value="" disabled>
+              {!state ? 'Escolha o estado' : loadingCidades ? 'Carregando...' : 'Selecione'}
+            </option>
+            {cidades?.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Orçamento mínimo (opcional)</label>
+          <input type="number" value={budgetMin} onChange={(e) => setBudgetMin(e.target.value)} className={inputClass} placeholder="R$ 150" />
+        </div>
+        <div>
+          <label className={labelClass}>Orçamento máximo (opcional)</label>
+          <input type="number" value={budgetMax} onChange={(e) => setBudgetMax(e.target.value)} className={inputClass} placeholder="R$ 250" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Data desejada (opcional)</label>
+          <input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Horário (opcional)</label>
+          <input value={desiredTime} onChange={(e) => setDesiredTime(e.target.value)} className={inputClass} placeholder="Ex: Pela manhã" />
+        </div>
+      </div>
+
+      {mutation.isError && <p className="text-sm text-danger">Não foi possível publicar. Tente novamente.</p>}
+
+      <button
+        onClick={() => mutation.mutate()}
+        disabled={!canSubmit || mutation.isPending}
+        className="w-full bg-ink py-3 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-40"
+      >
+        {mutation.isPending ? 'Publicando...' : 'Publicar solicitação'}
+      </button>
+    </div>
+  );
+}
+
+export default function SolicitarPage() {
+  const { user, token } = useAuthStore();
+  const router = useRouter();
+  const [mode, setMode] = useState<'ia' | 'formulario'>('ia');
+
+  useEffect(() => {
+    if (!token) router.push('/login');
+    else if (user && user.role !== 'CLIENTE') router.push('/');
+  }, [token, user, router]);
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-3xl text-ink">Publicar uma solicitação</h1>
       <p className="mt-2 text-foreground-muted">
         Conte o que você precisa e os profissionais da sua região que oferecem esse serviço vão poder te enviar propostas.
       </p>
 
-      <div className="mt-10 space-y-5">
-        <div>
-          <label className={labelClass}>Categoria do serviço</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-            <option value="" disabled>
-              Selecione
-            </option>
-            {CATEGORIES.map((c) => (
-              <option key={c.slug} value={c.label}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className={labelClass}>Título da solicitação</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className={inputClass}
-            placeholder="Ex: Instalação elétrica residencial"
-          />
-        </div>
-
-        <div>
-          <label className={labelClass}>Descreva o que você precisa</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className={inputClass}
-            placeholder="Ex: Preciso instalar 3 tomadas e verificar alguns pontos elétricos da minha residência."
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Estado</label>
-            <select
-              value={state}
-              onChange={(e) => {
-                setState(e.target.value);
-                setCity('');
-              }}
-              className={inputClass}
-            >
-              <option value="" disabled>
-                UF
-              </option>
-              {ESTADOS_BR.map((e) => (
-                <option key={e.uf} value={e.uf}>
-                  {e.nome} ({e.uf})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={labelClass}>Cidade (região aproximada)</label>
-            <select
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              disabled={!state || loadingCidades}
-              className={`${inputClass} disabled:opacity-50`}
-            >
-              <option value="" disabled>
-                {!state ? 'Escolha o estado' : loadingCidades ? 'Carregando...' : 'Selecione'}
-              </option>
-              {cidades?.map((nome) => (
-                <option key={nome} value={nome}>
-                  {nome}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Orçamento mínimo (opcional)</label>
-            <input
-              type="number"
-              value={budgetMin}
-              onChange={(e) => setBudgetMin(e.target.value)}
-              className={inputClass}
-              placeholder="R$ 150"
-            />
-          </div>
-          <div>
-            <label className={labelClass}>Orçamento máximo (opcional)</label>
-            <input
-              type="number"
-              value={budgetMax}
-              onChange={(e) => setBudgetMax(e.target.value)}
-              className={inputClass}
-              placeholder="R$ 250"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelClass}>Data desejada (opcional)</label>
-            <input type="date" value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>Horário (opcional)</label>
-            <input
-              value={desiredTime}
-              onChange={(e) => setDesiredTime(e.target.value)}
-              className={inputClass}
-              placeholder="Ex: Pela manhã"
-            />
-          </div>
-        </div>
-
-        {mutation.isError && <p className="text-sm text-danger">Não foi possível publicar. Tente novamente.</p>}
-
+      <div className="mt-6 flex gap-6 border-b border-border text-sm">
         <button
-          onClick={() => mutation.mutate()}
-          disabled={!canSubmit || mutation.isPending}
-          className="w-full bg-ink py-3 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-40"
+          onClick={() => setMode('ia')}
+          className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 transition-colors ${
+            mode === 'ia' ? 'border-ink font-medium text-ink' : 'border-transparent text-foreground-muted'
+          }`}
         >
-          {mutation.isPending ? 'Publicando...' : 'Publicar solicitação'}
+          <Sparkles size={14} /> Conversar com a IA
+        </button>
+        <button
+          onClick={() => setMode('formulario')}
+          className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 transition-colors ${
+            mode === 'formulario' ? 'border-ink font-medium text-ink' : 'border-transparent text-foreground-muted'
+          }`}
+        >
+          <FileText size={14} /> Formulário manual
         </button>
       </div>
+
+      {mode === 'ia' ? <AiIntake /> : <ManualForm />}
     </div>
   );
 }

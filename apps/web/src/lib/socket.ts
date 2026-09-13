@@ -9,3 +9,10 @@ export function createChatSocket(token: string): Socket {
     transports: ['websocket'],
   });
 }
+
+export function createNotificationsSocket(token: string): Socket {
+  return io(`${SOCKET_URL}/notifications`, {
+    auth: { token },
+    transports: ['websocket'],
+  });
+}

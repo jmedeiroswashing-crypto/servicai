@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { RequestStatus } from '../generated/prisma/enums.js';
+import { RequestStatus, NotificationType } from '../generated/prisma/enums.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 import { getPlanConfig } from '../subscriptions/plans.config.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
@@ -35,6 +36,7 @@ export class RequestsService {
   constructor(
     private prisma: PrismaService,
     private subscriptionsService: SubscriptionsService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(clientId: string, dto: CreateRequestDto) {
@@ -216,6 +218,18 @@ export class RequestsService {
     });
 
     await this.subscriptionsService.consumeProposal(provider.id);
+
+    const providerProfile = await this.prisma.providerProfile.findUnique({
+      where: { id: provider.id },
+      include: { user: { select: { name: true } } },
+    });
+    await this.notificationsService.create({
+      userId: request.clientId,
+      type: NotificationType.NOVA_PROPOSTA,
+      title: `Nova proposta para "${request.title}"`,
+      body: `${providerProfile?.user.name ?? 'Um prestador'} enviou uma proposta de R$ ${dto.price.toFixed(2).replace('.', ',')}.`,
+      link: `/minhas-solicitacoes`,
+    });
 
     return proposal;
   }

@@ -1,18 +1,21 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
-import { Plan, SubscriptionStatus } from '../generated/prisma/enums.js';
+import { Plan, SubscriptionStatus, NotificationType } from '../generated/prisma/enums.js';
 import { BOOST_CONFIG, getPlanCatalogForSale, getPlanConfig, currentPeriod } from './plans.config.js';
 import { getEffectivePlan, isExpired } from './subscription-state.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const BOOST_DURATION_MS = BOOST_CONFIG.durationDays * 24 * 60 * 60 * 1000;
+const EXPIRY_WARNING_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class SubscriptionsService {
   constructor(
     private prisma: PrismaService,
     private providersService: ProvidersService,
+    private notificationsService: NotificationsService,
   ) {}
 
   getCatalog() {
@@ -56,9 +59,20 @@ export class SubscriptionsService {
         data: { status: SubscriptionStatus.EXPIRADA, cancelAtPeriodEnd: false },
       });
       const freeConfig = getPlanConfig(Plan.GRATIS);
-      await this.prisma.providerProfile.update({
-        where: { id: providerId },
-        data: { selo: freeConfig.selo, planPriority: freeConfig.planPriority },
+      const oldConfig = getPlanConfig(subscription.plan);
+      const [providerRecord] = await Promise.all([
+        this.prisma.providerProfile.update({
+          where: { id: providerId },
+          data: { selo: freeConfig.selo, planPriority: freeConfig.planPriority },
+          select: { userId: true },
+        }),
+      ]);
+      await this.notificationsService.create({
+        userId: providerRecord.userId,
+        type: NotificationType.PLANO_EXPIRADO,
+        title: `Seu plano ${oldConfig.label} expirou`,
+        body: 'Você voltou para o plano Grátis. Assine novamente para recuperar sua exposição e limites.',
+        link: '/precos',
       });
       return expired;
     }
@@ -69,8 +83,33 @@ export class SubscriptionsService {
   async getMine(userId: string) {
     const provider = await this.providersService.findByUserId(userId);
     const subscription = await this.getOrCreateForProvider(provider.id);
+    await this.warnIfExpiringSoon(userId, subscription);
     const effectivePlan = getEffectivePlan(subscription);
     return { ...subscription, effectivePlan, config: getPlanConfig(effectivePlan) };
+  }
+
+  private async warnIfExpiringSoon(
+    userId: string,
+    subscription: { plan: Plan; status: SubscriptionStatus; currentPeriodEnd: Date | null },
+  ) {
+    if (subscription.plan === Plan.GRATIS || !subscription.currentPeriodEnd) return;
+    if (subscription.status !== SubscriptionStatus.ATIVA && subscription.status !== SubscriptionStatus.CANCELAMENTO_SOLICITADO) return;
+
+    const msUntilExpiry = subscription.currentPeriodEnd.getTime() - Date.now();
+    if (msUntilExpiry <= 0 || msUntilExpiry > EXPIRY_WARNING_WINDOW_MS) return;
+
+    const config = getPlanConfig(subscription.plan);
+    const daysLeft = Math.max(1, Math.ceil(msUntilExpiry / (24 * 60 * 60 * 1000)));
+    await this.notificationsService.createIfNotRecentlyNotified({
+      userId,
+      type: NotificationType.PLANO_EXPIRANDO,
+      title: `Seu plano ${config.label} expira em ${daysLeft} dia${daysLeft > 1 ? 's' : ''}`,
+      body:
+        subscription.status === SubscriptionStatus.CANCELAMENTO_SOLICITADO
+          ? 'O cancelamento já foi solicitado — você mantém os benefícios até essa data.'
+          : 'Renove para não perder sua exposição e seus limites de propostas.',
+      link: '/painel/plano',
+    });
   }
 
   /**
