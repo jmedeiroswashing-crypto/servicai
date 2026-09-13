@@ -1,16 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin } from 'lucide-react';
+import { MapPin, Rocket } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
 import type { ProviderProfile } from '@/lib/types';
 
 export function ProviderCard({ provider }: { provider: ProviderProfile }) {
   const cover = provider.media?.[0]?.url;
+  const isBoosted = !!provider.boostExpiresAt && new Date(provider.boostExpiresAt) > new Date();
 
   return (
     <Link href={`/prestador/${provider.id}`} className="group block">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
+        {isBoosted && (
+          <span className="absolute left-2 top-2 z-10 flex items-center gap-1 bg-ink px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-background">
+            <Rocket size={10} /> Em destaque
+          </span>
+        )}
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

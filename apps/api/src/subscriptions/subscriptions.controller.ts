@@ -16,6 +16,18 @@ export class SubscriptionsController {
     return this.subscriptionsService.getCatalog();
   }
 
+  @Get('boost')
+  getBoostInfo() {
+    return this.subscriptionsService.getBoostInfo();
+  }
+
+  @Post('me/boost')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  purchaseBoost(@CurrentUser() user: AuthUser) {
+    return this.subscriptionsService.purchaseBoost(user.userId);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)

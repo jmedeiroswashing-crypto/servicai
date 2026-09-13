@@ -67,6 +67,13 @@ export function getPlanConfig(plan: Plan): PlanConfig {
   return PLAN_CATALOG[plan];
 }
 
+export const BOOST_CONFIG = {
+  label: 'Potencialização de clientes',
+  price: 5,
+  durationDays: 7,
+  description: 'Coloca seu perfil no topo dos recomendados por 7 dias, à frente até de outros planos.',
+};
+
 export function currentPeriod(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }

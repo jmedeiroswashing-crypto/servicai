@@ -73,6 +73,13 @@ npm run dev              # http://localhost:3000
   um webhook de confirmação de pagamento (Pix/cartão via Stripe, Pagar.me, etc.), não
   diretamente pelo cliente. Preços definidos com base em pesquisa de mercado (GetNinjas,
   Zaask, Thumbtack, Angi) — ver `apps/api/src/subscriptions/plans.config.ts`.
+- **Impulso avulso "Potencialização de clientes"** (R$ 5, na página de preços): diferente
+  dos planos, é uma compra única que põe o prestador no topo de toda listagem/busca por
+  7 dias, **à frente até de quem tem plano Premium** (`GET /subscriptions/boost`,
+  `POST /subscriptions/me/boost`). Comprar de novo com um impulso ainda ativo soma mais
+  7 dias ao prazo restante em vez de reiniciar. Mesma ressalva dos planos: sem gateway de
+  pagamento, ativado direto para fins de teste. Testado que o prestador impulsionado
+  aparece antes de um concorrente Premium na listagem pública.
 - **Frontend**: landing, busca, perfil do prestador (estilo "Instagram"), cadastro/login
   com seleção de tipo de conta, painel do prestador (estatísticas, plano atual e
   solicitações), página de preços (`/precos`).

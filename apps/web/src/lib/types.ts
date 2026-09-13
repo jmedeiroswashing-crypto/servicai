@@ -32,6 +32,13 @@ export interface Subscription {
   config: PlanConfig;
 }
 
+export interface BoostInfo {
+  label: string;
+  price: number;
+  durationDays: number;
+  description: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -64,6 +71,7 @@ export interface ProviderProfile {
   ratingAvg: number;
   servicesDone: number;
   clientsCount: number;
+  boostExpiresAt?: string | null;
   createdAt: string;
   user: {
     name: string;

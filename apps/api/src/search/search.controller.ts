@@ -1,6 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AiService } from '../ai/ai.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { sortByBoostFirst } from '../providers/providers.service.js';
 
 @Controller('search')
 export class SearchController {
@@ -31,6 +32,6 @@ export class SearchController {
       take: 30,
     });
 
-    return { intent, providers };
+    return { intent, providers: sortByBoostFirst(providers) };
   }
 }

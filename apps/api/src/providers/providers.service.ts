@@ -3,22 +3,33 @@ import { Selo } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
 
+/**
+ * Impulsos ("Potencialização de clientes") furam a fila do topo dos resultados,
+ * mesmo à frente de planos pagos, enquanto boostExpiresAt não vencer. Stable sort
+ * preserva a ordem original (planPriority/score/rating) entre quem não está impulsionado.
+ */
+export function sortByBoostFirst<T extends { boostExpiresAt: Date | null }>(items: T[]): T[] {
+  const now = new Date();
+  const isBoosted = (item: T) => !!item.boostExpiresAt && item.boostExpiresAt > now;
+  return [...items].sort((a, b) => Number(isBoosted(b)) - Number(isBoosted(a)));
+}
+
 @Injectable()
 export class ProvidersService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(params: { city?: string; category?: string; skip?: number; take?: number }) {
     const { city, category, skip = 0, take = 20 } = params;
-    return this.prisma.providerProfile.findMany({
+    const candidates = await this.prisma.providerProfile.findMany({
       where: {
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
       },
       include: { user: { select: { name: true, avatarUrl: true } }, media: { take: 6 } },
       orderBy: [{ planPriority: 'desc' }, { scoreIA: 'desc' }, { ratingAvg: 'desc' }],
-      skip,
-      take,
+      take: Math.min(skip + take + 100, 500),
     });
+    return sortByBoostFirst(candidates).slice(skip, skip + take);
   }
 
   async findOne(id: string) {

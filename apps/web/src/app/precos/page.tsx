@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
+import { Check, Rocket } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import type { PlanConfig, Subscription } from '@/lib/types';
+import type { BoostInfo, PlanConfig, ProviderProfile, Subscription } from '@/lib/types';
 
 const PLAN_HIGHLIGHT: Record<string, boolean> = { PRO: true };
 
@@ -30,6 +30,27 @@ export default function PrecosPage() {
     queryKey: ['subscriptions', 'me'],
     enabled: !!user && user.role === 'PRESTADOR',
     queryFn: async () => (await api.get<Subscription>('/subscriptions/me')).data,
+  });
+
+  const { data: boostInfo } = useQuery({
+    queryKey: ['subscriptions', 'boost-info'],
+    queryFn: async () => (await api.get<BoostInfo>('/subscriptions/boost')).data,
+  });
+
+  const { data: myProvider } = useQuery({
+    queryKey: ['providers', 'me'],
+    enabled: !!user && user.role === 'PRESTADOR',
+    queryFn: async () => (await api.get<ProviderProfile>('/providers/me')).data,
+  });
+
+  const boostActiveUntil =
+    myProvider?.boostExpiresAt && new Date(myProvider.boostExpiresAt) > new Date()
+      ? new Date(myProvider.boostExpiresAt)
+      : null;
+
+  const purchaseBoost = useMutation({
+    mutationFn: async () => (await api.post('/subscriptions/me/boost')).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['providers', 'me'] }),
   });
 
   const changePlan = useMutation({
@@ -114,10 +135,52 @@ export default function PrecosPage() {
         })}
       </div>
 
+      {boostInfo && (
+        <div className="mt-6 flex flex-col gap-4 border border-border p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Rocket size={20} className="mt-0.5 shrink-0 text-accent" />
+            <div>
+              <p className="font-medium text-ink">{boostInfo.label}</p>
+              <p className="mt-1 text-sm text-foreground-muted">{boostInfo.description}</p>
+              {boostActiveUntil && (
+                <p className="mt-1.5 text-sm text-success">
+                  Ativo até {boostActiveUntil.toLocaleDateString('pt-BR')} às{' '}
+                  {boostActiveUntil.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4">
+            <span className="font-display text-2xl text-ink">
+              R$ {boostInfo.price.toFixed(2).replace('.', ',')}
+            </span>
+            <button
+              onClick={() => {
+                if (!user) {
+                  router.push('/cadastro?tipo=PRESTADOR');
+                  return;
+                }
+                purchaseBoost.mutate();
+              }}
+              disabled={user?.role !== 'PRESTADOR' && !!user}
+              className="whitespace-nowrap border border-ink bg-ink px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-40"
+            >
+              {purchaseBoost.isPending
+                ? 'Ativando...'
+                : boostActiveUntil
+                  ? `+${boostInfo.durationDays} dias`
+                  : user
+                    ? 'Ativar impulso'
+                    : 'Criar conta de vendedor'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {user?.role === 'PRESTADOR' && (
         <p className="mt-8 text-xs text-foreground-muted/70">
-          Pagamento ainda não integrado — a troca de plano é aplicada diretamente para fins de teste.
-          Em produção, isso será acionado pela confirmação de um gateway de pagamento (Pix/cartão).
+          Pagamento ainda não integrado — a troca de plano e a compra do impulso são aplicadas diretamente para
+          fins de teste. Em produção, isso será acionado pela confirmação de um gateway de pagamento (Pix/cartão).
         </p>
       )}
     </div>

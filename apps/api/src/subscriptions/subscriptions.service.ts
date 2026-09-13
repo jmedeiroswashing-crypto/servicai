@@ -2,9 +2,10 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
 import { Plan, SubscriptionStatus } from '../generated/prisma/enums.js';
-import { PLAN_CATALOG, currentPeriod, getPlanConfig } from './plans.config.js';
+import { BOOST_CONFIG, PLAN_CATALOG, currentPeriod, getPlanConfig } from './plans.config.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const BOOST_DURATION_MS = BOOST_CONFIG.durationDays * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class SubscriptionsService {
@@ -15,6 +16,27 @@ export class SubscriptionsService {
 
   getCatalog() {
     return Object.values(PLAN_CATALOG);
+  }
+
+  getBoostInfo() {
+    return BOOST_CONFIG;
+  }
+
+  /**
+   * Sem gateway de pagamento integrado ainda: a compra do impulso é aplicada
+   * imediatamente, como os planos. Se já houver um impulso ativo, os 7 dias são
+   * somados ao prazo restante em vez de reiniciar do zero.
+   */
+  async purchaseBoost(userId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    const now = new Date();
+    const base = provider.boostExpiresAt && provider.boostExpiresAt > now ? provider.boostExpiresAt : now;
+    const boostExpiresAt = new Date(base.getTime() + BOOST_DURATION_MS);
+
+    return this.prisma.providerProfile.update({
+      where: { id: provider.id },
+      data: { boostExpiresAt },
+    });
   }
 
   async getOrCreateForProvider(providerId: string) {
