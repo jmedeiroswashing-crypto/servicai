@@ -1,5 +1,7 @@
 # ServiçAi
 
+<!-- teste de acesso compartilhado: mbeze -->
+
 Plataforma de intermediação inteligente de serviços — conecta clientes a empresas e
 profissionais autônomos (eletricistas, encanadores, advogados, médicos, designers, etc.)
 usando IA, avaliações verificadas e reputação digital.
