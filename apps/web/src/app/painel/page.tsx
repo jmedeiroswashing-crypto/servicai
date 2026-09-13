@@ -77,23 +77,19 @@ export default function PainelPage() {
 
       {subscription && (
         <Link
-          href="/precos"
+          href="/painel/plano"
           className="mt-8 flex flex-col gap-2 border border-border p-5 transition-colors hover:border-ink sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
             <p className="font-medium text-ink">Plano {subscription.config.label}</p>
             <p className="mt-0.5 text-sm text-foreground-muted">
-              {subscription.config.aiGenerationsPerMonth >= UNLIMITED
-                ? 'IA ilimitada'
-                : `${subscription.aiUsageCount}/${subscription.config.aiGenerationsPerMonth} usos de IA neste mês`}
-              {' · '}
-              {subscription.config.maxListings >= UNLIMITED
-                ? 'anúncios ilimitados'
-                : `até ${subscription.config.maxListings} anúncio(s)`}
+              {subscription.config.proposalsPerMonth >= UNLIMITED
+                ? 'Propostas de oportunidade ilimitadas'
+                : `Até ${subscription.config.proposalsPerMonth} propostas de oportunidade por mês`}
             </p>
           </div>
           <span className="flex items-center gap-1 text-sm text-ink">
-            Gerenciar plano <ArrowRight size={14} />
+            Ver meu plano <ArrowRight size={14} />
           </span>
         </Link>
       )}

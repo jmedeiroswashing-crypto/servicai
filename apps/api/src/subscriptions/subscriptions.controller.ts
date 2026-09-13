@@ -35,6 +35,13 @@ export class SubscriptionsController {
     return this.subscriptionsService.getMine(user.userId);
   }
 
+  @Get('me/performance')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  getPerformance(@CurrentUser() user: AuthUser) {
+    return this.subscriptionsService.getPerformance(user.userId);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
@@ -42,10 +49,18 @@ export class SubscriptionsController {
     return this.subscriptionsService.changePlan(user.userId, dto.plan);
   }
 
+  /** Cancelamento "soft": mantém benefícios até o fim do período já pago. */
   @Post('me/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
   cancel(@CurrentUser() user: AuthUser) {
-    return this.subscriptionsService.cancel(user.userId);
+    return this.subscriptionsService.requestCancellation(user.userId);
+  }
+
+  @Get('admin/overview')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getAdminOverview() {
+    return this.subscriptionsService.getAdminOverview();
   }
 }

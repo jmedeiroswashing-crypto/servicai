@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { MapPin, Calendar, Clock3, Wallet, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
-import type { OpportunityMatch } from '@/lib/types';
+import { UNLIMITED, type OpportunityMatch, type PerformanceMetrics } from '@/lib/types';
 
 const inputClass = 'border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink';
 
@@ -51,6 +52,7 @@ function ProposalForm({ requestId, onDone }: { requestId: string; onDone: () => 
       ).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['requests', 'matches'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'performance'] });
       onDone();
     },
   });
@@ -81,7 +83,12 @@ function ProposalForm({ requestId, onDone }: { requestId: string; onDone: () => 
           placeholder="Apresente-se e explique como pode ajudar"
         />
       </div>
-      {mutation.isError && <p className="text-xs text-danger">Não foi possível enviar. Tente novamente.</p>}
+      {mutation.isError && (
+        <p className="text-xs text-danger">
+          {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            'Não foi possível enviar. Tente novamente.'}
+        </p>
+      )}
       <div className="flex gap-2">
         <button
           onClick={() => mutation.mutate()}
@@ -170,6 +177,12 @@ export default function OportunidadesPage() {
   const [sort, setSort] = useState<'recentes' | 'proximos' | 'match'>('match');
   const [budgetMax, setBudgetMax] = useState('');
 
+  const { data: performance } = useQuery({
+    queryKey: ['subscriptions', 'performance'],
+    enabled: !!token,
+    queryFn: async () => (await api.get<PerformanceMetrics>('/subscriptions/me/performance')).data,
+  });
+
   const { data: opportunities, isLoading } = useQuery({
     queryKey: ['requests', 'matches', { category, distance, sort, budgetMax }],
     enabled: !!token,
@@ -190,6 +203,23 @@ export default function OportunidadesPage() {
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-3xl text-ink">Oportunidades</h1>
       <p className="mt-2 text-foreground-muted">Clientes procurando por serviços que combinam com o seu perfil.</p>
+
+      {performance && performance.proposalsLimit < UNLIMITED && (
+        <div className="mt-6 flex items-center justify-between gap-3 border border-border px-4 py-3 text-sm">
+          <span className="text-foreground-muted">
+            {performance.proposalsUsed >= performance.proposalsLimit ? (
+              <>Você usou suas {performance.proposalsLimit} propostas deste mês e está perdendo oportunidades de novos clientes.</>
+            ) : (
+              <>
+                {performance.proposalsUsed} de {performance.proposalsLimit} propostas usadas este mês.
+              </>
+            )}
+          </span>
+          <Link href="/precos" className="shrink-0 font-medium text-accent hover:underline">
+            Desbloquear mais
+          </Link>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-wrap gap-2">
         <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>

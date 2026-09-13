@@ -19,7 +19,9 @@ export class RegisterDto {
   @IsString()
   name!: string;
 
-  @IsEnum(Role)
+  // Auto-cadastro nunca pode criar um ADMIN — esse papel só existe via provisionamento
+  // manual (seed/administração direta do banco).
+  @IsIn([Role.CLIENTE, Role.PRESTADOR], { message: 'Papel inválido' })
   role!: Role;
 
   @IsOptional()

@@ -66,7 +66,7 @@ export function Navbar() {
                         <UserCog size={15} className="text-foreground-muted" /> Editar perfil
                       </Link>
                       <Link
-                        href="/precos"
+                        href="/painel/plano"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                       >

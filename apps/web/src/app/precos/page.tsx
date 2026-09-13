@@ -8,8 +8,6 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { BoostInfo, PlanConfig, ProviderProfile, Subscription } from '@/lib/types';
 
-const PLAN_HIGHLIGHT: Record<string, boolean> = { PRO: true };
-
 function formatPrice(value: number) {
   if (value === 0) return 'Grátis';
   return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -31,6 +29,11 @@ export default function PrecosPage() {
     enabled: !!user && user.role === 'PRESTADOR',
     queryFn: async () => (await api.get<Subscription>('/subscriptions/me')).data,
   });
+
+  const currentPlan = mySubscription?.effectivePlan;
+  // Assinantes legados do plano Business (descontinuado) contam como Premium para
+  // efeito de exibição — os benefícios já são os mesmos.
+  const normalizedCurrentPlan = currentPlan === 'BUSINESS' ? 'PREMIUM' : currentPlan;
 
   const { data: boostInfo } = useQuery({
     queryKey: ['subscriptions', 'boost-info'],
@@ -56,9 +59,9 @@ export default function PrecosPage() {
   const changePlan = useMutation({
     mutationFn: async (plan: string) => (await api.patch('/subscriptions/me', { plan })).data,
     onMutate: (plan) => setPendingPlan(plan),
-    onSuccess: () => {
+    onSuccess: (_data, plan) => {
       queryClient.invalidateQueries({ queryKey: ['subscriptions', 'me'] });
-      router.push('/painel');
+      router.push(`/painel/plano?ativado=${plan}`);
     },
     onSettled: () => setPendingPlan(null),
   });
@@ -76,17 +79,17 @@ export default function PrecosPage() {
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
       <p className="mb-3 text-sm uppercase tracking-[0.15em] text-foreground-muted">Planos para vendedores</p>
       <h1 className="font-display max-w-xl text-4xl leading-tight text-ink sm:text-5xl">
-        Escolha o plano certo para o seu negócio
+        Mais visibilidade. Mais oportunidades. Mais clientes.
       </h1>
       <p className="mt-4 max-w-xl text-foreground-muted">
-        Clientes usam o ServiçAi de graça, sempre. Vendedores crescem com o plano que fizer sentido para o
-        volume de trabalho de hoje.
+        Clientes usam o ServiçAi de graça, sempre. O que você escolhe aqui não é uma lista de funcionalidades —
+        é o quanto de espaço você quer ocupar na frente de quem está procurando exatamente o que você faz.
       </p>
 
-      <div className="mt-16 grid border border-border sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-16 grid border border-border sm:grid-cols-3">
         {plans?.map((plan, i) => {
-          const isCurrent = mySubscription?.plan === plan.plan;
-          const highlighted = PLAN_HIGHLIGHT[plan.plan];
+          const isCurrent = normalizedCurrentPlan === plan.plan;
+          const highlighted = !!plan.highlight;
           return (
             <div
               key={plan.plan}
@@ -94,20 +97,19 @@ export default function PrecosPage() {
                 highlighted ? 'relative bg-surface-muted/40' : ''
               }`}
             >
+              {highlighted && <div className="absolute inset-x-0 top-0 h-[3px] bg-accent" />}
               {highlighted && (
-                <div className="absolute inset-x-0 top-0 h-[3px] bg-accent" />
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-accent">{plan.highlight}</p>
               )}
-              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
-                {highlighted ? 'Mais popular' : plan.label}
-              </p>
-              {highlighted && <h2 className="mt-1 font-display text-lg text-ink">{plan.label}</h2>}
+              <h2 className="font-display text-lg text-ink">{plan.label}</h2>
+              <p className="mt-1 text-sm text-foreground-muted">{plan.tagline}</p>
               <p className="mt-4 flex items-baseline gap-1">
                 <span className="font-display text-3xl text-ink">{formatPrice(plan.priceMonthly)}</span>
                 {plan.priceMonthly > 0 && <span className="text-sm text-foreground-muted">/mês</span>}
               </p>
 
               <ul className="mt-6 flex-1 space-y-2.5 text-sm">
-                {plan.features.map((f) => (
+                {plan.benefits.map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <Check size={15} className="mt-0.5 shrink-0 text-accent" />
                     <span className="text-foreground-muted">{f}</span>

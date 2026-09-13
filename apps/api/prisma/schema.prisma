@@ -38,8 +38,12 @@ enum Plan {
 
 enum SubscriptionStatus {
   ATIVA
+  TESTE
+  PAGAMENTO_PENDENTE
+  CANCELAMENTO_SOLICITADO
   CANCELADA
   INADIMPLENTE
+  EXPIRADA
 }
 
 enum PersonType {
@@ -109,6 +113,8 @@ model ProviderProfile {
   businessHours Json?
   planPriority  Int      @default(0)
   boostExpiresAt DateTime?
+  profileViews  Int      @default(0)
+  searchAppearances Int  @default(0)
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -135,6 +141,9 @@ model Subscription {
 
   aiUsageCount      Int                @default(0)
   aiUsagePeriod     String             @default("")
+
+  proposalsUsedCount  Int              @default(0)
+  proposalsUsedPeriod String           @default("")
 
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt

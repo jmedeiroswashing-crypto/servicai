@@ -1,6 +1,9 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RequestStatus } from '../generated/prisma/enums.js';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
+import { getEffectivePlan } from '../subscriptions/subscription-state.js';
+import { getPlanConfig } from '../subscriptions/plans.config.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
@@ -29,7 +32,10 @@ function timeAgo(date: Date): string {
 
 @Injectable()
 export class RequestsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private subscriptionsService: SubscriptionsService,
+  ) {}
 
   async create(clientId: string, dto: CreateRequestDto) {
     return this.prisma.serviceRequest.create({
@@ -57,20 +63,42 @@ export class RequestsService {
     return requests.map((r) => ({ ...r, proposalsCount: r._count.proposals }));
   }
 
+  /**
+   * O cliente vê todas as propostas — planos pagos não escondem concorrentes
+   * uns dos outros — mas quem tem plano superior aparece primeiro, como parte
+   * do valor comercial do plano. Dentro do mesmo plano, desempata por nota e
+   * depois por mais recente.
+   */
   async listProposalsForRequest(clientId: string, requestId: string) {
     const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
     if (!request) throw new NotFoundException('Solicitação não encontrada');
     if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
 
-    return this.prisma.proposal.findMany({
+    const proposals = await this.prisma.proposal.findMany({
       where: { requestId },
       include: {
         provider: {
-          include: { user: { select: { name: true, avatarUrl: true, phone: true } } },
+          include: {
+            user: { select: { name: true, avatarUrl: true, phone: true } },
+            subscription: { select: { plan: true, status: true, currentPeriodEnd: true } },
+          },
         },
       },
-      orderBy: { createdAt: 'desc' },
     });
+
+    return proposals
+      .map((p) => ({
+        ...p,
+        planWeight: p.provider.subscription
+          ? getPlanConfig(getEffectivePlan(p.provider.subscription)).rankingWeight
+          : 0,
+      }))
+      .sort(
+        (a, b) =>
+          b.planWeight - a.planWeight ||
+          b.provider.ratingAvg - a.provider.ratingAvg ||
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }
 
   /**
@@ -174,7 +202,9 @@ export class RequestsService {
     });
     if (existing) throw new ConflictException('Você já enviou uma proposta para esta solicitação');
 
-    return this.prisma.proposal.create({
+    await this.subscriptionsService.assertProposalLimit(provider.id);
+
+    const proposal = await this.prisma.proposal.create({
       data: {
         requestId,
         providerId: provider.id,
@@ -184,6 +214,10 @@ export class RequestsService {
         availableAt: dto.availableAt,
       },
     });
+
+    await this.subscriptionsService.consumeProposal(provider.id);
+
+    return proposal;
   }
 
   async listMyProposals(userId: string) {

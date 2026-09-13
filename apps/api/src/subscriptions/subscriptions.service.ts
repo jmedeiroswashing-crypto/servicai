@@ -2,7 +2,8 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
 import { Plan, SubscriptionStatus } from '../generated/prisma/enums.js';
-import { BOOST_CONFIG, PLAN_CATALOG, currentPeriod, getPlanConfig } from './plans.config.js';
+import { BOOST_CONFIG, getPlanCatalogForSale, getPlanConfig, currentPeriod } from './plans.config.js';
+import { getEffectivePlan, isExpired } from './subscription-state.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const BOOST_DURATION_MS = BOOST_CONFIG.durationDays * 24 * 60 * 60 * 1000;
@@ -15,7 +16,7 @@ export class SubscriptionsService {
   ) {}
 
   getCatalog() {
-    return Object.values(PLAN_CATALOG);
+    return getPlanCatalogForSale();
   }
 
   getBoostInfo() {
@@ -39,16 +40,37 @@ export class SubscriptionsService {
     });
   }
 
+  /**
+   * Ponto único de leitura da assinatura de um prestador. Aplica a expiração de
+   * verdade: se o prazo pago já passou, a assinatura vira EXPIRADA e o prestador
+   * volta a valer como Grátis (selo e prioridade de ranking inclusos) — a
+   * permissão real vem do status, não do que a tela mostrava antes.
+   */
   async getOrCreateForProvider(providerId: string) {
     const existing = await this.prisma.subscription.findUnique({ where: { providerId } });
-    if (existing) return existing;
-    return this.prisma.subscription.create({ data: { providerId } });
+    const subscription = existing ?? (await this.prisma.subscription.create({ data: { providerId } }));
+
+    if (subscription.plan !== Plan.GRATIS && isExpired(subscription) && subscription.status !== SubscriptionStatus.EXPIRADA) {
+      const expired = await this.prisma.subscription.update({
+        where: { id: subscription.id },
+        data: { status: SubscriptionStatus.EXPIRADA, cancelAtPeriodEnd: false },
+      });
+      const freeConfig = getPlanConfig(Plan.GRATIS);
+      await this.prisma.providerProfile.update({
+        where: { id: providerId },
+        data: { selo: freeConfig.selo, planPriority: freeConfig.planPriority },
+      });
+      return expired;
+    }
+
+    return subscription;
   }
 
   async getMine(userId: string) {
     const provider = await this.providersService.findByUserId(userId);
     const subscription = await this.getOrCreateForProvider(provider.id);
-    return { ...subscription, config: getPlanConfig(subscription.plan) };
+    const effectivePlan = getEffectivePlan(subscription);
+    return { ...subscription, effectivePlan, config: getPlanConfig(effectivePlan) };
   }
 
   /**
@@ -79,13 +101,33 @@ export class SubscriptionsService {
     return { ...updated, config };
   }
 
+  /**
+   * Cancelamento "soft", como a maioria dos SaaS: o prestador mantém os
+   * benefícios até o fim do período já pago, e só então volta para o Grátis
+   * (via a expiração aplicada em getOrCreateForProvider). Diferente de
+   * `changePlan(GRATIS)`, que derruba o plano na hora.
+   */
+  async requestCancellation(userId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    const subscription = await this.getOrCreateForProvider(provider.id);
+
+    if (subscription.plan === Plan.GRATIS) {
+      throw new ForbiddenException('Você já está no plano Grátis');
+    }
+
+    return this.prisma.subscription.update({
+      where: { id: subscription.id },
+      data: { status: SubscriptionStatus.CANCELAMENTO_SOLICITADO, cancelAtPeriodEnd: true },
+    });
+  }
+
   async cancel(userId: string) {
     return this.changePlan(userId, Plan.GRATIS);
   }
 
   async assertListingLimit(providerId: string, currentCount: number) {
     const subscription = await this.getOrCreateForProvider(providerId);
-    const config = getPlanConfig(subscription.plan);
+    const config = getPlanConfig(getEffectivePlan(subscription));
     if (currentCount >= config.maxListings) {
       throw new ForbiddenException(
         `Seu plano ${config.label} permite até ${config.maxListings} anúncio(s) ativo(s). Faça upgrade para publicar mais.`,
@@ -95,7 +137,7 @@ export class SubscriptionsService {
 
   async assertMediaLimit(providerId: string, currentCount: number) {
     const subscription = await this.getOrCreateForProvider(providerId);
-    const config = getPlanConfig(subscription.plan);
+    const config = getPlanConfig(getEffectivePlan(subscription));
     if (currentCount >= config.maxMedia) {
       throw new ForbiddenException(
         `Seu plano ${config.label} permite até ${config.maxMedia} itens de mídia. Faça upgrade para adicionar mais.`,
@@ -105,7 +147,7 @@ export class SubscriptionsService {
 
   async consumeAiUsage(providerId: string) {
     const subscription = await this.getOrCreateForProvider(providerId);
-    const config = getPlanConfig(subscription.plan);
+    const config = getPlanConfig(getEffectivePlan(subscription));
     const period = currentPeriod();
 
     const inCurrentPeriod = subscription.aiUsagePeriod === period;
@@ -123,9 +165,103 @@ export class SubscriptionsService {
     });
   }
 
+  /**
+   * A principal alavanca comercial: quantas propostas de oportunidade o
+   * prestador pode enviar por mês. É isso que vende "mais chances de fechar
+   * negócio", não uma funcionalidade travada.
+   */
+  async assertProposalLimit(providerId: string) {
+    const subscription = await this.getOrCreateForProvider(providerId);
+    const config = getPlanConfig(getEffectivePlan(subscription));
+    const period = currentPeriod();
+    const usedSoFar = subscription.proposalsUsedPeriod === period ? subscription.proposalsUsedCount : 0;
+
+    if (usedSoFar >= config.proposalsPerMonth) {
+      throw new ForbiddenException(
+        `Você usou suas ${config.proposalsPerMonth} propostas do plano ${config.label} neste mês. Assine um plano superior para enviar mais propostas e não perder oportunidades.`,
+      );
+    }
+    return { usedSoFar, limit: config.proposalsPerMonth, period };
+  }
+
+  async consumeProposal(providerId: string) {
+    const { period, usedSoFar } = await this.assertProposalLimit(providerId);
+    const subscription = await this.prisma.subscription.findUniqueOrThrow({ where: { providerId } });
+    await this.prisma.subscription.update({
+      where: { id: subscription.id },
+      data: { proposalsUsedPeriod: period, proposalsUsedCount: usedSoFar + 1 },
+    });
+  }
+
   async findProviderIdByUserId(userId: string) {
     const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
     if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
     return provider.id;
+  }
+
+  /**
+   * Dados para a área "Meu Plano": desempenho real (visualizações, aparições em
+   * busca, contatos) e o consumo do mês frente ao limite do plano. Sem gráfico
+   * histórico por enquanto — isso exigiria uma tabela de eventos por dia, que
+   * ainda não existe (registrado como próximo passo).
+   */
+  async getPerformance(userId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    const subscription = await this.getOrCreateForProvider(provider.id);
+    const config = getPlanConfig(getEffectivePlan(subscription));
+    const period = currentPeriod();
+
+    const [conversationsCount, bookingsCount] = await Promise.all([
+      this.prisma.conversation.count({ where: { providerId: provider.id } }),
+      this.prisma.booking.count({ where: { providerId: provider.id } }),
+    ]);
+
+    const proposalsUsed = subscription.proposalsUsedPeriod === period ? subscription.proposalsUsedCount : 0;
+
+    return {
+      profileViews: provider.profileViews,
+      searchAppearances: provider.searchAppearances,
+      contactsCount: conversationsCount + bookingsCount,
+      proposalsUsed,
+      proposalsLimit: config.proposalsPerMonth,
+      hasPerformanceStats: config.hasPerformanceStats,
+      hasAdvancedInsights: config.hasAdvancedInsights,
+    };
+  }
+
+  /**
+   * Métricas agregadas para administração (só ADMIN). MRR é estimado a partir
+   * dos assinantes pagos ativos — sem histórico de eventos, não dá para mostrar
+   * evolução ao longo do tempo ainda; isso fica para quando existir uma tabela
+   * de auditoria de mudanças de plano.
+   */
+  async getAdminOverview() {
+    const [totalProviders, subscriptions] = await Promise.all([
+      this.prisma.providerProfile.count(),
+      this.prisma.subscription.findMany(),
+    ]);
+
+    const byPlan: Record<string, number> = { GRATIS: 0, PRO: 0, PREMIUM: 0 };
+    let mrr = 0;
+    let cancelamentosSolicitados = 0;
+
+    for (const sub of subscriptions) {
+      const effective = getEffectivePlan(sub);
+      const key = effective === 'BUSINESS' ? 'PREMIUM' : effective;
+      byPlan[key] = (byPlan[key] ?? 0) + 1;
+      if (effective !== Plan.GRATIS) mrr += getPlanConfig(effective).priceMonthly;
+      if (sub.status === SubscriptionStatus.CANCELAMENTO_SOLICITADO) cancelamentosSolicitados++;
+    }
+
+    const paidCount = totalProviders - byPlan.GRATIS;
+    const conversionRate = totalProviders > 0 ? paidCount / totalProviders : 0;
+
+    return {
+      totalProviders,
+      byPlan,
+      mrr: Math.round(mrr * 100) / 100,
+      conversionRate: Math.round(conversionRate * 1000) / 1000,
+      cancelamentosSolicitados,
+    };
   }
 }

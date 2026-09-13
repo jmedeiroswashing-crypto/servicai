@@ -64,15 +64,51 @@ npm run dev              # http://localhost:3000
   (`SOLICITADO → ACEITO/RECUSADO → EM_ANDAMENTO → CONCLUIDO/CANCELADO`).
 - **Favoritos**.
 - **Chat**: REST + WebSocket (namespace `/chat`) para mensagens em tempo real.
-- **Planos de assinatura** (Grátis/Pro/Business/Premium): cada plano define limite de
-  anúncios ativos, limite de itens de mídia, cota mensal de usos de IA e o selo de
-  reputação correspondente (Prata/Ouro/Premium); a troca de plano já atualiza o selo e
-  a prioridade de exposição do prestador na busca (`GET /subscriptions/plans`,
-  `GET/PATCH /subscriptions/me`). **Sem gateway de pagamento integrado ainda** — a troca
-  de plano é aplicada diretamente para fins de teste; em produção deve ser acionada por
-  um webhook de confirmação de pagamento (Pix/cartão via Stripe, Pagar.me, etc.), não
-  diretamente pelo cliente. Preços definidos com base em pesquisa de mercado (GetNinjas,
-  Zaask, Thumbtack, Angi) — ver `apps/api/src/subscriptions/plans.config.ts`.
+- **Planos de assinatura — Grátis / Profissional (R$ 29,90) / Premium (R$ 59,90)**
+  (`apps/api/src/subscriptions/plans.config.ts`): reformulados para vender **visibilidade
+  e oportunidades**, não itens de funcionalidade soltos. A alavanca comercial central é
+  quantas **propostas de oportunidade por mês** o prestador pode enviar (Grátis: 5,
+  Profissional: 60, Premium: ilimitado) — cada proposta é uma chance real de fechar
+  negócio, o que é diferente de travar uma função. Premium também ganha o selo de
+  "prestador verificado" (reaproveita o campo `Selo` já existente). O enum `Plan` no
+  banco ainda tem `BUSINESS` por causa de dados de teste antigos (evitar remover valor
+  de enum no Postgres é mais seguro que recriar a tabela) — ele não é mais vendido,
+  `GET /subscriptions/plans` já filtra para mostrar só os 3 planos atuais, e assinantes
+  legados nesse plano são tratados com os benefícios do Premium.
+  - **Algoritmo de ranking de visibilidade** (`apps/api/src/providers/ranking.ts`): a
+    posição nos resultados de busca (`/providers`, `/search`) combina relevância de
+    categoria, localização, nota média, volume de avaliações, taxa de resposta
+    (aceite de solicitações), atividade recente e completude do perfil — o plano
+    contratado soma pontos (até 25 de ~130 possíveis), mas não decide sozinho.
+    Testado explicitamente: um prestador pago com perfil vazio e zero avaliações fica
+    só 1 posição à frente de um grátis com perfil completo, não dezenas de posições —
+    e nota+volume de avaliações têm o mesmo peso máximo que o plano, então um grátis
+    muito bem avaliado consegue superar um pago irrelevante.
+  - **Estados reais de assinatura** (`ATIVA/TESTE/PAGAMENTO_PENDENTE/
+    CANCELAMENTO_SOLICITADO/CANCELADA/INADIMPLENTE/EXPIRADA`): cancelar é "soft" — o
+    prestador mantém os benefícios até o fim do período já pago
+    (`POST /subscriptions/me/cancel`), e a expiração de verdade é aplicada no backend
+    (não só na tela) sempre que a assinatura é lida: se o prazo pago já passou, o
+    prestador volta a valer como Grátis para ranking e limites, mesmo que a UI antiga
+    ainda não tenha sido recarregada. `TESTE` (período de teste) existe no modelo de
+    dados mas não tem um fluxo de ativação ainda — ficou definido para o futuro.
+  - **Página "Meu Plano"** (`/painel/plano`): plano atual + status, benefícios,
+    desempenho (visualizações do perfil, aparições em buscas, contatos, propostas
+    usadas no mês) e dados da assinatura (valor, próxima cobrança, upgrade,
+    cancelamento) — separada da página de preços (`/precos`), que continua sendo a
+    vitrine de comparação/venda.
+  - **Métricas administrativas** (`GET /subscriptions/admin/overview`, role `ADMIN`,
+    tela `/admin/planos`): assinantes por plano, MRR estimado, taxa de conversão
+    grátis→pago, cancelamentos solicitados. Não construí CRUD de planos nem gráfico de
+    evolução histórica — isso exigiria uma tabela de auditoria de mudanças de plano que
+    ainda não existe (não quis simular dado falso). **Não há fluxo de criação de conta
+    ADMIN** — esse papel só existe via provisionamento manual do banco.
+  - **Correção de segurança feita nesta entrega**: o cadastro aceitava `role: "ADMIN"`
+    diretamente pela API (a interface só oferecia Cliente/Vendedor, mas nada impedia
+    uma chamada direta). `RegisterDto` agora valida contra uma lista fixa
+    (`CLIENTE`/`PRESTADOR`), fechando a escalação de privilégio.
+  - Ainda sem gateway de pagamento — troca de plano e cancelamento são aplicados
+    direto, como já valia para o impulso avulso abaixo.
 - **Impulso avulso "Potencialização de clientes"** (R$ 5, na página de preços): diferente
   dos planos, é uma compra única que põe o prestador no topo de toda listagem/busca por
   7 dias, **à frente até de quem tem plano Premium** (`GET /subscriptions/boost`,
@@ -113,6 +149,13 @@ npm run dev              # http://localhost:3000
 - **Gamificação**: ranking por cidade/bairro/nacional, medalhas, missões.
 - **Cobrança recorrente real** dos planos de assinatura (a estrutura de planos já existe;
   falta integrar um gateway de pagamento — Stripe, Pagar.me — via webhook).
+- **Período de teste (trial)** de planos pagos: o status `TESTE` já existe no modelo de
+  dados, falta o fluxo de ativação (duração, elegibilidade, um teste por prestador).
+- **Administração de planos completa**: CRUD de planos/preços pela UI, lista/busca de
+  assinantes, gráfico de evolução (grátis→pago→cancelamento) ao longo do tempo — precisa
+  de uma tabela de auditoria de mudanças de plano que ainda não existe.
+- **Distância real por coordenadas** no ranking e no mural de oportunidades (hoje é
+  aproximação por cidade/estado, sem geocodificação).
 - Infraestrutura de produção: Docker/Kubernetes, CI/CD, ElasticSearch (busca full-text
   em escala) e Pinecone (busca semântica/recomendação via embeddings).
 - Upload de mídia real via **AWS S3** (hoje a API aceita apenas URLs já hospedadas).

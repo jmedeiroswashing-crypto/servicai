@@ -6,18 +6,32 @@ export type Plan = 'GRATIS' | 'PRO' | 'BUSINESS' | 'PREMIUM';
 // Mirrors the backend's plans.config.ts sentinel — Infinity doesn't survive JSON,
 // so "unlimited" is represented as this large finite number instead.
 export const UNLIMITED = 999_999;
-export type SubscriptionStatus = 'ATIVA' | 'CANCELADA' | 'INADIMPLENTE';
+export type SubscriptionStatus =
+  | 'ATIVA'
+  | 'TESTE'
+  | 'PAGAMENTO_PENDENTE'
+  | 'CANCELAMENTO_SOLICITADO'
+  | 'CANCELADA'
+  | 'INADIMPLENTE'
+  | 'EXPIRADA';
 
 export interface PlanConfig {
   plan: Plan;
   label: string;
+  tagline: string;
   priceMonthly: number;
   selo: Selo;
   planPriority: number;
+  rankingWeight: number;
   maxListings: number;
   maxMedia: number;
   aiGenerationsPerMonth: number;
-  features: string[];
+  proposalsPerMonth: number;
+  hasPerformanceStats: boolean;
+  hasAdvancedInsights: boolean;
+  verifiedBadge: boolean;
+  highlight?: string;
+  benefits: string[];
 }
 
 export interface Subscription {
@@ -25,11 +39,32 @@ export interface Subscription {
   providerId: string;
   plan: Plan;
   status: SubscriptionStatus;
+  effectivePlan: Plan;
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd: boolean;
   aiUsageCount: number;
   aiUsagePeriod: string;
+  proposalsUsedCount: number;
+  proposalsUsedPeriod: string;
   config: PlanConfig;
+}
+
+export interface PerformanceMetrics {
+  profileViews: number;
+  searchAppearances: number;
+  contactsCount: number;
+  proposalsUsed: number;
+  proposalsLimit: number;
+  hasPerformanceStats: boolean;
+  hasAdvancedInsights: boolean;
+}
+
+export interface AdminOverview {
+  totalProviders: number;
+  byPlan: Record<string, number>;
+  mrr: number;
+  conversionRate: number;
+  cancelamentosSolicitados: number;
 }
 
 export interface BoostInfo {
