@@ -60,7 +60,8 @@ function ClientHome() {
       </section>
 
       <section className="border-b border-border">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:py-24">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div>
           <p className="mb-3 text-sm uppercase tracking-[0.15em] text-foreground-muted">ServiçAi</p>
           <h1 className="font-display text-3xl leading-tight text-ink sm:text-5xl">
             Mais de 20 tipos de serviço em um só lugar.
@@ -78,6 +79,16 @@ function ClientHome() {
             </Link>{' '}
             e deixe os profissionais da sua região virem até você.
           </p>
+          </div>
+
+          <div className="hidden justify-self-center lg:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/hero-worker.png"
+              alt="Profissional ServiçAi"
+              className="max-h-[420px] w-auto"
+            />
+          </div>
         </div>
       </section>
 
