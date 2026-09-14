@@ -37,22 +37,6 @@
   --font-display: var(--font-fraunces);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #100f0c;
-    --foreground: #f3efe5;
-    --foreground-muted: #a89e8a;
-    --surface: #17150f;
-    --surface-muted: #1f1c15;
-    --border: #2c2718;
-
-    --ink: #eef4fc;
-    --accent: #4da3ff;
-    --accent-strong: #7ec1ff;
-    --accent-soft: #102844;
-  }
-}
-
 * {
   border-color: var(--border);
 }
