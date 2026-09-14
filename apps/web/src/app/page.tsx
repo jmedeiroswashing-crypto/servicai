@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
-  ArrowUpRight,
   Hammer,
   Home as HomeIcon,
   Car,
@@ -18,10 +17,9 @@ import {
 } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
-import { AuthForm } from '@/components/AuthForm';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import type { ProviderProfile, Role } from '@/lib/types';
+import type { ProviderProfile } from '@/lib/types';
 
 const CATEGORY_GROUPS = [
   { label: 'Reformas e reparos', query: 'eletricista, encanador, pedreiro, pintor', icon: Hammer },
@@ -33,49 +31,6 @@ const CATEGORY_GROUPS = [
   { label: 'Tecnologia', query: 'desenvolvedor, designer', icon: Code2 },
   { label: 'Aulas', query: 'professor particular', icon: GraduationCap },
 ];
-
-function RoleChoice({ onChoose }: { onChoose: (role: Role) => void }) {
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-20 sm:py-28">
-      <p className="mb-3 text-sm uppercase tracking-[0.15em] text-foreground-muted">ServiçAi</p>
-      <h1 className="font-display max-w-lg text-4xl leading-[1.1] text-ink sm:text-6xl">
-        Você quer ser
-      </h1>
-
-      <div className="mt-14 divide-y divide-border border-y border-border">
-        <button
-          onClick={() => onChoose('CLIENTE')}
-          className="group flex w-full items-center justify-between py-8 text-left transition-colors hover:bg-surface-muted/50"
-        >
-          <div>
-            <span className="mb-1 block text-xs text-foreground-muted">01</span>
-            <span className="font-display block text-3xl text-ink sm:text-4xl">Cliente</span>
-            <span className="mt-1 block text-sm text-foreground-muted">Quero contratar um serviço</span>
-          </div>
-          <ArrowUpRight
-            size={28}
-            className="shrink-0 text-foreground-muted transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-accent"
-          />
-        </button>
-
-        <button
-          onClick={() => onChoose('PRESTADOR')}
-          className="group flex w-full items-center justify-between py-8 text-left transition-colors hover:bg-surface-muted/50"
-        >
-          <div>
-            <span className="mb-1 block text-xs text-foreground-muted">02</span>
-            <span className="font-display block text-3xl text-ink sm:text-4xl">Vendedor</span>
-            <span className="mt-1 block text-sm text-foreground-muted">Quero oferecer meus serviços</span>
-          </div>
-          <ArrowUpRight
-            size={28}
-            className="shrink-0 text-foreground-muted transition-transform group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-accent"
-          />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function ClientHome() {
   const { data } = useQuery({
@@ -148,30 +103,12 @@ function ClientHome() {
 export default function HomePage() {
   const { user } = useAuthStore();
   const router = useRouter();
-  const [step, setStep] = useState<'choose' | 'auth'>('choose');
-  const [chosenRole, setChosenRole] = useState<Role>('CLIENTE');
 
   useEffect(() => {
     if (user?.role === 'PRESTADOR') router.push('/painel');
   }, [user, router]);
 
-  if (user?.role === 'CLIENTE') return <ClientHome />;
   if (user?.role === 'PRESTADOR') return null;
 
-  if (step === 'auth') {
-    return (
-      <div className="px-4 py-16">
-        <AuthForm role={chosenRole} onBack={() => setStep('choose')} />
-      </div>
-    );
-  }
-
-  return (
-    <RoleChoice
-      onChoose={(role) => {
-        setChosenRole(role);
-        setStep('auth');
-      }}
-    />
-  );
+  return <ClientHome />;
 }
