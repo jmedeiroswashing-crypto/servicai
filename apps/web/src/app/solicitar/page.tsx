@@ -7,6 +7,7 @@ import { Send, Sparkles, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
+import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import type { IntakeResult, RequestDraft } from '@/lib/types';
 
@@ -185,16 +186,7 @@ function ManualForm() {
     <div className="mt-10 max-w-xl space-y-5">
       <div>
         <label className={labelClass}>Categoria do serviço</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-          <option value="" disabled>
-            Selecione
-          </option>
-          {CATEGORIES.map((c) => (
-            <option key={c.slug} value={c.label}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+        <CategorySelect categories={CATEGORIES} value={category} onChange={setCategory} emptyLabel="Selecione" />
       </div>
 
       <div>

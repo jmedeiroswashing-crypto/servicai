@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
@@ -18,6 +19,7 @@ export default function PerfilPrestadorPage() {
   const [bio, setBio] = useState('');
   const [yearsExperience, setYearsExperience] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [categoryQuery, setCategoryQuery] = useState('');
 
   useEffect(() => {
     if (!token) router.push('/login');
@@ -79,8 +81,17 @@ export default function PerfilPrestadorPage() {
           <label className="mb-1.5 block text-xs font-medium text-foreground-muted">
             Categorias de serviço que você atende
           </label>
+          <div className="mb-3 flex items-center gap-2 border border-border px-3 py-2">
+            <Search size={14} className="shrink-0 text-foreground-muted" />
+            <input
+              value={categoryQuery}
+              onChange={(e) => setCategoryQuery(e.target.value)}
+              placeholder="Buscar categoria..."
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-foreground-muted/50"
+            />
+          </div>
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => {
+            {CATEGORIES.filter((c) => c.label.toLowerCase().includes(categoryQuery.trim().toLowerCase())).map((c) => {
               const active = categories.includes(c.label);
               return (
                 <button
