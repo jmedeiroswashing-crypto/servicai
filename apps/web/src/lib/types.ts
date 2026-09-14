@@ -244,7 +244,8 @@ export type NotificationType =
   | 'PROPOSTA_ACEITA'
   | 'NOVA_OPORTUNIDADE'
   | 'PLANO_EXPIRANDO'
-  | 'PLANO_EXPIRADO';
+  | 'PLANO_EXPIRADO'
+  | 'VAGA_RESERVADA';
 
 export interface NotificationItem {
   id: string;
@@ -254,6 +255,45 @@ export interface NotificationItem {
   body: string;
   link?: string | null;
   read: boolean;
+  createdAt: string;
+}
+
+export type DealStatus = 'ATIVA' | 'RESERVADA' | 'CANCELADA';
+
+export interface LastMinuteDeal {
+  id: string;
+  category: string;
+  title: string;
+  description?: string | null;
+  city: string;
+  state?: string | null;
+  originalPrice: number;
+  dealPrice: number;
+  discountPct: number;
+  scheduledAt: string;
+  provider: {
+    id: string;
+    name: string;
+    avatarUrl?: string | null;
+    specialty: string;
+    ratingAvg: number;
+    selo: string;
+  };
+}
+
+export interface MyDeal {
+  id: string;
+  category: string;
+  title: string;
+  description?: string | null;
+  city: string;
+  state?: string | null;
+  originalPrice: number;
+  dealPrice: number;
+  scheduledAt: string;
+  status: DealStatus;
+  claimedBy?: { name: string; phone?: string | null } | null;
+  claimedAt?: string | null;
   createdAt: string;
 }
 

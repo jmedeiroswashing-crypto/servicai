@@ -16,6 +16,7 @@ import { AiModule } from './ai/ai.module.js';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { RequestsModule } from './requests/requests.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { DealsModule } from './deals/deals.module.js';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
     SubscriptionsModule,
     RequestsModule,
     NotificationsModule,
+    DealsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

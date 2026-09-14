@@ -65,6 +65,13 @@ enum NotificationType {
   NOVA_OPORTUNIDADE
   PLANO_EXPIRANDO
   PLANO_EXPIRADO
+  VAGA_RESERVADA
+}
+
+enum DealStatus {
+  ATIVA
+  RESERVADA
+  CANCELADA
 }
 
 enum ProposalStatus {
@@ -103,6 +110,7 @@ model User {
   favorites       Favorite[]
   serviceRequests ServiceRequest[] @relation("ServiceRequestsByClient")
   notifications   Notification[]
+  dealsClaimed    LastMinuteDeal[] @relation("DealsClaimedByClient")
 }
 
 model ProviderProfile {
@@ -137,6 +145,7 @@ model ProviderProfile {
   favoritedBy   Favorite[]
   subscription  Subscription?
   proposals     Proposal[]
+  lastMinuteDeals LastMinuteDeal[]
 }
 
 model Subscription {
@@ -333,4 +342,29 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId, read])
+}
+
+model LastMinuteDeal {
+  id            String   @id @default(cuid())
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  category      String
+  title         String
+  description   String?
+  city          String
+  state         String?
+  originalPrice Float
+  dealPrice     Float
+  scheduledAt   DateTime
+  status        DealStatus @default(ATIVA)
+
+  claimedById   String?
+  claimedBy     User?    @relation("DealsClaimedByClient", fields: [claimedById], references: [id])
+  claimedAt     DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, scheduledAt])
 }

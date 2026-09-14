@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
@@ -23,6 +23,9 @@ export function Navbar() {
         <nav className="hidden items-center gap-8 text-[0.9rem] text-foreground-muted sm:flex">
           <Link href="/buscar" className="link-underline pb-0.5 hover:text-foreground">
             Buscar serviços
+          </Link>
+          <Link href="/vagas-ultima-hora" className="link-underline flex items-center gap-1 pb-0.5 hover:text-foreground">
+            <Zap size={13} /> Vagas de última hora
           </Link>
           <Link href="/cadastro?tipo=PRESTADOR" className="link-underline pb-0.5 hover:text-foreground">
             Anuncie seu serviço
@@ -61,6 +64,13 @@ export function Navbar() {
                         className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                       >
                         <Sparkles size={15} className="text-foreground-muted" /> Oportunidades
+                      </Link>
+                      <Link
+                        href="/painel/vagas-ultima-hora"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <Zap size={15} className="text-foreground-muted" /> Vagas de última hora
                       </Link>
                       <Link
                         href="/painel/perfil"
