@@ -60,25 +60,23 @@ function ClientHome() {
       </section>
 
       <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          {/* TESTE VISUAL: imagem completa com card de avaliacao fabricado (Carlos Mendes) -
-              NAO e uma avaliacao real, e so pra ver o layout tipo GetNinjas. Trocar depois. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/hero-worker-full.jpeg"
-            alt="Teste de layout"
-            className="w-full"
-          />
-          <div className="mx-auto max-w-xl py-10 text-center">
-            <SearchBar large />
-            <p className="mt-8 text-sm text-foreground-muted">
-              Não achou quem procurava?{' '}
-              <Link href="/solicitar" className="text-accent hover:underline">
-                Publique uma solicitação
-              </Link>{' '}
-              e deixe os profissionais da sua região virem até você.
-            </p>
-          </div>
+        {/* TESTE VISUAL: imagem completa com card de avaliacao fabricado (Carlos Mendes) -
+            NAO e uma avaliacao real, e so pra ver o layout tipo GetNinjas. Trocar depois. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hero-worker-transparent.png"
+          alt="Teste de layout"
+          className="w-full"
+        />
+        <div className="mx-auto max-w-xl px-4 py-10 text-center sm:px-6">
+          <SearchBar large />
+          <p className="mt-8 text-sm text-foreground-muted">
+            Não achou quem procurava?{' '}
+            <Link href="/solicitar" className="text-accent hover:underline">
+              Publique uma solicitação
+            </Link>{' '}
+            e deixe os profissionais da sua região virem até você.
+          </p>
         </div>
       </section>
 
