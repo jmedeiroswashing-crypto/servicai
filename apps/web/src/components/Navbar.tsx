@@ -13,24 +13,28 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-ink bg-ink">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="ServiçAi" className="h-8 w-auto" />
+          <img src="/logo-icon.png" alt="" className="h-8 w-auto" />
+          <span className="font-display text-xl font-medium tracking-tight">
+            <span className="text-white">Servic</span>
+            <span className="text-accent">AI</span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-[0.9rem] text-foreground-muted sm:flex">
-          <Link href="/buscar" className="link-underline pb-0.5 hover:text-foreground">
+        <nav className="hidden items-center gap-8 text-[0.9rem] text-white/70 sm:flex">
+          <Link href="/buscar" className="link-underline pb-0.5 hover:text-white">
             Buscar serviços
           </Link>
-          <Link href="/vagas-ultima-hora" className="link-underline flex items-center gap-1 pb-0.5 hover:text-foreground">
+          <Link href="/vagas-ultima-hora" className="link-underline flex items-center gap-1 pb-0.5 hover:text-white">
             <Zap size={13} /> Vagas de última hora
           </Link>
-          <Link href="/cadastro?tipo=PRESTADOR" className="link-underline pb-0.5 hover:text-foreground">
+          <Link href="/cadastro?tipo=PRESTADOR" className="link-underline pb-0.5 hover:text-white">
             Anuncie seu serviço
           </Link>
-          <Link href="/precos" className="link-underline pb-0.5 hover:text-foreground">
+          <Link href="/precos" className="link-underline pb-0.5 hover:text-white">
             Planos
           </Link>
         </nav>
@@ -42,7 +46,7 @@ export function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 border border-border px-3 py-1.5 text-sm text-foreground hover:border-ink/40"
+                className="flex items-center gap-2 border border-white/25 px-3 py-1.5 text-sm text-white hover:border-white/50"
               >
                 {user.name.split(' ')[0]}
                 <ChevronDown size={14} className={`transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
@@ -131,13 +135,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden text-sm text-foreground-muted transition-colors hover:text-foreground sm:block"
+                className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block"
               >
                 Entrar
               </Link>
               <Link
                 href="/cadastro"
-                className="border border-ink bg-ink px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
+                className="border border-accent bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
               >
                 Criar conta
               </Link>
