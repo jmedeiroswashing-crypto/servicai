@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Crown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
@@ -73,6 +73,27 @@ export default function PainelPage() {
           </div>
         </div>
         <ArrowRight size={16} />
+      </Link>
+
+      <Link
+        href="/painel/prospeccao"
+        className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+      >
+        <div className="flex items-center gap-3">
+          <Crown size={18} className="text-accent" />
+          <div>
+            <p className="flex items-center gap-2 font-medium text-ink">
+              Prospecção de possíveis clientes
+              {!subscription?.config.hasAdvancedInsights && (
+                <span className="border border-accent px-1.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-wide text-accent">
+                  Premium
+                </span>
+              )}
+            </p>
+            <p className="text-sm text-foreground-muted">Veja quem favoritou seu perfil, com nome e telefone</p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-foreground-muted" />
       </Link>
 
       {subscription && (

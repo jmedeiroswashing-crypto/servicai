@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -22,6 +22,7 @@ function ProviderProfileContent() {
   const id = searchParams.get('id') ?? '';
   const { user } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [requesting, setRequesting] = useState(false);
   const [locating, setLocating] = useState(false);
 
@@ -32,6 +33,19 @@ function ProviderProfileContent() {
       return res.data;
     },
     enabled: !!id,
+  });
+
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites', 'mine'],
+    enabled: user?.role === 'CLIENTE',
+    queryFn: async () => (await api.get<{ provider: { id: string } }[]>('/providers/favorites/mine')).data,
+  });
+  const isFavorited = !!favorites?.some((f) => f.provider.id === id);
+
+  const favoriteMutation = useMutation({
+    mutationFn: async () =>
+      isFavorited ? api.delete(`/providers/${id}/favorite`) : api.post(`/providers/${id}/favorite`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites', 'mine'] }),
   });
 
   const bookingMutation = useMutation({
@@ -115,7 +129,25 @@ function ProviderProfileContent() {
         >
           <MessageCircle size={16} /> {chatMutation.isPending ? 'Abrindo...' : 'Enviar mensagem'}
         </button>
+        {user?.role === 'CLIENTE' && (
+          <button
+            disabled={favoriteMutation.isPending}
+            onClick={() => favoriteMutation.mutate()}
+            className={`flex items-center gap-2 border px-5 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+              isFavorited ? 'border-accent text-accent' : 'border-border hover:border-ink'
+            }`}
+          >
+            <Heart size={16} className={isFavorited ? 'fill-accent' : ''} />
+            {isFavorited ? 'Favoritado' : 'Favoritar'}
+          </button>
+        )}
       </div>
+      {user?.role === 'CLIENTE' && (
+        <p className="mt-2 text-xs text-foreground-muted/70">
+          Favoritar avisa este prestador do seu interesse — prestadores no plano Premium podem ver seu nome e telefone
+          para prospecção.
+        </p>
+      )}
 
       {provider.bio && (
         <div className="mt-10">

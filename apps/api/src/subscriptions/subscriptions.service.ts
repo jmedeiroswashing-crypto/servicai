@@ -269,6 +269,36 @@ export class SubscriptionsService {
   }
 
   /**
+   * "Prospecção de possíveis clientes" — exclusiva do plano Premium (mesmo flag
+   * hasAdvancedInsights dos outros recursos avançados). Por privacidade/LGPD, a
+   * lista NÃO é de quem só visualizou o perfil (isso seria usar o contato do
+   * cliente para uma finalidade que ele nunca autorizou) — é de quem favoritou
+   * o prestador, um sinal real de interesse e uma ação que o próprio cliente
+   * escolheu fazer.
+   */
+  async getProspecting(userId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    const subscription = await this.getOrCreateForProvider(provider.id);
+    const config = getPlanConfig(getEffectivePlan(subscription));
+
+    if (!config.hasAdvancedInsights) {
+      throw new ForbiddenException(
+        'A prospecção de possíveis clientes é exclusiva do plano Premium. Assine o Premium para ver quem demonstrou interesse no seu perfil.',
+      );
+    }
+
+    const favorites = await this.prisma.favorite.findMany({
+      where: { providerId: provider.id },
+      include: { client: { select: { name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return favorites
+      .filter((f) => !!f.client.phone)
+      .map((f) => ({ name: f.client.name, phone: f.client.phone, favoritedAt: f.createdAt }));
+  }
+
+  /**
    * Métricas agregadas para administração (só ADMIN). MRR é estimado a partir
    * dos assinantes pagos ativos — sem histórico de eventos, não dá para mostrar
    * evolução ao longo do tempo ainda; isso fica para quando existir uma tabela

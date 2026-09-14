@@ -42,6 +42,13 @@ export class SubscriptionsController {
     return this.subscriptionsService.getPerformance(user.userId);
   }
 
+  @Get('me/prospecting')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  getProspecting(@CurrentUser() user: AuthUser) {
+    return this.subscriptionsService.getProspecting(user.userId);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
