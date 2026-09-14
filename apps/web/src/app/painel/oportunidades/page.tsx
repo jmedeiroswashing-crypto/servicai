@@ -8,6 +8,7 @@ import { MapPin, Calendar, Clock3, Wallet, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
+import { CategorySelect } from '@/components/CategorySelect';
 import { UNLIMITED, type OpportunityMatch, type PerformanceMetrics } from '@/lib/types';
 
 const inputClass = 'border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink';
@@ -222,14 +223,14 @@ export default function OportunidadesPage() {
       )}
 
       <div className="mt-8 flex flex-wrap gap-2">
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
-          <option value="">Todas as categorias</option>
-          {CATEGORIES.map((c) => (
-            <option key={c.slug} value={c.label}>
-              {c.label}
-            </option>
-          ))}
-        </select>
+        <CategorySelect
+          categories={CATEGORIES}
+          value={category}
+          onChange={setCategory}
+          allowEmpty
+          emptyLabel="Todas as categorias"
+          className="w-56"
+        />
         <select value={distance} onChange={(e) => setDistance(e.target.value as typeof distance)} className={inputClass}>
           <option value="todas">Qualquer distância</option>
           <option value="cidade">Só na minha cidade</option>
