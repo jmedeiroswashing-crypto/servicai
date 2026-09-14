@@ -6,10 +6,15 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { ProvidersService } from './providers.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
+import { ProviderAiIntakeDto } from './dto/provider-ai-intake.dto.js';
+import { AiService } from '../ai/ai.service.js';
 
 @Controller('providers')
 export class ProvidersController {
-  constructor(private providersService: ProvidersService) {}
+  constructor(
+    private providersService: ProvidersService,
+    private aiService: AiService,
+  ) {}
 
   @Get()
   findAll(
@@ -38,6 +43,17 @@ export class ProvidersController {
   @Roles(Role.PRESTADOR)
   updateMe(@CurrentUser() user: AuthUser, @Body() dto: UpdateProviderDto) {
     return this.providersService.update(user.userId, dto);
+  }
+
+  /**
+   * Intake conversacional: em vez do formulário, o prestador descreve em texto livre
+   * e a IA vai devolvendo o rascunho do perfil + a próxima pergunta.
+   */
+  @Post('ai-intake')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  aiIntake(@Body() dto: ProviderAiIntakeDto) {
+    return this.aiService.parseProviderIntake(dto.message, dto.draft ?? {});
   }
 
   @Get('favorites/mine')

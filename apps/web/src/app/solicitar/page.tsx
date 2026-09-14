@@ -48,6 +48,13 @@ function DraftField({ label, value }: { label: string; value?: string }) {
   );
 }
 
+function nextStepHint(draft: RequestDraft) {
+  if (!draft.category) return 'Diga qual serviço você precisa. Ex: "preciso de um pintor" ou "quero um encanador urgente".';
+  if (!draft.description) return 'Conte com suas palavras o que precisa ser feito.';
+  if (!draft.city) return 'Diga sua cidade. Ex: "Recife" ou "Recife, PE".';
+  return 'Pode informar um orçamento e data (opcional), ou já publicar ao lado.';
+}
+
 function AiIntake() {
   const router = useRouter();
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -73,14 +80,14 @@ function AiIntake() {
     onSuccess: () => router.push('/minhas-solicitacoes'),
   });
 
-  function handleSend() {
-    const message = input.trim();
+  function sendMessage(message: string) {
     if (!message || intakeMutation.isPending) return;
     setInput('');
     intakeMutation.mutate(message);
   }
 
   const canPublish = !!(draft.category && draft.title && draft.description && draft.city);
+  const showCategoryChips = !draft.category && !intakeMutation.isPending;
 
   return (
     <div className="mt-10 grid gap-6 sm:grid-cols-[1fr_300px]">
@@ -102,23 +109,40 @@ function AiIntake() {
               <div className="border border-border px-3.5 py-2 text-sm text-foreground-muted">Digitando...</div>
             </div>
           )}
+          {showCategoryChips && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {CATEGORIES.slice(0, 10).map((c) => (
+                <button
+                  key={c.slug}
+                  type="button"
+                  onClick={() => sendMessage(`Preciso de um serviço de ${c.label.toLowerCase()}`)}
+                  className="border border-border px-2.5 py-1 text-xs text-foreground-muted transition-colors hover:border-ink hover:text-ink"
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-2 border-t border-border p-3">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Descreva o que você precisa..."
-            className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-foreground-muted/50"
-          />
-          <button onClick={handleSend} className="p-2 text-ink hover:text-accent" aria-label="Enviar">
-            <Send size={18} />
-          </button>
+        <div className="border-t border-border p-3">
+          <p className="mb-2 text-xs text-foreground-muted">{nextStepHint(draft)}</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  sendMessage(input.trim());
+                }
+              }}
+              placeholder="Descreva o que você precisa..."
+              className="flex-1 bg-transparent px-2 py-2 text-sm outline-none placeholder:text-foreground-muted/50"
+            />
+            <button onClick={() => sendMessage(input.trim())} className="p-2 text-ink hover:text-accent" aria-label="Enviar">
+              <Send size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
