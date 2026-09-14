@@ -459,17 +459,35 @@ export class AiService {
       if (yearsMatch) draft.yearsExperience = Number(yearsMatch[1]);
     }
 
+    // Extrações oportunistas: uma mensagem rica como "Sou encanador, atendo em
+    // Olinda" já responde duas ou três perguntas de uma vez — não esperamos o
+    // próximo turno para aproveitar categoria e cidade se já vierem com um
+    // marcador claro (palavra-chave de categoria, "atendo em X").
+    if (!draft.categories?.length) {
+      const detected = matchAllCategories(lower);
+      if (detected.length) draft.categories = detected;
+    }
+    if (!draft.city) {
+      const cityMarkerMatch =
+        trimmed.match(/\b(?:atendo|trabalho|moro|resido|estou|fico)\s+(?:em|na)\s+(.+)$/i) ??
+        trimmed.match(/^(?:em|na)\s+(.+)$/i);
+      if (cityMarkerMatch) {
+        const { city } = extractCityState(cityMarkerMatch[1]);
+        if (city) draft.city = city;
+      }
+    }
+
+    // Cada pergunta dedicada consome a mensagem inteira como resposta, garantindo
+    // que o fluxo sempre avança mesmo se a extração oportunista acima não pegou nada.
+    const wasSpecialtyMissing = !draftSoFar.specialty;
     if (!draft.specialty) {
       draft.specialty = trimmed;
-      const detected = matchAllCategories(lower);
-      if (detected.length) draft.categories = [...new Set([...draft.categories!, ...detected])];
-    } else if (!draft.categories?.length) {
-      const detected = matchAllCategories(lower);
-      draft.categories = detected.length ? detected : [trimmed];
-    } else if (!draft.city) {
+    } else if (!draft.categories?.length && !wasSpecialtyMissing) {
+      draft.categories = [trimmed];
+    } else if (!draft.city && !wasSpecialtyMissing) {
       const { city } = extractCityState(trimmed);
       draft.city = city;
-    } else if (draft.bio === undefined) {
+    } else if (draft.bio === undefined && !wasSpecialtyMissing) {
       const skip = ['pular', 'não', 'nao', 'n/a', 'sem descrição', 'sem descricao'].includes(lower);
       draft.bio = skip ? '' : trimmed;
     }
