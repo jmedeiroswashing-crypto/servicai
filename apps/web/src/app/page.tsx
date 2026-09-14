@@ -47,7 +47,7 @@ function ClientHome() {
         <img
           src="/hero-worker-transparent.png"
           alt="Teste de layout"
-          className="w-full"
+          className="mx-auto w-full max-w-2xl"
         />
         <div className="mx-auto max-w-xl px-4 py-10 text-center sm:px-6">
           <SearchBar large />
