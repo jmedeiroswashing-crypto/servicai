@@ -15,8 +15,9 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="font-display text-[1.4rem] font-medium tracking-tight text-ink">
-          ServiçAi
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="ServiçAi" className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-8 text-[0.9rem] text-foreground-muted sm:flex">
