@@ -274,3 +274,17 @@ export interface IntakeResult {
   assistantReply: string;
   readyToPublish: boolean;
 }
+
+export interface ProviderDraft {
+  specialty?: string;
+  categories?: string[];
+  city?: string;
+  bio?: string;
+  yearsExperience?: number;
+}
+
+export interface ProviderIntakeResult {
+  draft: ProviderDraft;
+  assistantReply: string;
+  readyToSave: boolean;
+}
