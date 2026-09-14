@@ -40,25 +40,6 @@ function ClientHome() {
 
   return (
     <div>
-      <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <div className="grid grid-cols-4 gap-x-2 gap-y-6 sm:grid-cols-8">
-            {CATEGORY_GROUPS.map(({ label, query, icon: Icon }) => (
-              <Link
-                key={label}
-                href={`/buscar?q=${encodeURIComponent(query)}`}
-                className="group flex flex-col items-center gap-2 text-center"
-              >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent-strong transition-colors group-hover:bg-accent group-hover:text-white">
-                  <Icon size={24} strokeWidth={1.75} />
-                </span>
-                <span className="text-xs leading-tight text-foreground-muted group-hover:text-ink">{label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="border-b border-border">
         {/* TESTE VISUAL: imagem completa com card de avaliacao fabricado (Carlos Mendes) -
             NAO e uma avaliacao real, e so pra ver o layout tipo GetNinjas. Trocar depois. */}
@@ -77,6 +58,25 @@ function ClientHome() {
             </Link>{' '}
             e deixe os profissionais da sua região virem até você.
           </p>
+        </div>
+      </section>
+
+      <section className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="grid grid-cols-4 gap-x-2 gap-y-6 sm:grid-cols-8">
+            {CATEGORY_GROUPS.map(({ label, query, icon: Icon }) => (
+              <Link
+                key={label}
+                href={`/buscar?q=${encodeURIComponent(query)}`}
+                className="group flex flex-col items-center gap-2 text-center"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent-strong transition-colors group-hover:bg-accent group-hover:text-white">
+                  <Icon size={24} strokeWidth={1.75} />
+                </span>
+                <span className="text-xs leading-tight text-foreground-muted group-hover:text-ink">{label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
