@@ -20,6 +20,17 @@ import {
   Star,
   ShieldCheck,
   Lock,
+  Wrench,
+  Paintbrush,
+  Sparkle,
+  Scissors,
+  Truck,
+  Laptop,
+  Wind,
+  BookOpen,
+  MapPin,
+  Rocket,
+  TrendingUp,
 } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
@@ -38,11 +49,32 @@ const CATEGORY_GROUPS = [
   { label: 'Aulas', query: 'professor particular', icon: GraduationCap },
 ];
 
+const POPULAR_SERVICES = [
+  { label: 'Eletricista', icon: Wrench },
+  { label: 'Encanador', icon: Wrench },
+  { label: 'Pintor', icon: Paintbrush },
+  { label: 'Limpeza', icon: Sparkle },
+  { label: 'Barbeiro', icon: Scissors },
+  { label: 'Mudanças', icon: Truck },
+  { label: 'Desenvolvedor', icon: Laptop },
+  { label: 'Ar-condicionado', icon: Wind },
+  { label: 'Professor Particular', icon: BookOpen },
+];
+
 function ClientHome() {
   const { data } = useQuery({
     queryKey: ['providers', 'top-rated'],
     queryFn: async () => (await api.get<ProviderProfile[]>('/providers', { params: { take: 8 } })).data,
   });
+
+  const { data: allProviders } = useQuery({
+    queryKey: ['providers', 'cities'],
+    queryFn: async () => (await api.get<ProviderProfile[]>('/providers', { params: { take: 100 } })).data,
+  });
+
+  const cities = allProviders
+    ? Array.from(new Set(allProviders.map((p) => p.city).filter(Boolean))).slice(0, 10)
+    : [];
 
   return (
     <div>
@@ -80,6 +112,24 @@ function ClientHome() {
                   <Icon size={24} strokeWidth={1.75} />
                 </span>
                 <span className="text-xs leading-tight text-foreground-muted group-hover:text-ink">{label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="font-display text-2xl text-ink">Serviços mais buscados</h2>
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {POPULAR_SERVICES.map(({ label, icon: Icon }) => (
+              <Link
+                key={label}
+                href={`/buscar?q=${encodeURIComponent(label)}`}
+                className="group flex items-center gap-3 border border-border px-4 py-3 transition-colors hover:border-accent"
+              >
+                <Icon size={18} className="text-accent shrink-0" strokeWidth={1.75} />
+                <span className="text-sm text-ink">{label}</span>
               </Link>
             ))}
           </div>
@@ -150,6 +200,62 @@ function ClientHome() {
               <h3 className="mt-3 font-medium text-ink">Sua privacidade primeiro</h3>
               <p className="mt-1 text-sm text-foreground-muted">
                 Telefone, e-mail e endereço só aparecem pro prestador depois que você decide seguir com a conversa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {cities.length > 0 && (
+        <section className="border-t border-border bg-surface-muted">
+          <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-foreground-muted">
+              <span className="flex items-center gap-1.5 font-medium text-ink">
+                <MapPin size={15} className="text-accent" /> Já disponível em:
+              </span>
+              {cities.map((city) => (
+                <span key={city} className="border border-border px-3 py-1 text-ink">
+                  {city}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="border-t border-border bg-ink">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:items-center">
+          <div>
+            <p className="mb-3 flex items-center gap-1.5 text-sm uppercase tracking-[0.15em] text-white/60">
+              <Rocket size={14} /> Para prestadores
+            </p>
+            <h2 className="font-display text-3xl text-white">
+              Preste serviços e apareça pra quem já está procurando por você.
+            </h2>
+            <Link
+              href="/cadastro?tipo=PRESTADOR"
+              className="mt-8 inline-flex items-center gap-2 bg-accent px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85"
+            >
+              Criar perfil de prestador <ArrowRight size={15} />
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            <div>
+              <TrendingUp size={20} className="text-accent" strokeWidth={1.75} />
+              <p className="mt-2 text-sm text-white/80">
+                <strong className="text-white">5 propostas/mês</strong> no plano Grátis, até ilimitadas no Premium
+              </p>
+            </div>
+            <div>
+              <ShieldCheck size={20} className="text-accent" strokeWidth={1.75} />
+              <p className="mt-2 text-sm text-white/80">
+                <strong className="text-white">Selo verificado</strong> pra quem assina o plano Premium
+              </p>
+            </div>
+            <div>
+              <Star size={20} className="text-accent" strokeWidth={1.75} />
+              <p className="mt-2 text-sm text-white/80">
+                Ranking de busca leva em conta <strong className="text-white">nota e avaliações</strong>, não só quem paga mais
               </p>
             </div>
           </div>
