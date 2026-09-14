@@ -14,6 +14,12 @@ import {
   Scale,
   Code2,
   GraduationCap,
+  FileText,
+  Inbox,
+  MessageCircle,
+  Star,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
@@ -95,6 +101,60 @@ function ClientHome() {
           </div>
         </section>
       )}
+
+      <section className="border-t border-border bg-surface-muted">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="font-display text-2xl text-ink">Como funciona</h2>
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: FileText, title: 'Descreva o que precisa', text: 'Preencha o formulário ou converse com a IA — ela monta o pedido pra você.' },
+              { icon: Inbox, title: 'Receba propostas', text: 'Prestadores da sua região e categoria enviam valor, prazo e mensagem.' },
+              { icon: MessageCircle, title: 'Compare e contrate', text: 'Converse pelo chat, tire dúvidas e escolha quem contratar.' },
+              { icon: Star, title: 'Avalie o serviço', text: 'Sua nota ajuda a formar o Score do prestador pra próxima pessoa.' },
+            ].map((step, i) => (
+              <div key={step.title}>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
+                    <step.icon size={18} strokeWidth={1.75} />
+                  </span>
+                  <span className="text-xs font-medium text-foreground-muted">Passo {i + 1}</span>
+                </div>
+                <h3 className="mt-3 font-medium text-ink">{step.title}</h3>
+                <p className="mt-1 text-sm text-foreground-muted">{step.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="font-display text-2xl text-ink">Por que confiar no ServiçAi</h2>
+          <div className="mt-10 grid gap-8 sm:grid-cols-3">
+            <div>
+              <ShieldCheck size={22} className="text-accent" strokeWidth={1.75} />
+              <h3 className="mt-3 font-medium text-ink">Score ServiçAi</h3>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Calculado a partir de avaliações reais de pontualidade, qualidade, preço e atendimento — não só uma média de estrelas.
+              </p>
+            </div>
+            <div>
+              <MessageCircle size={22} className="text-accent" strokeWidth={1.75} />
+              <h3 className="mt-3 font-medium text-ink">Converse antes de contratar</h3>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Chat direto com o prestador pra tirar dúvidas e combinar detalhes antes de fechar negócio.
+              </p>
+            </div>
+            <div>
+              <Lock size={22} className="text-accent" strokeWidth={1.75} />
+              <h3 className="mt-3 font-medium text-ink">Sua privacidade primeiro</h3>
+              <p className="mt-1 text-sm text-foreground-muted">
+                Telefone, e-mail e endereço só aparecem pro prestador depois que você decide seguir com a conversa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
