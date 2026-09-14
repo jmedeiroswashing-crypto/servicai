@@ -17,7 +17,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="ServiçAi" className="h-8 w-auto" />
+          <img src="/logo.png" alt="ServiçAi" className="h-9 w-auto sm:h-10" />
         </Link>
 
         <nav className="hidden items-center gap-8 text-[0.9rem] text-foreground-muted sm:flex">
