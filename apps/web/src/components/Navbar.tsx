@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
@@ -11,6 +11,7 @@ export function Navbar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">
@@ -40,6 +41,13 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileNavOpen((v) => !v)}
+            aria-label="Abrir menu"
+            className="flex items-center justify-center p-1.5 text-white sm:hidden"
+          >
+            {mobileNavOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
           {user ? (
             <>
             <NotificationBell />
@@ -149,6 +157,32 @@ export function Navbar() {
           )}
         </div>
       </div>
+
+      {mobileNavOpen && (
+        <nav className="flex flex-col border-t border-white/15 bg-ink px-4 py-3 text-sm text-white/80 sm:hidden">
+          <Link href="/buscar" onClick={() => setMobileNavOpen(false)} className="border-b border-white/10 py-3">
+            Buscar serviços
+          </Link>
+          <Link
+            href="/vagas-ultima-hora"
+            onClick={() => setMobileNavOpen(false)}
+            className="flex items-center gap-1.5 border-b border-white/10 py-3"
+          >
+            <Zap size={14} /> Vagas de última hora
+          </Link>
+          <Link href="/cadastro?tipo=PRESTADOR" onClick={() => setMobileNavOpen(false)} className="border-b border-white/10 py-3">
+            Anuncie seu serviço
+          </Link>
+          <Link href="/precos" onClick={() => setMobileNavOpen(false)} className="py-3">
+            Planos
+          </Link>
+          {!user && (
+            <Link href="/login" onClick={() => setMobileNavOpen(false)} className="border-t border-white/10 py-3">
+              Entrar
+            </Link>
+          )}
+        </nav>
+      )}
     </header>
   );
 }
