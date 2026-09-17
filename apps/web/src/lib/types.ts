@@ -121,6 +121,14 @@ export interface ProviderProfile {
   media?: MediaItem[];
   services?: ServiceListing[];
   reviews?: Review[];
+  respondsWithinHour?: boolean | null;
+}
+
+export interface PriceEstimate {
+  priceMin: number;
+  priceMax: number;
+  estimatedTime: string;
+  reasoning: string;
 }
 
 export interface MediaItem {

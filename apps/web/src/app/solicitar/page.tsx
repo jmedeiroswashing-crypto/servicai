@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
-import type { IntakeResult, RequestDraft } from '@/lib/types';
+import type { IntakeResult, PriceEstimate, RequestDraft } from '@/lib/types';
 
 interface IbgeMunicipio {
   id: number;
@@ -37,6 +37,48 @@ function formatBudget(min?: number, max?: number) {
   if (min == null && max == null) return undefined;
   if (min != null && max != null) return `R$ ${min} – R$ ${max}`;
   return `R$ ${min ?? max}`;
+}
+
+function usePriceEstimate(category?: string, description?: string, city?: string) {
+  return useQuery({
+    queryKey: ['estimate-price', category, city, description],
+    enabled: !!category && !!city,
+    staleTime: 1000 * 30,
+    queryFn: async () =>
+      (await api.post<PriceEstimate>('/requests/estimate-price', { category, description, city })).data,
+  });
+}
+
+/**
+ * Diferencial contra plataformas onde o cliente só descobre o preço depois de
+ * ser bombardeado de ligações pra negociar: aqui ele já vê uma referência de
+ * valor antes de qualquer prestador responder.
+ */
+function PriceEstimateBox({ category, description, city }: { category?: string; description?: string; city?: string }) {
+  const { data, isFetching } = usePriceEstimate(category, description, city);
+  if (!category || !city) return null;
+
+  return (
+    <div className="border border-accent/30 bg-accent/5 p-4">
+      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
+        <Sparkles size={12} /> Estimativa de preço
+      </p>
+      {isFetching && !data && <p className="mt-2 text-sm text-foreground-muted">Calculando...</p>}
+      {data && (
+        <>
+          <p className="mt-1 font-display text-xl text-ink">
+            R$ {data.priceMin} – R$ {data.priceMax}
+          </p>
+          <p className="mt-1 text-xs text-foreground-muted">
+            {data.estimatedTime} · {data.reasoning}
+          </p>
+          <p className="mt-2 text-[0.7rem] text-foreground-muted/70">
+            Estimativa da IA para te dar uma referência — o valor final é combinado com o profissional.
+          </p>
+        </>
+      )}
+    </div>
+  );
 }
 
 function DraftField({ label, value }: { label: string; value?: string }) {
@@ -157,6 +199,10 @@ function AiIntake() {
           <DraftField label="Data" value={draft.desiredDate ?? draft.desiredTime} />
         </dl>
 
+        <div className="mt-4">
+          <PriceEstimateBox category={draft.category} description={draft.description} city={draft.city} />
+        </div>
+
         {publishMutation.isError && <p className="mt-3 text-xs text-danger">Não foi possível publicar. Tente novamente.</p>}
 
         <button
@@ -274,6 +320,8 @@ function ManualForm() {
           </select>
         </div>
       </div>
+
+      <PriceEstimateBox category={category} description={description} city={city} />
 
       <div className="grid grid-cols-2 gap-3">
         <div>

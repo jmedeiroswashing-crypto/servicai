@@ -10,6 +10,7 @@ import { CreateRequestDto } from './dto/create-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
 import { AiIntakeDto } from './dto/ai-intake.dto.js';
+import { EstimatePriceDto } from './dto/estimate-price.dto.js';
 
 @Controller('requests')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -33,6 +34,17 @@ export class RequestsController {
   @Roles(Role.CLIENTE)
   aiIntake(@Body() dto: AiIntakeDto) {
     return this.aiService.parseServiceRequestIntake(dto.message, dto.draft ?? {});
+  }
+
+  /**
+   * Estimativa instantânea de preço para o cliente, mostrada antes de qualquer
+   * prestador responder — diferencial contra plataformas onde o cliente só
+   * descobre o preço depois de ser bombardeado de ligações para negociar.
+   */
+  @Post('estimate-price')
+  @Roles(Role.CLIENTE)
+  estimatePrice(@Body() dto: EstimatePriceDto) {
+    return this.aiService.suggestPriceRange({ category: dto.category, description: dto.description ?? '', city: dto.city });
   }
 
   @Get('mine')

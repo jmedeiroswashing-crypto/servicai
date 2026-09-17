@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart } from 'lucide-react';
+import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart, Timer } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -106,7 +106,14 @@ function ProviderProfileContent() {
               <Phone size={13} /> Entrar em contato · {formatPhone(provider.user.phone)}
             </a>
           )}
-          <ScoreBadge rating={provider.ratingAvg} scoreIA={provider.scoreIA} selo={provider.selo} />
+          <div className="flex flex-wrap items-center gap-2">
+            <ScoreBadge rating={provider.ratingAvg} scoreIA={provider.scoreIA} selo={provider.selo} />
+            {provider.respondsWithinHour && (
+              <span className="flex items-center gap-1 border border-success/40 bg-success/10 px-2 py-1 text-xs font-medium text-success">
+                <Timer size={12} /> Responde em até 1 hora
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

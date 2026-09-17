@@ -146,7 +146,42 @@ export class ProvidersService {
       .update({ where: { id }, data: { profileViews: { increment: 1 } } })
       .catch(() => undefined);
 
-    return provider;
+    const respondsWithinHour = await this.respondsWithinHour(id, provider.userId);
+
+    return { ...provider, respondsWithinHour };
+  }
+
+  /**
+   * Selo "Responde em até 1 hora" — calculado a partir do histórico real de
+   * mensagens (tempo entre a primeira mensagem do cliente em cada conversa e a
+   * primeira resposta do prestador), nunca um valor fixo/mockado. Sem histórico
+   * suficiente, retorna null e o selo simplesmente não aparece — não inventamos
+   * uma promessa que o prestador ainda não comprovou.
+   */
+  private async respondsWithinHour(providerId: string, providerUserId: string): Promise<boolean | null> {
+    const conversations = await this.prisma.conversation.findMany({
+      where: { providerId },
+      select: {
+        clientId: true,
+        messages: { orderBy: { createdAt: 'asc' }, select: { senderId: true, createdAt: true } },
+      },
+      take: 30,
+    });
+
+    const responseTimesMs: number[] = [];
+    for (const conv of conversations) {
+      const firstClientMsg = conv.messages.find((m) => m.senderId === conv.clientId);
+      if (!firstClientMsg) continue;
+      const firstProviderReply = conv.messages.find(
+        (m) => m.senderId === providerUserId && m.createdAt > firstClientMsg.createdAt,
+      );
+      if (!firstProviderReply) continue;
+      responseTimesMs.push(firstProviderReply.createdAt.getTime() - firstClientMsg.createdAt.getTime());
+    }
+
+    if (responseTimesMs.length === 0) return null;
+    const avgMs = responseTimesMs.reduce((sum, ms) => sum + ms, 0) / responseTimesMs.length;
+    return avgMs <= 60 * 60 * 1000;
   }
 
   async findByUserId(userId: string) {
