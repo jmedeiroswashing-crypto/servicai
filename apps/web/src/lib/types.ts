@@ -191,6 +191,21 @@ export interface Booking {
   client?: { name: string; avatarUrl?: string | null; phone?: string | null };
 }
 
+export interface EarningsMonth {
+  label: string;
+  total: number;
+  count: number;
+}
+
+export interface Earnings {
+  currentMonthTotal: number;
+  currentMonthCount: number;
+  totalAllTime: number;
+  totalServicesCompleted: number;
+  avgTicket: number;
+  months: EarningsMonth[];
+}
+
 export interface SearchIntent {
   category: string;
   keywords: string[];

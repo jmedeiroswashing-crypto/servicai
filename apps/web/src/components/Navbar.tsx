@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User, CalendarDays } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User, CalendarDays, Wallet } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
@@ -83,6 +83,13 @@ export function Navbar() {
                         className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                       >
                         <CalendarDays size={15} className="text-foreground-muted" /> Agenda
+                      </Link>
+                      <Link
+                        href="/painel/faturamento"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                      >
+                        <Wallet size={15} className="text-foreground-muted" /> Faturamento
                       </Link>
                       <Link
                         href="/painel/oportunidades"

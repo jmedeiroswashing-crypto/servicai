@@ -4,10 +4,10 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Sparkles, Crown, CalendarDays } from 'lucide-react';
+import { ArrowRight, Sparkles, Crown, CalendarDays, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
-import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
+import { UNLIMITED, type Booking, type Earnings, type ProviderProfile, type Subscription } from '@/lib/types';
 
 const STATUS_LABEL: Record<string, string> = {
   SOLICITADO: 'Solicitado',
@@ -45,6 +45,12 @@ export default function PainelPage() {
     queryFn: async () => (await api.get<Booking[]>('/bookings/provider')).data,
   });
 
+  const { data: earnings } = useQuery({
+    queryKey: ['bookings', 'earnings'],
+    enabled: !!token,
+    queryFn: async () => (await api.get<Earnings>('/bookings/earnings')).data,
+  });
+
   if (!provider) {
     return <div className="mx-auto max-w-5xl px-4 py-20 text-foreground-muted">Carregando painel...</div>;
   }
@@ -75,6 +81,22 @@ export default function PainelPage() {
           </div>
         </div>
         <ArrowRight size={16} />
+      </Link>
+
+      <Link
+        href="/painel/faturamento"
+        className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+      >
+        <div className="flex items-center gap-3">
+          <Wallet size={18} className="text-accent" />
+          <div>
+            <p className="font-medium text-ink">Faturamento</p>
+            <p className="text-sm text-foreground-muted">
+              {earnings ? `R$ ${earnings.currentMonthTotal.toFixed(2).replace('.', ',')} este mês` : 'Acompanhe seus ganhos'}
+            </p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-foreground-muted" />
       </Link>
 
       <Link
