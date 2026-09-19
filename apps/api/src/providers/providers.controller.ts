@@ -22,12 +22,14 @@ export class ProvidersController {
     @Query('category') category?: string,
     @Query('skip') skip?: string,
     @Query('take') take?: string,
+    @Query('availableNow') availableNow?: string,
   ) {
     return this.providersService.findAll({
       city,
       category,
       skip: skip ? Number(skip) : undefined,
       take: take ? Number(take) : undefined,
+      availableNow: availableNow === 'true',
     });
   }
 
@@ -55,6 +57,18 @@ export class ProvidersController {
   @Roles(Role.PRESTADOR)
   updateMe(@CurrentUser() user: AuthUser, @Body() dto: UpdateProviderDto) {
     return this.providersService.update(user.userId, dto);
+  }
+
+  /**
+   * Liga/desliga o indicador "Disponível agora" — janela curta (ver
+   * AVAILABILITY_WINDOW_HOURS), expira sozinha mesmo se o prestador esquecer
+   * de desligar.
+   */
+  @Patch('me/availability')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  setAvailability(@CurrentUser() user: AuthUser, @Body('available') available: boolean) {
+    return this.providersService.setAvailability(user.userId, !!available);
   }
 
   /**

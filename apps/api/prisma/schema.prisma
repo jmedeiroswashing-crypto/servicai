@@ -149,6 +149,8 @@ model ProviderProfile {
   boostExpiresAt DateTime?
   profileViews  Int      @default(0)
   searchAppearances Int  @default(0)
+  availableNow  Boolean  @default(false)
+  availableUntil DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -17,6 +17,11 @@ export function ProviderCard({ provider }: { provider: ProviderProfile }) {
             <Rocket size={10} /> Em destaque
           </span>
         )}
+        {provider.availableNow && (
+          <span className="absolute right-2 top-2 z-10 flex items-center gap-1 bg-success px-2 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-white">
+            <span className="h-1.5 w-1.5 bg-white" /> Disponível agora
+          </span>
+        )}
         <CategoryArt
           category={provider.categories?.[0] ?? provider.specialty}
           className="h-full w-full transition-transform duration-500 group-hover:scale-[1.03]"

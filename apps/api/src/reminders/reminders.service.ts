@@ -61,6 +61,24 @@ export class RemindersService {
     return sent;
   }
 
+  /**
+   * Limpeza em massa de "disponível agora" vencido — cada leitura já confere
+   * a expiração na hora (providers.service.ts), então isso é só housekeeping
+   * pra não deixar linhas com availableNow=true acumulando indefinidamente no
+   * banco depois que a janela passou.
+   */
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async expireAvailability() {
+    const result = await this.prisma.providerProfile.updateMany({
+      where: { availableNow: true, availableUntil: { lt: new Date() } },
+      data: { availableNow: false, availableUntil: null },
+    });
+    if (result.count > 0) {
+      this.logger.log(`Disponibilidade expirada limpa para ${result.count} prestador(es).`);
+    }
+    return result.count;
+  }
+
   private async checkCategory(category: string): Promise<number> {
     const intervalDays = RECURRING_INTERVALS_DAYS[category];
 

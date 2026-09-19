@@ -17,4 +17,13 @@ export class RemindersController {
     const sent = await this.remindersService.checkMaintenanceReminders();
     return { sent };
   }
+
+  /** Disparo manual da limpeza de disponibilidade vencida — normalmente roda sozinha a cada 10min. */
+  @Post('expire-availability')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async expireAvailability() {
+    const cleared = await this.remindersService.expireAvailability();
+    return { cleared };
+  }
 }

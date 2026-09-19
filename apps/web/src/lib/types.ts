@@ -130,6 +130,7 @@ export interface ProviderProfile {
   reviews?: Review[];
   reviewCount?: number;
   respondsWithinHour?: boolean | null;
+  availableNow?: boolean;
 }
 
 export interface PriceEstimate {

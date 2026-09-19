@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { Radio } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
 import { api } from '@/lib/api';
@@ -11,13 +12,14 @@ import type { ProviderProfile, SearchIntent } from '@/lib/types';
 function SearchResults() {
   const params = useSearchParams();
   const q = params.get('q') ?? '';
+  const [availableNow, setAvailableNow] = useState(false);
 
   const { data, isFetching } = useQuery({
-    queryKey: ['search', q],
+    queryKey: ['search', q, availableNow],
     enabled: q.length > 0,
     queryFn: async () => {
       const res = await api.get<{ intent: SearchIntent | null; providers: ProviderProfile[] }>('/search', {
-        params: { q },
+        params: { q, availableNow: availableNow || undefined },
       });
       return res.data;
     },
@@ -28,6 +30,15 @@ function SearchResults() {
       <div className="max-w-2xl">
         <SearchBar initialValue={q} large />
       </div>
+
+      <button
+        onClick={() => setAvailableNow((v) => !v)}
+        className={`mt-4 flex w-fit items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors ${
+          availableNow ? 'border-success bg-success/10 text-success' : 'border-border text-foreground-muted hover:border-ink'
+        }`}
+      >
+        <Radio size={12} /> Disponível agora
+      </button>
 
       {q && data?.intent && (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted">
@@ -44,7 +55,9 @@ function SearchResults() {
 
         {!isFetching && data && data.providers.length === 0 && (
           <p className="text-foreground-muted">
-            Nenhum profissional encontrado para &quot;{q}&quot; ainda. Tente outra busca.
+            {availableNow
+              ? 'Ninguém disponível agora para essa busca. Desative o filtro pra ver todos os profissionais.'
+              : `Nenhum profissional encontrado para "${q}" ainda. Tente outra busca.`}
           </p>
         )}
 

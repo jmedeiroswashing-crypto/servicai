@@ -3,11 +3,54 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Sparkles, Crown, CalendarDays, Wallet } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, Sparkles, Crown, CalendarDays, Wallet, Radio } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type Earnings, type ProviderProfile, type Subscription } from '@/lib/types';
+
+function AvailabilityToggle({ provider }: { provider: ProviderProfile }) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async (available: boolean) => (await api.patch('/providers/me/availability', { available })).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['providers', 'me'] }),
+  });
+
+  const isOn = provider.availableNow;
+
+  return (
+    <div
+      className={`mb-8 flex items-center justify-between border p-5 transition-colors ${
+        isOn ? 'border-success bg-success/5' : 'border-border'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="relative flex h-3 w-3">
+          {isOn && <span className="absolute inline-flex h-full w-full animate-ping bg-success/60" />}
+          <span className={`relative inline-flex h-3 w-3 ${isOn ? 'bg-success' : 'bg-foreground-muted/40'}`} />
+        </span>
+        <div>
+          <p className="flex items-center gap-1.5 font-medium text-ink">
+            <Radio size={15} className={isOn ? 'text-success' : 'text-foreground-muted'} />
+            {isOn ? 'Você está disponível agora' : 'Disponível agora'}
+          </p>
+          <p className="text-sm text-foreground-muted">
+            {isOn ? 'Clientes buscando urgência veem você em destaque. Desativa sozinho em 4h.' : 'Avise que pode atender um serviço hoje'}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={() => mutation.mutate(!isOn)}
+        disabled={mutation.isPending}
+        className={`shrink-0 border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+          isOn ? 'border-border text-foreground-muted hover:border-danger hover:text-danger' : 'border-ink bg-ink text-background hover:opacity-85'
+        }`}
+      >
+        {isOn ? 'Desativar' : 'Ativar'}
+      </button>
+    </div>
+  );
+}
 
 const STATUS_LABEL: Record<string, string> = {
   SOLICITADO: 'Solicitado',
@@ -66,6 +109,10 @@ export default function PainelPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="font-display text-3xl text-ink">Painel do vendedor</h1>
       <p className="mt-2 text-foreground-muted">Acompanhe seus resultados e solicitações de serviço.</p>
+
+      <div className="mt-8">
+        <AvailabilityToggle provider={provider} />
+      </div>
 
       <Link
         href="/painel/agenda"

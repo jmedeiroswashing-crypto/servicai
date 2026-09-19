@@ -11,6 +11,19 @@ const ACCEPTED_STATUSES: BookingStatus[] = [
   BookingStatus.CONCLUIDO,
 ];
 
+const AVAILABILITY_WINDOW_HOURS = 4;
+
+/**
+ * "Disponível agora" nunca é lido cru do banco: sempre passa por aqui, que
+ * confere se a janela já expirou. Isso garante que a informação mostrada é
+ * sempre real, mesmo entre uma execução e outra do job de limpeza — o
+ * prestador nunca aparece "disponível" horas depois de esquecer de desligar.
+ */
+export function withEffectiveAvailability<T extends { availableNow: boolean; availableUntil: Date | null }>(provider: T): T {
+  const isActive = provider.availableNow && !!provider.availableUntil && provider.availableUntil.getTime() > Date.now();
+  return { ...provider, availableNow: isActive };
+}
+
 type RankableCandidate = {
   id: string;
   plan: import('../generated/prisma/enums.js').Plan;
@@ -90,13 +103,14 @@ export class ProvidersService {
       .catch(() => undefined);
   }
 
-  async findAll(params: { city?: string; category?: string; skip?: number; take?: number }) {
-    const { city, category, skip = 0, take = 20 } = params;
+  async findAll(params: { city?: string; category?: string; skip?: number; take?: number; availableNow?: boolean }) {
+    const { city, category, skip = 0, take = 20, availableNow } = params;
     const candidates = await this.prisma.providerProfile.findMany({
       where: {
         user: { deletedAt: null },
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
+        ...(availableNow ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),
       },
       include: {
         user: { select: { name: true, avatarUrl: true, addressState: true } },
@@ -108,7 +122,7 @@ export class ProvidersService {
     });
 
     const withPlan = candidates.map((c) => ({
-      ...c,
+      ...withEffectiveAvailability(c),
       plan: c.subscription ? getEffectivePlan(c.subscription) : ('GRATIS' as const),
     }));
     const ranked = await this.rankCandidates(
@@ -156,7 +170,7 @@ export class ProvidersService {
 
     const respondsWithinHour = await this.respondsWithinHour(provider.id, provider.userId);
     const { _count, ...rest } = provider;
-    return { ...rest, reviewCount: _count.reviews, respondsWithinHour };
+    return { ...withEffectiveAvailability(rest), reviewCount: _count.reviews, respondsWithinHour };
   }
 
   async findOne(id: string) {
@@ -216,7 +230,23 @@ export class ProvidersService {
   async findByUserId(userId: string) {
     const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
     if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
-    return provider;
+    return withEffectiveAvailability(provider);
+  }
+
+  /**
+   * Liga/desliga "disponível agora" por uma janela de tempo curta (não fica
+   * disponível pra sempre por esquecimento) — o job periódico em
+   * RemindersService limpa em massa quem passou da janela, e toda leitura
+   * também confere a expiração na hora via withEffectiveAvailability.
+   */
+  async setAvailability(userId: string, available: boolean) {
+    const provider = await this.findByUserId(userId);
+    return this.prisma.providerProfile.update({
+      where: { id: provider.id },
+      data: available
+        ? { availableNow: true, availableUntil: new Date(Date.now() + AVAILABILITY_WINDOW_HOURS * 60 * 60 * 1000) }
+        : { availableNow: false, availableUntil: null },
+    });
   }
 
   async update(userId: string, dto: UpdateProviderDto) {

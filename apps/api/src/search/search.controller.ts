@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AiService } from '../ai/ai.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { ProvidersService } from '../providers/providers.service.js';
+import { ProvidersService, withEffectiveAvailability } from '../providers/providers.service.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 
 @Controller('search')
@@ -13,7 +13,7 @@ export class SearchController {
   ) {}
 
   @Get()
-  async search(@Query('q') query: string) {
+  async search(@Query('q') query: string, @Query('availableNow') availableNow?: string) {
     if (!query || query.trim().length === 0) {
       return { intent: null, providers: [] };
     }
@@ -22,12 +22,14 @@ export class SearchController {
 
     const candidates = await this.prisma.providerProfile.findMany({
       where: {
+        user: { deletedAt: null },
         OR: [
           { specialty: { contains: intent.category, mode: 'insensitive' } },
           { categories: { has: intent.category } },
           { specialty: { contains: query, mode: 'insensitive' } },
         ],
         ...(intent.location ? { city: { contains: intent.location, mode: 'insensitive' } } : {}),
+        ...(availableNow === 'true' ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),
       },
       include: {
         user: { select: { name: true, avatarUrl: true, addressState: true } },
@@ -39,7 +41,7 @@ export class SearchController {
     });
 
     const withPlan = candidates.map((c) => ({
-      ...c,
+      ...withEffectiveAvailability(c),
       plan: c.subscription ? getEffectivePlan(c.subscription) : ('GRATIS' as const),
     }));
     const ranked = await this.providersService.rankCandidates(

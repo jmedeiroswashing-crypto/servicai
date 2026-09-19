@@ -108,6 +108,11 @@ function ProviderProfileContent() {
           )}
           <div className="flex flex-wrap items-center gap-2">
             <ScoreBadge rating={provider.ratingAvg} scoreIA={provider.scoreIA} selo={provider.selo} />
+            {provider.availableNow && (
+              <span className="flex items-center gap-1.5 border border-success/40 bg-success/10 px-2 py-1 text-xs font-medium text-success">
+                <span className="h-1.5 w-1.5 bg-success" /> Disponível agora
+              </span>
+            )}
             {provider.respondsWithinHour && (
               <span className="flex items-center gap-1 border border-success/40 bg-success/10 px-2 py-1 text-xs font-medium text-success">
                 <Timer size={12} /> Responde em até 1 hora
