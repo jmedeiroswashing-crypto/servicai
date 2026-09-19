@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.decorator.js';
 import { UsersService } from './users.service.js';
@@ -17,5 +17,10 @@ export class UsersController {
   @Patch('me')
   updateMe(@CurrentUser() user: AuthUser, @Body() dto: UpdateUserDto) {
     return this.usersService.update(user.userId, dto);
+  }
+
+  @Delete('me')
+  deleteMe(@CurrentUser() user: AuthUser) {
+    return this.usersService.softDelete(user.userId);
   }
 }

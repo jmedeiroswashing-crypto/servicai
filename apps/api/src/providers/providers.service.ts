@@ -94,6 +94,7 @@ export class ProvidersService {
     const { city, category, skip = 0, take = 20 } = params;
     const candidates = await this.prisma.providerProfile.findMany({
       where: {
+        user: { deletedAt: null },
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
       },
@@ -119,7 +120,13 @@ export class ProvidersService {
     return page;
   }
 
-  async findOne(id: string) {
+  /**
+   * Consulta completa do perfil (usada tanto no perfil público quanto no "meu
+   * perfil"). Corrige um bug real: a busca de avaliações não incluía o cliente,
+   * então o nome de quem avaliou nunca aparecia (sempre caía no fallback
+   * "Cliente" no frontend).
+   */
+  private async loadRichProfile(id: string) {
     const provider = await this.prisma.providerProfile.findUnique({
       where: { id },
       include: {
@@ -137,18 +144,40 @@ export class ProvidersService {
         },
         media: { orderBy: { createdAt: 'desc' } },
         services: { where: { active: true } },
-        reviews: { orderBy: { createdAt: 'desc' }, take: 20 },
+        reviews: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: { client: { select: { name: true, avatarUrl: true } } },
+        },
+        _count: { select: { reviews: true } },
       },
     });
     if (!provider) throw new NotFoundException('Prestador não encontrado');
+
+    const respondsWithinHour = await this.respondsWithinHour(provider.id, provider.userId);
+    const { _count, ...rest } = provider;
+    return { ...rest, reviewCount: _count.reviews, respondsWithinHour };
+  }
+
+  async findOne(id: string) {
+    const provider = await this.loadRichProfile(id);
 
     this.prisma.providerProfile
       .update({ where: { id }, data: { profileViews: { increment: 1 } } })
       .catch(() => undefined);
 
-    const respondsWithinHour = await this.respondsWithinHour(id, provider.userId);
+    return provider;
+  }
 
-    return { ...provider, respondsWithinHour };
+  /**
+   * Versão do perfil completo para o próprio prestador ("meu perfil") — mesma
+   * consulta rica do perfil público, mas sem contar como visualização (não faz
+   * sentido inflar as próprias métricas de quem viu o perfil).
+   */
+  async findMyRichProfile(userId: string) {
+    const provider = await this.prisma.providerProfile.findUnique({ where: { userId }, select: { id: true } });
+    if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
+    return this.loadRichProfile(provider.id);
   }
 
   /**

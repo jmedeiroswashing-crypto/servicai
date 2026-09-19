@@ -38,6 +38,18 @@ export class ProvidersController {
     return this.providersService.findByUserId(user.userId);
   }
 
+  /**
+   * Versão completa do próprio perfil (mídia, serviços, avaliações, reputação)
+   * para a aba "Meu Perfil" — endpoint novo e separado de /providers/me para não
+   * mudar o formato de resposta que outras telas (painel, IA, edição) já usam.
+   */
+  @Get('me/full')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  findMeFull(@CurrentUser() user: AuthUser) {
+    return this.providersService.findMyRichProfile(user.userId);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
@@ -61,6 +61,13 @@ export function Navbar() {
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-52 border border-border bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)]">
+                  <Link
+                    href="/perfil"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                  >
+                    <User size={15} className="text-foreground-muted" /> Meu perfil
+                  </Link>
                   {user.role === 'PRESTADOR' && (
                     <>
                       <Link
@@ -89,7 +96,7 @@ export function Navbar() {
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                       >
-                        <UserCog size={15} className="text-foreground-muted" /> Editar perfil
+                        <UserCog size={15} className="text-foreground-muted" /> Dados profissionais
                       </Link>
                       <Link
                         href="/painel/plano"

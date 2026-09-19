@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Send, Sparkles, FileText } from 'lucide-react';
+import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
-import type { ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
+import type { MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
 
 function DraftField({ label, value }: { label: string; value?: string }) {
   return (
@@ -265,11 +265,227 @@ function ManualProfileForm({ provider }: { provider: ProviderProfile }) {
   );
 }
 
+const MEDIA_TYPE_LABEL: Record<string, string> = {
+  photo: 'Foto',
+  video: 'Vídeo',
+  before_after: 'Antes e depois',
+};
+
+function AddPortfolioItemForm({
+  providerId,
+  services,
+  onAdded,
+}: {
+  providerId: string;
+  services: ProviderProfile['services'];
+  onAdded: () => void;
+}) {
+  const [type, setType] = useState<'photo' | 'video' | 'before_after'>('photo');
+  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [caption, setCaption] = useState('');
+  const [serviceId, setServiceId] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () =>
+      (
+        await api.post('/media', {
+          type,
+          url,
+          title: title || undefined,
+          caption: caption || undefined,
+          serviceId: serviceId || undefined,
+        })
+      ).data,
+    onSuccess: () => {
+      setUrl('');
+      setTitle('');
+      setCaption('');
+      setServiceId('');
+      onAdded();
+    },
+  });
+
+  const inputClass =
+    'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
+
+  return (
+    <div className="border border-border p-5">
+      <h3 className="flex items-center gap-1.5 font-medium text-ink">
+        <Images size={15} className="text-accent" /> Adicionar ao portfólio
+      </h3>
+      <div className="mt-4 space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <select value={type} onChange={(e) => setType(e.target.value as typeof type)} className={inputClass}>
+            <option value="photo">Foto</option>
+            <option value="video">Vídeo</option>
+            <option value="before_after">Antes e depois</option>
+          </select>
+          {!!services?.length && (
+            <select value={serviceId} onChange={(e) => setServiceId(e.target.value)} className={inputClass}>
+              <option value="">Sem serviço associado</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <input value={url} onChange={(e) => setUrl(e.target.value)} className={inputClass} placeholder="URL da imagem/vídeo" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="Título do trabalho (opcional)" />
+        <textarea
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          rows={2}
+          className={inputClass}
+          placeholder="Descrição do trabalho (opcional)"
+        />
+        {mutation.isError && (
+          <p className="text-xs text-danger">
+            {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+              'Não foi possível adicionar. Tente novamente.'}
+          </p>
+        )}
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={!url.trim() || mutation.isPending}
+          className="w-full bg-ink py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-40"
+        >
+          {mutation.isPending ? 'Adicionando...' : 'Adicionar item'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioItemCard({ item, onChanged }: { item: MediaItem; onChanged: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(item.title ?? '');
+  const [caption, setCaption] = useState(item.caption ?? '');
+
+  const updateMutation = useMutation({
+    mutationFn: async () => (await api.patch(`/media/${item.id}`, { title: title || undefined, caption: caption || undefined })).data,
+    onSuccess: () => {
+      setEditing(false);
+      onChanged();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => api.delete(`/media/${item.id}`),
+    onSuccess: onChanged,
+  });
+
+  return (
+    <div className="border border-border">
+      <div className="aspect-video w-full overflow-hidden bg-surface-muted">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.url}
+          alt={item.title ?? item.caption ?? ''}
+          className="h-full w-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+      <div className="p-3">
+        <span className="text-[0.65rem] font-medium uppercase tracking-wide text-foreground-muted">
+          {MEDIA_TYPE_LABEL[item.type] ?? item.type}
+        </span>
+        {editing ? (
+          <div className="mt-2 space-y-2">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Título"
+              className="w-full border border-border bg-transparent px-2 py-1.5 text-sm outline-none focus:border-ink"
+            />
+            <textarea
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="Descrição"
+              rows={2}
+              className="w-full border border-border bg-transparent px-2 py-1.5 text-sm outline-none focus:border-ink"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => updateMutation.mutate()}
+                disabled={updateMutation.isPending}
+                className="flex items-center gap-1 bg-ink px-2.5 py-1.5 text-xs font-medium text-background hover:opacity-85"
+              >
+                <Check size={12} /> Salvar
+              </button>
+              <button onClick={() => setEditing(false)} className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-foreground-muted hover:text-ink">
+                <X size={12} /> Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="mt-1 text-sm font-medium text-ink">{item.title || 'Sem título'}</p>
+            {item.caption && <p className="mt-0.5 text-xs text-foreground-muted">{item.caption}</p>}
+            <div className="mt-2 flex gap-3">
+              <button onClick={() => setEditing(true)} className="flex items-center gap-1 text-xs text-foreground-muted hover:text-ink">
+                <Pencil size={12} /> Editar
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate()}
+                disabled={deleteMutation.isPending}
+                className="flex items-center gap-1 text-xs text-foreground-muted hover:text-danger"
+              >
+                <Trash2 size={12} /> Remover
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PortfolioManager() {
+  const queryClient = useQueryClient();
+  const { data: provider } = useQuery({
+    queryKey: ['providers', 'me', 'full'],
+    queryFn: async () => (await api.get<ProviderProfile>('/providers/me/full')).data,
+  });
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ['providers', 'me', 'full'] });
+  }
+
+  if (!provider) {
+    return <p className="mt-10 text-foreground-muted">Carregando portfólio...</p>;
+  }
+
+  return (
+    <div className="mt-10 grid gap-8 sm:grid-cols-[1fr_1.3fr]">
+      <AddPortfolioItemForm providerId={provider.id} services={provider.services} onAdded={refresh} />
+
+      <div>
+        <h3 className="mb-3 text-sm font-medium text-foreground-muted">Seu portfólio</h3>
+        {(!provider.media || provider.media.length === 0) && (
+          <p className="text-sm text-foreground-muted">
+            Nenhum trabalho no portfólio ainda. Adicione fotos dos seus melhores serviços para atrair mais clientes.
+          </p>
+        )}
+        <div className="grid grid-cols-2 gap-4">
+          {provider.media?.map((item) => (
+            <PortfolioItemCard key={item.id} item={item} onChanged={refresh} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PerfilPrestadorPage() {
   const { user, token } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'ia' | 'formulario'>('formulario');
+  const [mode, setMode] = useState<'ia' | 'formulario' | 'portfolio'>('formulario');
 
   useEffect(() => {
     if (!token) router.push('/login');
@@ -310,13 +526,21 @@ export default function PerfilPrestadorPage() {
         >
           <FileText size={14} /> Formulário manual
         </button>
+        <button
+          onClick={() => setMode('portfolio')}
+          className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 transition-colors ${
+            mode === 'portfolio' ? 'border-ink font-medium text-ink' : 'border-transparent text-foreground-muted'
+          }`}
+        >
+          <Images size={14} /> Portfólio
+        </button>
       </div>
 
-      {mode === 'ia' ? (
+      {mode === 'ia' && (
         <AiProfileIntake onSaved={() => queryClient.invalidateQueries({ queryKey: ['providers', 'me'] })} />
-      ) : (
-        <ManualProfileForm provider={provider} />
       )}
+      {mode === 'formulario' && <ManualProfileForm provider={provider} />}
+      {mode === 'portfolio' && <PortfolioManager />}
     </div>
   );
 }

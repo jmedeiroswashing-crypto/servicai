@@ -9,6 +9,10 @@ export class CreateMediaDto {
 
   @IsOptional()
   @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
   caption?: string;
 
   @IsOptional()
@@ -18,4 +22,8 @@ export class CreateMediaDto {
   @IsOptional()
   @IsString()
   afterUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  serviceId?: string;
 }

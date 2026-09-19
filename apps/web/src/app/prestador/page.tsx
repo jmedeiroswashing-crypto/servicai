@@ -165,12 +165,23 @@ function ProviderProfileContent() {
 
       {provider.media && provider.media.length > 0 && (
         <div className="mt-10">
-          <h2 className="font-display mb-4 text-xl text-ink">Galeria</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <h2 className="font-display mb-4 text-xl text-ink">Portfólio</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {provider.media.map((m) => (
-              <div key={m.id} className="aspect-square overflow-hidden bg-surface-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.url} alt={m.caption ?? ''} className="h-full w-full object-cover" />
+              <div key={m.id}>
+                <div className="aspect-square overflow-hidden bg-surface-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={m.url}
+                    alt={m.title ?? m.caption ?? ''}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+                {m.title && <p className="mt-1.5 text-sm font-medium text-ink">{m.title}</p>}
+                {m.caption && <p className="text-xs text-foreground-muted">{m.caption}</p>}
               </div>
             ))}
           </div>

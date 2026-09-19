@@ -81,15 +81,22 @@ export interface AuthUser {
   name: string;
 }
 
+export type PersonType = 'PF' | 'PJ';
+
 export interface UserProfile {
   id: string;
   email: string;
   name: string;
   phone?: string | null;
   city?: string | null;
+  addressState?: string | null;
+  bio?: string | null;
   role: Role;
   avatarUrl?: string | null;
   verified: boolean;
+  personType?: PersonType | null;
+  razaoSocial?: string | null;
+  nomeFantasia?: string | null;
   createdAt: string;
 }
 
@@ -121,6 +128,7 @@ export interface ProviderProfile {
   media?: MediaItem[];
   services?: ServiceListing[];
   reviews?: Review[];
+  reviewCount?: number;
   respondsWithinHour?: boolean | null;
 }
 
@@ -135,9 +143,11 @@ export interface MediaItem {
   id: string;
   type: string;
   url: string;
+  title?: string | null;
   caption?: string | null;
   beforeUrl?: string | null;
   afterUrl?: string | null;
+  serviceId?: string | null;
   createdAt: string;
 }
 
