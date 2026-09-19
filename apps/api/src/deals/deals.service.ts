@@ -146,6 +146,7 @@ export class DealsService {
           scheduledAt: deal.scheduledAt,
           notes: `Vaga de última hora: ${deal.title}`,
           priceQuoted: deal.dealPrice,
+          category: deal.category,
         },
       });
 

@@ -20,7 +20,23 @@ export class BookingsService {
     private providersService: ProvidersService,
   ) {}
 
-  create(clientId: string, dto: CreateBookingDto) {
+  /**
+   * Categoria é salva na reserva (não só no serviço) para dar base aos
+   * lembretes de manutenção recorrente — sem isso não teria como saber que
+   * tipo de serviço foi feito quando o cliente contrata direto, sem
+   * selecionar um Service específico.
+   */
+  private async resolveCategory(providerId: string, serviceId?: string) {
+    if (serviceId) {
+      const service = await this.prisma.service.findUnique({ where: { id: serviceId } });
+      if (service) return service.category;
+    }
+    const provider = await this.prisma.providerProfile.findUnique({ where: { id: providerId } });
+    return provider?.specialty;
+  }
+
+  async create(clientId: string, dto: CreateBookingDto) {
+    const category = await this.resolveCategory(dto.providerId, dto.serviceId);
     return this.prisma.booking.create({
       data: {
         clientId,
@@ -29,6 +45,7 @@ export class BookingsService {
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
         address: dto.address,
         notes: dto.notes,
+        category,
       },
       include: { service: true, provider: { include: { user: { select: { name: true } } } } },
     });

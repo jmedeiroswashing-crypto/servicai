@@ -136,6 +136,7 @@ export class RequestsService {
           status: 'ACEITO',
           priceQuoted: proposal.price,
           notes: notesParts.join(' — '),
+          category: request.category,
         },
       }),
       this.prisma.proposal.update({ where: { id: proposalId }, data: { status: 'ACEITA' } }),

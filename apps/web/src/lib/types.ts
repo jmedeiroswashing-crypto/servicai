@@ -279,7 +279,8 @@ export type NotificationType =
   | 'NOVA_OPORTUNIDADE'
   | 'PLANO_EXPIRANDO'
   | 'PLANO_EXPIRADO'
-  | 'VAGA_RESERVADA';
+  | 'VAGA_RESERVADA'
+  | 'LEMBRETE_MANUTENCAO';
 
 export interface NotificationItem {
   id: string;
