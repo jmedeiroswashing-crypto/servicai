@@ -67,6 +67,7 @@ enum NotificationType {
   PLANO_EXPIRADO
   VAGA_RESERVADA
   LEMBRETE_MANUTENCAO
+  LEMBRETE_AVALIACAO
 }
 
 enum DealStatus {
@@ -264,6 +265,7 @@ model Booking {
   notes         String?
   priceQuoted   Float?
   category      String?
+  reviewReminderSentAt DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

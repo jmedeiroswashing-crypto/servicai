@@ -21,6 +21,7 @@ import {
   FileText,
   Bell,
   BellOff,
+  CalendarClock,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -439,6 +440,18 @@ export default function MeuPerfilPage() {
               <div>
                 <p className="font-medium text-ink">Minhas solicitações</p>
                 <p className="text-sm text-foreground-muted">Veja o histórico de serviços que você solicitou</p>
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/minhas-reservas"
+            className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+          >
+            <div className="flex items-center gap-3">
+              <CalendarClock size={18} className="text-foreground-muted" />
+              <div>
+                <p className="font-medium text-ink">Minhas reservas</p>
+                <p className="text-sm text-foreground-muted">Acompanhe status e avalie serviços concluídos</p>
               </div>
             </div>
           </Link>

@@ -41,6 +41,7 @@ const REMINDER_LABEL: Record<string, string> = {
 };
 
 const REMINDER_COOLDOWN_HOURS = 30 * 24;
+const REVIEW_REMINDER_DELAY_DAYS = 2;
 
 @Injectable()
 export class RemindersService {
@@ -77,6 +78,44 @@ export class RemindersService {
       this.logger.log(`Disponibilidade expirada limpa para ${result.count} prestador(es).`);
     }
     return result.count;
+  }
+
+  /**
+   * Avaliação hoje é 100% passiva — depende do cliente lembrar sozinho de
+   * avaliar. Um único lembrete por reserva (nunca mais que isso, controlado
+   * por reviewReminderSentAt na própria reserva, não por uma janela de tempo
+   * genérica) evita virar spam pra quem decidiu não avaliar.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_10AM)
+  async checkReviewReminders() {
+    const cutoff = new Date(Date.now() - REVIEW_REMINDER_DELAY_DAYS * 24 * 60 * 60 * 1000);
+
+    const pending = await this.prisma.booking.findMany({
+      where: {
+        status: BookingStatus.CONCLUIDO,
+        updatedAt: { lte: cutoff },
+        reviewReminderSentAt: null,
+        review: null,
+      },
+      include: { provider: { include: { user: { select: { name: true } } } } },
+    });
+
+    for (const booking of pending) {
+      await this.notificationsService.create({
+        userId: booking.clientId,
+        type: NotificationType.LEMBRETE_AVALIACAO,
+        title: 'Como foi seu serviço?',
+        body: `Avalie ${booking.provider.user.name} e ajude outros clientes a escolher bem.`,
+        link: '/minhas-reservas',
+      });
+      await this.prisma.booking.update({
+        where: { id: booking.id },
+        data: { reviewReminderSentAt: new Date() },
+      });
+    }
+
+    this.logger.log(`Lembretes de avaliação: ${pending.length} enviado(s).`);
+    return pending.length;
   }
 
   private async checkCategory(category: string): Promise<number> {

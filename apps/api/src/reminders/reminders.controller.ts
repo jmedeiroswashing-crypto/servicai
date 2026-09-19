@@ -26,4 +26,13 @@ export class RemindersController {
     const cleared = await this.remindersService.expireAvailability();
     return { cleared };
   }
+
+  /** Disparo manual dos lembretes de avaliação — a execução automática é diária via cron. */
+  @Post('run-reviews')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async runReviews() {
+    const sent = await this.remindersService.checkReviewReminders();
+    return { sent };
+  }
 }

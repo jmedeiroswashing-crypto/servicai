@@ -190,6 +190,7 @@ export interface Booking {
   provider?: ProviderProfile;
   service?: ServiceListing | null;
   client?: { name: string; avatarUrl?: string | null; phone?: string | null };
+  review?: Review | null;
 }
 
 export interface EarningsMonth {
@@ -281,7 +282,8 @@ export type NotificationType =
   | 'PLANO_EXPIRANDO'
   | 'PLANO_EXPIRADO'
   | 'VAGA_RESERVADA'
-  | 'LEMBRETE_MANUTENCAO';
+  | 'LEMBRETE_MANUTENCAO'
+  | 'LEMBRETE_AVALIACAO';
 
 export interface NotificationItem {
   id: string;

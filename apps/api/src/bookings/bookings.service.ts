@@ -54,7 +54,11 @@ export class BookingsService {
   findMine(clientId: string) {
     return this.prisma.booking.findMany({
       where: { clientId },
-      include: { provider: { include: { user: { select: { name: true, avatarUrl: true } } } }, service: true },
+      include: {
+        provider: { include: { user: { select: { name: true, avatarUrl: true } } } },
+        service: true,
+        review: true,
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
