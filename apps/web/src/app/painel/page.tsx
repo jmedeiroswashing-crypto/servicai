@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Sparkles, Crown } from 'lucide-react';
+import { ArrowRight, Sparkles, Crown, CalendarDays } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type ProviderProfile, type Subscription } from '@/lib/types';
@@ -62,17 +62,33 @@ export default function PainelPage() {
       <p className="mt-2 text-foreground-muted">Acompanhe seus resultados e solicitações de serviço.</p>
 
       <Link
-        href="/painel/oportunidades"
+        href="/painel/agenda"
         className="mt-8 flex items-center justify-between border border-ink bg-ink p-5 text-background transition-opacity hover:opacity-90"
       >
         <div className="flex items-center gap-3">
-          <Sparkles size={18} />
+          <CalendarDays size={18} />
           <div>
-            <p className="font-medium">Oportunidades</p>
-            <p className="text-sm text-background/70">Veja clientes procurando pelos serviços que você oferece</p>
+            <p className="font-medium">Agenda</p>
+            <p className="text-sm text-background/70">
+              {bookings ? `${bookings.filter((b) => ['SOLICITADO', 'ACEITO', 'EM_ANDAMENTO'].includes(b.status)).length} compromisso(s) ativo(s)` : 'Reservas, vagas e propostas aceitas'}
+            </p>
           </div>
         </div>
         <ArrowRight size={16} />
+      </Link>
+
+      <Link
+        href="/painel/oportunidades"
+        className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+      >
+        <div className="flex items-center gap-3">
+          <Sparkles size={18} className="text-accent" />
+          <div>
+            <p className="font-medium text-ink">Oportunidades</p>
+            <p className="text-sm text-foreground-muted">Veja clientes procurando pelos serviços que você oferece</p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-foreground-muted" />
       </Link>
 
       <Link
@@ -124,10 +140,15 @@ export default function PainelPage() {
         ))}
       </div>
 
-      <h2 className="mt-14 mb-4 font-display text-xl text-ink">Solicitações recentes</h2>
+      <div className="mt-14 mb-4 flex items-center justify-between">
+        <h2 className="font-display text-xl text-ink">Solicitações recentes</h2>
+        <Link href="/painel/agenda" className="flex items-center gap-1 text-sm text-accent hover:underline">
+          Ver agenda completa <ArrowRight size={13} />
+        </Link>
+      </div>
       <div className="divide-y divide-border border-t border-border">
         {bookings && bookings.length === 0 && <p className="py-6 text-foreground-muted">Nenhuma solicitação ainda.</p>}
-        {bookings?.map((b) => (
+        {bookings?.slice(0, 5).map((b) => (
           <div key={b.id} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium text-ink">{b.client?.name ?? 'Cliente'}</p>

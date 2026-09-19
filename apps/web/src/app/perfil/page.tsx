@@ -19,15 +19,69 @@ import {
   Trash2,
   AlertTriangle,
   FileText,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { isPushSupported, getCurrentPushSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import type { ProviderProfile, UserProfile } from '@/lib/types';
 
 function roleLabel(user: UserProfile) {
   if (user.role === 'ADMIN') return 'Administrador';
   if (user.role === 'CLIENTE') return 'Cliente';
   return user.personType === 'PJ' ? 'Empresa' : 'Prestador de serviço';
+}
+
+function PushNotificationToggle() {
+  const [supported, setSupported] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setSupported(isPushSupported());
+    getCurrentPushSubscription().then((sub) => setSubscribed(!!sub));
+  }, []);
+
+  async function toggle() {
+    setLoading(true);
+    setError('');
+    try {
+      if (subscribed) {
+        await unsubscribeFromPush();
+        setSubscribed(false);
+      } else {
+        await subscribeToPush();
+        setSubscribed(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível ativar as notificações.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!supported) {
+    return (
+      <div className="flex items-center gap-2.5 border-b border-border py-3 text-sm text-foreground-muted/60">
+        <BellOff size={15} /> Notificações push não são suportadas neste navegador
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-b border-border py-3">
+      <button onClick={toggle} disabled={loading} className="flex w-full items-center justify-between text-sm text-ink disabled:opacity-50">
+        <span className="flex items-center gap-2.5">
+          {subscribed ? <Bell size={15} className="text-accent" /> : <BellOff size={15} className="text-foreground-muted" />}
+          Notificações push {subscribed ? 'ativadas' : 'desativadas'}
+        </span>
+        <span className="text-xs text-accent hover:underline">{loading ? '...' : subscribed ? 'Desativar' : 'Ativar'}</span>
+      </button>
+      {error && <p className="mt-1.5 text-xs text-danger">{error}</p>}
+    </div>
+  );
 }
 
 function ChangePasswordForm() {
@@ -395,6 +449,7 @@ export default function MeuPerfilPage() {
       <div className="mt-10">
         <h2 className="mb-3 font-display text-xl text-ink">Configurações</h2>
         <div className="divide-y divide-border border border-border px-5">
+          <PushNotificationToggle />
           <ChangePasswordForm />
           <div className="flex gap-4 py-1 text-xs text-foreground-muted">
             <Link href="/privacidade" className="hover:text-ink hover:underline">

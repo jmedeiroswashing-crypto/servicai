@@ -104,6 +104,63 @@ export class RequestsService {
   }
 
   /**
+   * Aceitar uma proposta é o que faltava para fechar o ciclo do mural de
+   * oportunidades: sem isso, "proposta aceita" nunca virava um compromisso de
+   * verdade em lugar nenhum do sistema. Cria uma reserva (Booking) real,
+   * fecha a solicitação e recusa as demais propostas — só um prestador é
+   * contratado por solicitação. `availableAt`/`deadline` da proposta são
+   * texto livre (ex: "amanhã de manhã"), não uma data — por isso viram
+   * observação da reserva em vez de um scheduledAt inventado.
+   */
+  async acceptProposal(clientId: string, requestId: string, proposalId: string) {
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
+    if (request.status !== RequestStatus.ABERTA) {
+      throw new BadRequestException('Esta solicitação já foi fechada');
+    }
+
+    const proposal = await this.prisma.proposal.findUnique({ where: { id: proposalId } });
+    if (!proposal || proposal.requestId !== requestId) throw new NotFoundException('Proposta não encontrada');
+    if (proposal.status !== 'ENVIADA') throw new BadRequestException('Esta proposta não está mais disponível');
+
+    const notesParts = [request.title];
+    if (proposal.availableAt) notesParts.push(`Disponibilidade combinada: ${proposal.availableAt}`);
+    if (proposal.deadline) notesParts.push(`Prazo combinado: ${proposal.deadline}`);
+
+    const [booking] = await this.prisma.$transaction([
+      this.prisma.booking.create({
+        data: {
+          clientId,
+          providerId: proposal.providerId,
+          status: 'ACEITO',
+          priceQuoted: proposal.price,
+          notes: notesParts.join(' — '),
+        },
+      }),
+      this.prisma.proposal.update({ where: { id: proposalId }, data: { status: 'ACEITA' } }),
+      this.prisma.proposal.updateMany({
+        where: { requestId, id: { not: proposalId } },
+        data: { status: 'RECUSADA' },
+      }),
+      this.prisma.serviceRequest.update({ where: { id: requestId }, data: { status: RequestStatus.FECHADA } }),
+    ]);
+
+    const provider = await this.prisma.providerProfile.findUnique({ where: { id: proposal.providerId } });
+    if (provider) {
+      await this.notificationsService.create({
+        userId: provider.userId,
+        type: NotificationType.PROPOSTA_ACEITA,
+        title: `Sua proposta para "${request.title}" foi aceita!`,
+        body: `O cliente aceitou sua proposta de R$ ${proposal.price.toFixed(2).replace('.', ',')}. Confira na sua agenda.`,
+        link: '/painel/agenda',
+      });
+    }
+
+    return booking;
+  }
+
+  /**
    * Feed de oportunidades do prestador. Por privacidade, NUNCA inclui dados
    * pessoais do cliente (nome, telefone, e-mail, endereço exato) — apenas o
    * necessário para o prestador avaliar a oportunidade.

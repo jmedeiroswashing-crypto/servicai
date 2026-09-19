@@ -76,4 +76,14 @@ export class RequestsController {
   createProposal(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: CreateProposalDto) {
     return this.requestsService.createProposal(user.userId, id, dto);
   }
+
+  @Post(':id/proposals/:proposalId/accept')
+  @Roles(Role.CLIENTE)
+  acceptProposal(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('proposalId') proposalId: string,
+  ) {
+    return this.requestsService.acceptProposal(user.userId, id, proposalId);
+  }
 }

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { MessageCircle, Star, Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { MessageCircle, Star, Plus, Check } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { Proposal, ServiceRequestItem } from '@/lib/types';
@@ -14,8 +14,14 @@ function formatMoney(v?: number | null) {
   return `R$ ${v.toFixed(2).replace('.', ',')}`;
 }
 
-function ProposalsList({ requestId }: { requestId: string }) {
+const PROPOSAL_STATUS_LABEL: Record<string, string> = {
+  ACEITA: 'Aceita',
+  RECUSADA: 'Não selecionada',
+};
+
+function ProposalsList({ requestId, requestOpen }: { requestId: string; requestOpen: boolean }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: proposals } = useQuery({
     queryKey: ['requests', requestId, 'proposals'],
     queryFn: async () => (await api.get<Proposal[]>(`/requests/${requestId}/proposals`)).data,
@@ -24,6 +30,14 @@ function ProposalsList({ requestId }: { requestId: string }) {
   const chatMutation = useMutation({
     mutationFn: async (providerId: string) => (await api.post('/chat/conversations', { providerId })).data,
     onSuccess: (conversation) => router.push(`/mensagens?c=${conversation.id}`),
+  });
+
+  const acceptMutation = useMutation({
+    mutationFn: async (proposalId: string) => (await api.post(`/requests/${requestId}/proposals/${proposalId}/accept`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['requests', requestId, 'proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['requests', 'mine'] });
+    },
   });
 
   if (!proposals || proposals.length === 0) {
@@ -42,6 +56,11 @@ function ProposalsList({ requestId }: { requestId: string }) {
                   <Star size={11} className="fill-accent text-accent" /> {p.provider.ratingAvg.toFixed(1)}
                 </span>
               )}
+              {p.status !== 'ENVIADA' && (
+                <span className={`text-xs font-medium ${p.status === 'ACEITA' ? 'text-success' : 'text-foreground-muted'}`}>
+                  {PROPOSAL_STATUS_LABEL[p.status]}
+                </span>
+              )}
             </div>
             <p className="mt-1 text-sm text-foreground-muted">{p.message}</p>
             <p className="mt-1 text-xs text-foreground-muted">
@@ -50,12 +69,23 @@ function ProposalsList({ requestId }: { requestId: string }) {
               {p.availableAt ? ` · Disponível: ${p.availableAt}` : ''}
             </p>
           </div>
-          <button
-            onClick={() => p.provider && chatMutation.mutate(p.provider.id)}
-            className="flex shrink-0 items-center gap-1.5 border border-border px-3.5 py-2 text-xs font-medium hover:border-ink"
-          >
-            <MessageCircle size={13} /> Conversar
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={() => p.provider && chatMutation.mutate(p.provider.id)}
+              className="flex items-center gap-1.5 border border-border px-3.5 py-2 text-xs font-medium hover:border-ink"
+            >
+              <MessageCircle size={13} /> Conversar
+            </button>
+            {requestOpen && p.status === 'ENVIADA' && (
+              <button
+                onClick={() => acceptMutation.mutate(p.id)}
+                disabled={acceptMutation.isPending}
+                className="flex items-center gap-1.5 bg-ink px-3.5 py-2 text-xs font-medium text-background hover:opacity-85 disabled:opacity-50"
+              >
+                <Check size={13} /> Aceitar
+              </button>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -111,11 +141,16 @@ export default function MinhasSolicitacoesPage() {
                   {r.state ? ` - ${r.state}` : ''}
                 </p>
               </div>
-              <span className="shrink-0 border border-border px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">
-                {r.proposalsCount} proposta{r.proposalsCount === 1 ? '' : 's'}
-              </span>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span className="border border-border px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">
+                  {r.proposalsCount} proposta{r.proposalsCount === 1 ? '' : 's'}
+                </span>
+                {r.status === 'FECHADA' && (
+                  <span className="text-xs font-medium text-success">Contratado</span>
+                )}
+              </div>
             </button>
-            {expanded === r.id && <ProposalsList requestId={r.id} />}
+            {expanded === r.id && <ProposalsList requestId={r.id} requestOpen={r.status !== 'FECHADA'} />}
           </div>
         ))}
       </div>

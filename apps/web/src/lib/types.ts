@@ -184,6 +184,7 @@ export interface Booking {
   scheduledAt?: string | null;
   address?: string | null;
   notes?: string | null;
+  priceQuoted?: number | null;
   createdAt: string;
   provider?: ProviderProfile;
   service?: ServiceListing | null;
