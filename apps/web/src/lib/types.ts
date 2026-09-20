@@ -367,3 +367,43 @@ export interface ProviderIntakeResult {
   assistantReply: string;
   readyToSave: boolean;
 }
+
+export type ProductStatus = 'DISPONIVEL' | 'RESERVADO' | 'VENDIDO';
+export type ProductCondition = 'NOVO' | 'USADO';
+
+export interface Product {
+  id: string;
+  sellerId: string;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  condition: ProductCondition;
+  city: string;
+  state?: string | null;
+  status: ProductStatus;
+  photoUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+  seller?: { name: string; avatarUrl?: string | null; verified?: boolean; city?: string };
+}
+
+export interface MarketplaceMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface MarketplaceConversation {
+  id: string;
+  productId: string;
+  buyerId: string;
+  sellerId: string;
+  createdAt: string;
+  product?: { id: string; title: string; price: number; photoUrls: string[]; status: ProductStatus };
+  buyer?: { name: string; avatarUrl?: string | null };
+  seller?: { name: string; avatarUrl?: string | null };
+  messages?: MarketplaceMessage[];
+}

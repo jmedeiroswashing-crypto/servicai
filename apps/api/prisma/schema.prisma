@@ -83,6 +83,17 @@ enum ProposalStatus {
   RECUSADA
 }
 
+enum ProductStatus {
+  DISPONIVEL
+  RESERVADO
+  VENDIDO
+}
+
+enum ProductCondition {
+  NOVO
+  USADO
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -117,6 +128,12 @@ model User {
   notifications   Notification[]
   dealsClaimed    LastMinuteDeal[] @relation("DealsClaimedByClient")
   pushSubscriptions PushSubscription[]
+
+  productsListed          Product[]                @relation("ProductsBySeller")
+  productFavorites        ProductFavorite[]
+  marketplaceConvsAsBuyer  MarketplaceConversation[] @relation("MarketplaceConversationsAsBuyer")
+  marketplaceConvsAsSeller MarketplaceConversation[] @relation("MarketplaceConversationsAsSeller")
+  marketplaceMessagesSent  MarketplaceMessage[]      @relation("MarketplaceMessagesBySender")
 }
 
 model PushSubscription {
@@ -394,4 +411,71 @@ model LastMinuteDeal {
   updatedAt     DateTime @updatedAt
 
   @@index([status, scheduledAt])
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  sellerId      String
+  seller        User     @relation("ProductsBySeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  price         Float
+  category      String
+  condition     ProductCondition @default(USADO)
+  city          String
+  state         String?
+  status        ProductStatus    @default(DISPONIVEL)
+  photoUrls     String[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  favoritedBy   ProductFavorite[]
+  conversations MarketplaceConversation[]
+
+  @@index([status, category])
+}
+
+model ProductFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model MarketplaceConversation {
+  id        String   @id @default(cuid())
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  buyerId   String
+  buyer     User     @relation("MarketplaceConversationsAsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  sellerId  String
+  seller    User     @relation("MarketplaceConversationsAsSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  messages  MarketplaceMessage[]
+
+  @@unique([productId, buyerId])
+}
+
+model MarketplaceMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   MarketplaceConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId       String
+  sender         User     @relation("MarketplaceMessagesBySender", fields: [senderId], references: [id])
+
+  content        String
+  createdAt      DateTime @default(now())
 }

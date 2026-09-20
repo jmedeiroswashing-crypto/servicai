@@ -16,3 +16,10 @@ export function createNotificationsSocket(token: string): Socket {
     transports: ['websocket'],
   });
 }
+
+export function createMarketplaceChatSocket(token: string): Socket {
+  return io(`${SOCKET_URL}/marketplace-chat`, {
+    auth: { token },
+    transports: ['websocket'],
+  });
+}

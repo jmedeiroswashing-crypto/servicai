@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User, CalendarDays, Wallet, CalendarClock } from 'lucide-react';
+import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User, CalendarDays, Wallet, CalendarClock, ShoppingBag } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
@@ -31,6 +31,9 @@ export function Navbar() {
           </Link>
           <Link href="/vagas-ultima-hora" className="link-underline flex items-center gap-1 pb-0.5 hover:text-white">
             <Zap size={13} /> Vagas de última hora
+          </Link>
+          <Link href="/marketplace" className="link-underline flex items-center gap-1 pb-0.5 hover:text-white">
+            <ShoppingBag size={13} /> Marketplace
           </Link>
           <Link href="/cadastro?tipo=PRESTADOR" className="link-underline pb-0.5 hover:text-white">
             Anuncie seu serviço
@@ -67,6 +70,13 @@ export function Navbar() {
                     className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
                   >
                     <User size={15} className="text-foreground-muted" /> Meu perfil
+                  </Link>
+                  <Link
+                    href="/marketplace/meus-anuncios"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
+                  >
+                    <ShoppingBag size={15} className="text-foreground-muted" /> Meus anúncios
                   </Link>
                   {user.role === 'PRESTADOR' && (
                     <>
@@ -197,6 +207,13 @@ export function Navbar() {
             className="flex items-center gap-1.5 border-b border-white/10 py-3"
           >
             <Zap size={14} /> Vagas de última hora
+          </Link>
+          <Link
+            href="/marketplace"
+            onClick={() => setMobileNavOpen(false)}
+            className="flex items-center gap-1.5 border-b border-white/10 py-3"
+          >
+            <ShoppingBag size={14} /> Marketplace
           </Link>
           <Link href="/cadastro?tipo=PRESTADOR" onClick={() => setMobileNavOpen(false)} className="border-b border-white/10 py-3">
             Anuncie seu serviço

@@ -19,6 +19,8 @@ import { RequestsModule } from './requests/requests.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { DealsModule } from './deals/deals.module.js';
 import { RemindersModule } from './reminders/reminders.module.js';
+import { ProductsModule } from './products/products.module.js';
+import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.module.js';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { RemindersModule } from './reminders/reminders.module.js';
     NotificationsModule,
     DealsModule,
     RemindersModule,
+    ProductsModule,
+    MarketplaceChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
