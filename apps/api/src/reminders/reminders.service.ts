@@ -42,6 +42,7 @@ const REMINDER_LABEL: Record<string, string> = {
 
 const REMINDER_COOLDOWN_HOURS = 30 * 24;
 const REVIEW_REMINDER_DELAY_DAYS = 2;
+const DIGEST_COOLDOWN_HOURS = 6 * 24;
 
 @Injectable()
 export class RemindersService {
@@ -116,6 +117,70 @@ export class RemindersService {
 
     this.logger.log(`Lembretes de avaliação: ${pending.length} enviado(s).`);
     return pending.length;
+  }
+
+  /**
+   * Resumo semanal: diferente dos outros lembretes (reativos a um evento
+   * específico), esse é proativo — junta o que já existe (faturamento, agenda,
+   * avaliações, oportunidades) numa mensagem só, toda segunda de manhã. Só
+   * envia se teve algum movimento real: um prestador sem nada acontecendo não
+   * recebe um resumo vazio, isso seria ruído, não valor.
+   */
+  @Cron('0 8 * * 1')
+  async sendWeeklyDigest() {
+    const providers = await this.prisma.providerProfile.findMany({
+      where: { user: { deletedAt: null } },
+      select: { id: true, userId: true },
+    });
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    let sent = 0;
+    for (const provider of providers) {
+      const [earningsAgg, newReviewsCount, pendingProposalsCount, openDealsCount] = await Promise.all([
+        this.prisma.booking.aggregate({
+          where: {
+            providerId: provider.id,
+            status: BookingStatus.CONCLUIDO,
+            updatedAt: { gte: weekAgo },
+            priceQuoted: { not: null },
+          },
+          _sum: { priceQuoted: true },
+        }),
+        this.prisma.review.count({ where: { providerId: provider.id, createdAt: { gte: weekAgo } } }),
+        this.prisma.proposal.count({ where: { providerId: provider.id, status: 'ENVIADA' } }),
+        this.prisma.lastMinuteDeal.count({
+          where: { providerId: provider.id, status: 'ATIVA', scheduledAt: { gt: new Date() } },
+        }),
+      ]);
+
+      const weeklyEarnings = earningsAgg._sum.priceQuoted ?? 0;
+      if (weeklyEarnings === 0 && newReviewsCount === 0 && pendingProposalsCount === 0 && openDealsCount === 0) {
+        continue;
+      }
+
+      const parts: string[] = [];
+      if (weeklyEarnings > 0) parts.push(`R$ ${weeklyEarnings.toFixed(0)} em serviços concluídos`);
+      if (pendingProposalsCount > 0) parts.push(`${pendingProposalsCount} proposta(s) aguardando resposta`);
+      if (newReviewsCount > 0) parts.push(`${newReviewsCount} avaliação(ões) nova(s)`);
+      if (openDealsCount > 0) parts.push(`${openDealsCount} vaga(s) de última hora aberta(s)`);
+
+      const notification = await this.notificationsService.createIfNotRecentlyNotified(
+        {
+          userId: provider.userId,
+          type: NotificationType.RESUMO_SEMANAL,
+          title: 'Seu resumo da semana',
+          body: parts.join(' · '),
+          link: '/painel',
+        },
+        DIGEST_COOLDOWN_HOURS,
+      );
+
+      const isNew = Date.now() - notification.createdAt.getTime() < 60_000;
+      if (isNew) sent++;
+    }
+
+    this.logger.log(`Resumo semanal: ${sent} enviado(s).`);
+    return sent;
   }
 
   private async checkCategory(category: string): Promise<number> {

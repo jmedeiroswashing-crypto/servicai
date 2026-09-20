@@ -35,4 +35,13 @@ export class RemindersController {
     const sent = await this.remindersService.checkReviewReminders();
     return { sent };
   }
+
+  /** Disparo manual do resumo semanal — a execução automática é toda segunda às 8h. */
+  @Post('run-digest')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async runDigest() {
+    const sent = await this.remindersService.sendWeeklyDigest();
+    return { sent };
+  }
 }

@@ -283,7 +283,8 @@ export type NotificationType =
   | 'PLANO_EXPIRADO'
   | 'VAGA_RESERVADA'
   | 'LEMBRETE_MANUTENCAO'
-  | 'LEMBRETE_AVALIACAO';
+  | 'LEMBRETE_AVALIACAO'
+  | 'RESUMO_SEMANAL';
 
 export interface NotificationItem {
   id: string;
