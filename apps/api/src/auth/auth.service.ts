@@ -1,18 +1,33 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'node:crypto';
 import { Role } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { EmailService } from '../email/email.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ChangePasswordDto } from './dto/change-password.dto.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto.js';
+
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TTL_MS = 48 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
+    private config: ConfigService,
+    private emailService: EmailService,
   ) {}
+
+  private get frontendUrl() {
+    return this.config.get<string>('FRONTEND_URL') ?? this.config.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000';
+  }
 
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
@@ -61,7 +76,82 @@ export class AuthService {
       await this.prisma.subscription.create({ data: { providerId: provider.id } });
     }
 
+    await this.issueEmailVerification(user.id, user.email, user.name);
+
     return this.buildAuthResponse(user.id, user.email, user.role, user.name);
+  }
+
+  private async issueEmailVerification(userId: string, email: string, name: string) {
+    const token = randomBytes(32).toString('hex');
+    const emailVerificationExpiresAt = new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { emailVerificationToken: token, emailVerificationExpiresAt },
+    });
+
+    const link = `${this.frontendUrl}/verificar-email?token=${token}`;
+    await this.emailService.send(
+      email,
+      'Confirme seu e-mail — ServiçAi',
+      `<p>Olá, ${name}!</p><p>Confirme seu e-mail clicando no link abaixo:</p><p><a href="${link}">${link}</a></p><p>Este link expira em 48 horas.</p>`,
+      `Confirme seu e-mail: ${link}`,
+    );
+  }
+
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.verified) return { success: true, alreadyVerified: true };
+    await this.issueEmailVerification(user.id, user.email, user.name);
+    return { success: true, alreadyVerified: false };
+  }
+
+  async verifyEmail(dto: VerifyEmailDto) {
+    const user = await this.prisma.user.findUnique({ where: { emailVerificationToken: dto.token } });
+    if (!user || !user.emailVerificationExpiresAt || user.emailVerificationExpiresAt < new Date()) {
+      throw new BadRequestException('Link de verificação inválido ou expirado');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verified: true, emailVerificationToken: null, emailVerificationExpiresAt: null },
+    });
+    return { success: true };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user || user.deletedAt) return { success: true };
+
+    const token = randomBytes(32).toString('hex');
+    const passwordResetExpiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordResetToken: token, passwordResetExpiresAt },
+    });
+
+    const link = `${this.frontendUrl}/redefinir-senha?token=${token}`;
+    await this.emailService.send(
+      user.email,
+      'Redefinição de senha — ServiçAi',
+      `<p>Olá, ${user.name}!</p><p>Clique no link abaixo para redefinir sua senha:</p><p><a href="${link}">${link}</a></p><p>Este link expira em 1 hora. Se você não solicitou isso, ignore este e-mail.</p>`,
+      `Redefina sua senha: ${link}`,
+    );
+
+    return { success: true };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { passwordResetToken: dto.token } });
+    if (!user || !user.passwordResetExpiresAt || user.passwordResetExpiresAt < new Date()) {
+      throw new BadRequestException('Link de redefinição inválido ou expirado');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, passwordResetToken: null, passwordResetExpiresAt: null },
+    });
+
+    return { success: true };
   }
 
   async login(dto: LoginDto) {

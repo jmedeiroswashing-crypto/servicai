@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart, Timer } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
+import { ReportButton } from '@/components/ReportButton';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { openRouteToProvider } from '@/lib/maps';
@@ -159,6 +160,11 @@ function ProviderProfileContent() {
           Favoritar avisa este prestador do seu interesse — prestadores no plano Premium podem ver seu nome e telefone
           para prospecção.
         </p>
+      )}
+      {user && user.id !== provider.userId && (
+        <div className="mt-3">
+          <ReportButton targetType="USUARIO" targetId={provider.userId} label="Denunciar este prestador" />
+        </div>
       )}
 
       {provider.bio && (

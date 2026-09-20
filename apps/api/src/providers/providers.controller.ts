@@ -7,6 +7,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { ProvidersService } from './providers.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
 import { ProviderAiIntakeDto } from './dto/provider-ai-intake.dto.js';
+import { Throttle } from '@nestjs/throttler';
 import { AiService } from '../ai/ai.service.js';
 
 @Controller('providers')
@@ -75,6 +76,7 @@ export class ProvidersController {
    * Intake conversacional: em vez do formulário, o prestador descreve em texto livre
    * e a IA vai devolvendo o rascunho do perfil + a próxima pergunta.
    */
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('ai-intake')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)

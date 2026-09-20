@@ -22,6 +22,7 @@ import {
   Bell,
   BellOff,
   CalendarClock,
+  MailWarning,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -201,6 +202,37 @@ function DeleteAccountSection() {
   );
 }
 
+function VerifyEmailBanner() {
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () => (await api.post('/auth/resend-verification')).data,
+    onSuccess: () => setSent(true),
+    onError: () => setError('Não foi possível reenviar agora. Tente novamente em instantes.'),
+  });
+
+  return (
+    <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border border-warning/40 bg-warning/5 px-4 py-3">
+      <p className="flex items-center gap-2 text-sm text-ink">
+        <MailWarning size={15} className="text-warning" /> Confirme seu e-mail para garantir o selo de verificado.
+      </p>
+      {sent ? (
+        <span className="text-xs text-success">Link enviado! Confira sua caixa de entrada.</span>
+      ) : (
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+          className="text-xs font-medium text-accent hover:underline disabled:opacity-50"
+        >
+          {mutation.isPending ? 'Enviando...' : 'Reenviar e-mail de confirmação'}
+        </button>
+      )}
+      {error && <p className="w-full text-xs text-danger">{error}</p>}
+    </div>
+  );
+}
+
 function ReputationRow({ provider }: { provider: ProviderProfile }) {
   return (
     <div className="grid grid-cols-3 border border-border sm:grid-cols-4">
@@ -366,6 +398,8 @@ export default function MeuPerfilPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
+      {!user.verified && <VerifyEmailBanner />}
+
       {/* Cabeçalho */}
       <div className="flex flex-col gap-5 border-b border-border pb-8 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">

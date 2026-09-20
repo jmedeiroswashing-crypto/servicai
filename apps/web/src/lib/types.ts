@@ -407,3 +407,21 @@ export interface MarketplaceConversation {
   seller?: { name: string; avatarUrl?: string | null };
   messages?: MarketplaceMessage[];
 }
+
+export type ReportTargetType = 'USUARIO' | 'PRODUTO' | 'AVALIACAO' | 'SERVICO';
+export type ReportReason = 'SPAM' | 'GOLPE_FRAUDE' | 'CONTEUDO_INAPROPRIADO' | 'ASSEDIO' | 'OUTRO';
+export type ReportStatus = 'PENDENTE' | 'EM_ANALISE' | 'RESOLVIDO' | 'REJEITADO';
+
+export interface Report {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  details?: string | null;
+  status: ReportStatus;
+  resolutionNote?: string | null;
+  resolvedAt?: string | null;
+  createdAt: string;
+  reporter?: { id: string; name: string; email: string };
+  resolvedBy?: { id: string; name: string } | null;
+}

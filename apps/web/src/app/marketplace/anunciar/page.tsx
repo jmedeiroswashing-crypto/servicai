@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { ImagePlus, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CategorySelect } from '@/components/CategorySelect';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
+import { uploadImage } from '@/lib/uploads';
 import type { Product } from '@/lib/types';
 
 interface IbgeMunicipio {
@@ -47,8 +49,10 @@ export default function AnunciarProdutoPage() {
   const [condition, setCondition] = useState<'NOVO' | 'USADO'>('USADO');
   const [addressState, setAddressState] = useState('');
   const [city, setCity] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: cidades, isFetching: loadingCidades } = useCidadesPorEstado(addressState);
 
@@ -69,10 +73,22 @@ export default function AnunciarProdutoPage() {
     onSuccess: (product) => router.push(`/marketplace/produto?id=${product.id}`),
   });
 
-  function addPhoto() {
-    if (!photoUrl.trim()) return;
-    setPhotoUrls((prev) => [...prev, photoUrl.trim()]);
-    setPhotoUrl('');
+  async function handlePhotoFile(file: File | undefined) {
+    if (!file) return;
+    setUploadError('');
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setPhotoUrls((prev) => [...prev, url]);
+    } catch (err) {
+      setUploadError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Não foi possível enviar a imagem.',
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   }
 
   const canSubmit = title.length >= 3 && description.length >= 10 && Number(price) > 0 && category && city;
@@ -158,24 +174,24 @@ export default function AnunciarProdutoPage() {
         </div>
 
         <div>
-          <label className={labelClass}>Fotos (URL)</label>
-          <div className="flex gap-2">
-            <input
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addPhoto();
-                }
-              }}
-              className={inputClass}
-              placeholder="https://..."
-            />
-            <button type="button" onClick={addPhoto} className="shrink-0 border border-ink px-4 text-sm font-medium text-ink hover:bg-ink hover:text-background">
-              Adicionar
-            </button>
-          </div>
+          <label className={labelClass}>Fotos</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => handlePhotoFile(e.target.files?.[0])}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-1.5 border border-ink px-4 py-2 text-sm font-medium text-ink hover:bg-ink hover:text-background disabled:opacity-50"
+          >
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
+            {uploading ? 'Enviando...' : 'Adicionar foto'}
+          </button>
+          {uploadError && <p className="mt-1 text-xs text-danger">{uploadError}</p>}
           {photoUrls.length > 0 && (
             <div className="mt-3 grid grid-cols-4 gap-2">
               {photoUrls.map((url, i) => (

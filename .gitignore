@@ -12,6 +12,7 @@ coverage/
 .env.*.local
 
 apps/api/src/generated/
+apps/api/uploads/
 
 .DS_Store
 Thumbs.db

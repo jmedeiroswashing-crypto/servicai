@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -361,6 +362,11 @@ export function AuthForm({
             placeholder={mode === 'cadastro' ? 'Mínimo 6 caracteres' : '••••••••'}
           />
           {errors.password && <p className={errorClass}>Mínimo de 6 caracteres</p>}
+          {mode === 'login' && (
+            <Link href="/esqueci-senha" className="mt-1.5 inline-block text-xs text-foreground-muted hover:text-ink hover:underline">
+              Esqueceu a senha?
+            </Link>
+          )}
         </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}

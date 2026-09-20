@@ -6,6 +6,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { MapPin, BadgeCheck, MessageCircle, Heart, Tag } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { ReportButton } from '@/components/ReportButton';
 import type { Product } from '@/lib/types';
 
 const CONDITION_LABEL: Record<string, string> = {
@@ -143,6 +144,11 @@ function ProductDetailContent() {
             </div>
           )}
           {isOwner && <p className="mt-6 text-sm text-foreground-muted">Este é o seu anúncio.</p>}
+          {!isOwner && (
+            <div className="mt-4">
+              <ReportButton targetType="PRODUTO" targetId={product.id} label="Denunciar anúncio" />
+            </div>
+          )}
         </div>
       </div>
     </div>

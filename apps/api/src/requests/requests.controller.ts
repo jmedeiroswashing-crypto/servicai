@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -30,6 +31,7 @@ export class RequestsController {
    * Intake conversacional: em vez do formulário, o cliente descreve em texto
    * livre e a IA vai devolvendo o rascunho estruturado + a próxima pergunta.
    */
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('ai-intake')
   @Roles(Role.CLIENTE)
   aiIntake(@Body() dto: AiIntakeDto) {
@@ -41,6 +43,7 @@ export class RequestsController {
    * prestador responder — diferencial contra plataformas onde o cliente só
    * descobre o preço depois de ser bombardeado de ligações para negociar.
    */
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
   @Post('estimate-price')
   @Roles(Role.CLIENTE)
   estimatePrice(@Body() dto: EstimatePriceDto) {

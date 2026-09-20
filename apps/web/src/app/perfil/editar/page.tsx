@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
+import { ImageUploadField } from '@/components/ImageUploadField';
 import type { UserProfile } from '@/lib/types';
 
 interface IbgeMunicipio {
@@ -109,26 +110,8 @@ export default function EditarPerfilPage() {
         </div>
 
         <div>
-          <label className={labelClass}>Foto de perfil (URL)</label>
-          <input
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-            className={inputClass}
-            placeholder="https://..."
-          />
-          {avatarUrl && (
-            <div className="mt-2 h-16 w-16 overflow-hidden border border-border bg-surface-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatarUrl}
-                alt="Pré-visualização"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+          <label className={labelClass}>Foto de perfil</label>
+          <ImageUploadField value={avatarUrl} onChange={setAvatarUrl} label="Escolher foto" previewClassName="h-16 w-16" />
         </div>
 
         <div>

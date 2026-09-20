@@ -7,6 +7,7 @@ import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check } fr
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
+import { ImageUploadField } from '@/components/ImageUploadField';
 import type { MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
 
 function DraftField({ label, value }: { label: string; value?: string }) {
@@ -332,7 +333,11 @@ function AddPortfolioItemForm({
             </select>
           )}
         </div>
-        <input value={url} onChange={(e) => setUrl(e.target.value)} className={inputClass} placeholder="URL da imagem/vídeo" />
+        {type === 'video' ? (
+          <input value={url} onChange={(e) => setUrl(e.target.value)} className={inputClass} placeholder="URL do vídeo" />
+        ) : (
+          <ImageUploadField value={url} onChange={setUrl} label="Escolher imagem" previewClassName="h-16 w-16" />
+        )}
         <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="Título do trabalho (opcional)" />
         <textarea
           value={caption}

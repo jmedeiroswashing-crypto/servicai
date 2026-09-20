@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -21,11 +23,16 @@ import { DealsModule } from './deals/deals.module.js';
 import { RemindersModule } from './reminders/reminders.module.js';
 import { ProductsModule } from './products/products.module.js';
 import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.module.js';
+import { UploadsModule } from './uploads/uploads.module.js';
+import { ReportsModule } from './reports/reports.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    // Limite geral contra abuso (spam de cadastro, força bruta de login, custo de IA).
+    // Rotas sensíveis (login/registro) têm um limite mais apertado no próprio controller.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -44,8 +51,10 @@ import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.modul
     RemindersModule,
     ProductsModule,
     MarketplaceChatModule,
+    UploadsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
