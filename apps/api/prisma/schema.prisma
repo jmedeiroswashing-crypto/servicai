@@ -99,6 +99,7 @@ enum ReportTargetType {
   PRODUTO
   AVALIACAO
   SERVICO
+  RESERVA
 }
 
 enum ReportReason {
@@ -106,6 +107,7 @@ enum ReportReason {
   GOLPE_FRAUDE
   CONTEUDO_INAPROPRIADO
   ASSEDIO
+  SERVICO_NAO_CONFORME
   OUTRO
 }
 
@@ -113,6 +115,13 @@ enum ReportStatus {
   PENDENTE
   EM_ANALISE
   RESOLVIDO
+  REJEITADO
+}
+
+enum IdentityStatus {
+  NAO_ENVIADO
+  PENDENTE
+  APROVADO
   REJEITADO
 }
 
@@ -143,6 +152,15 @@ model User {
   passwordResetToken         String?   @unique
   passwordResetExpiresAt     DateTime?
 
+  identityStatus          IdentityStatus @default(NAO_ENVIADO)
+  identityDocumentUrl     String?
+  identityRejectionReason String?
+  identitySubmittedAt     DateTime?
+  identityReviewedAt      DateTime?
+  identityReviewedById    String?
+  identityReviewedBy      User?          @relation("IdentityReviewedBy", fields: [identityReviewedById], references: [id])
+  identityReviewsDone     User[]         @relation("IdentityReviewedBy")
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -163,8 +181,9 @@ model User {
   marketplaceConvsAsSeller MarketplaceConversation[] @relation("MarketplaceConversationsAsSeller")
   marketplaceMessagesSent  MarketplaceMessage[]      @relation("MarketplaceMessagesBySender")
 
-  reportsFiled    Report[] @relation("ReportsByReporter")
-  reportsResolved Report[] @relation("ReportsByResolver")
+  reportsFiled      Report[] @relation("ReportsByReporter")
+  reportsResolved   Report[] @relation("ReportsByResolver")
+  reportsResponded  Report[] @relation("ReportsByRespondent")
 }
 
 model PushSubscription {
@@ -529,6 +548,11 @@ model Report {
   resolvedBy     User?        @relation("ReportsByResolver", fields: [resolvedById], references: [id])
   resolutionNote String?
   resolvedAt     DateTime?
+
+  respondentId        String?
+  respondent          User?    @relation("ReportsByRespondent", fields: [respondentId], references: [id])
+  respondentStatement String?
+  respondedAt         DateTime?
 
   createdAt  DateTime         @default(now())
 

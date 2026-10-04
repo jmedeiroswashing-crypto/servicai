@@ -20,6 +20,8 @@ export class UsersService {
         role: true,
         avatarUrl: true,
         verified: true,
+        identityStatus: true,
+        identityRejectionReason: true,
         personType: true,
         razaoSocial: true,
         nomeFantasia: true,

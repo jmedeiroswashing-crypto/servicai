@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Rocket } from 'lucide-react';
+import { MapPin, Rocket, ShieldCheck } from 'lucide-react';
 import { ScoreBadge } from './ScoreBadge';
 import { CategoryArt } from './CategoryArt';
 import type { ProviderProfile } from '@/lib/types';
@@ -28,7 +28,12 @@ export function ProviderCard({ provider }: { provider: ProviderProfile }) {
         />
       </div>
       <div className="space-y-1.5 border-b border-border pb-4 pt-3">
-        <h3 className="font-medium text-ink group-hover:text-accent">{provider.user.name}</h3>
+        <h3 className="flex items-center gap-1 font-medium text-ink group-hover:text-accent">
+          {provider.user.name}
+          {provider.user.identityStatus === 'APROVADO' && (
+            <ShieldCheck size={13} className="shrink-0 text-accent" aria-label="Identidade verificada" />
+          )}
+        </h3>
         <p className="text-sm text-foreground-muted">{provider.specialty}</p>
         <p className="flex items-center gap-1 text-xs text-foreground-muted/80">
           <MapPin size={11} /> {provider.city}

@@ -12,6 +12,7 @@ const REASON_LABEL: Record<ReportReason, string> = {
   GOLPE_FRAUDE: 'Golpe ou fraude',
   CONTEUDO_INAPROPRIADO: 'Conteúdo inapropriado',
   ASSEDIO: 'Assédio ou comportamento abusivo',
+  SERVICO_NAO_CONFORME: 'Serviço não realizado conforme combinado',
   OUTRO: 'Outro motivo',
 };
 
@@ -19,21 +20,35 @@ export function ReportButton({
   targetType,
   targetId,
   label = 'Denunciar',
+  title = 'Denunciar',
+  reasons,
+  detailsPlaceholder = 'Descreva o que aconteceu',
+  submitLabel = 'Enviar denúncia',
+  successMessage = 'Denúncia enviada. Nossa equipe vai analisar.',
   className = 'flex items-center gap-1.5 text-xs text-foreground-muted hover:text-danger',
+  onSuccess,
 }: {
   targetType: ReportTargetType;
   targetId: string;
   label?: string;
+  title?: string;
+  reasons?: ReportReason[];
+  detailsPlaceholder?: string;
+  submitLabel?: string;
+  successMessage?: string;
   className?: string;
+  onSuccess?: () => void;
 }) {
   const { token } = useAuthStore();
+  const availableReasons = reasons ?? (Object.keys(REASON_LABEL) as ReportReason[]);
   const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<ReportReason>('SPAM');
+  const [reason, setReason] = useState<ReportReason>(availableReasons[0]);
   const [details, setDetails] = useState('');
 
   const mutation = useMutation({
     mutationFn: async () => (await api.post('/reports', { targetType, targetId, reason, details: details || undefined })).data,
     onSuccess: () => {
+      onSuccess?.();
       setTimeout(() => setOpen(false), 1500);
     },
   });
@@ -51,7 +66,7 @@ export function ReportButton({
           <div className="w-full max-w-sm border border-border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-display text-lg text-ink">
-                <Flag size={16} /> Denunciar
+                <Flag size={16} /> {title}
               </h2>
               <button onClick={() => setOpen(false)} className="text-foreground-muted hover:text-ink">
                 <X size={18} />
@@ -59,7 +74,7 @@ export function ReportButton({
             </div>
 
             {mutation.isSuccess ? (
-              <p className="text-sm text-success">Denúncia enviada. Nossa equipe vai analisar.</p>
+              <p className="text-sm text-success">{successMessage}</p>
             ) : (
               <div className="space-y-3">
                 <div>
@@ -69,9 +84,9 @@ export function ReportButton({
                     onChange={(e) => setReason(e.target.value as ReportReason)}
                     className="w-full border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink"
                   >
-                    {Object.entries(REASON_LABEL).map(([value, text]) => (
+                    {availableReasons.map((value) => (
                       <option key={value} value={value}>
-                        {text}
+                        {REASON_LABEL[value]}
                       </option>
                     ))}
                   </select>
@@ -84,16 +99,21 @@ export function ReportButton({
                     rows={3}
                     maxLength={1000}
                     className="w-full resize-none border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink"
-                    placeholder="Descreva o que aconteceu"
+                    placeholder={detailsPlaceholder}
                   />
                 </div>
-                {mutation.isError && <p className="text-xs text-danger">Não foi possível enviar a denúncia. Tente novamente.</p>}
+                {mutation.isError && (
+                  <p className="text-xs text-danger">
+                    {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+                      'Não foi possível enviar. Tente novamente.'}
+                  </p>
+                )}
                 <button
                   onClick={() => mutation.mutate()}
                   disabled={mutation.isPending}
                   className="w-full bg-ink py-2.5 text-sm font-medium text-background hover:opacity-85 disabled:opacity-50"
                 >
-                  {mutation.isPending ? 'Enviando...' : 'Enviar denúncia'}
+                  {mutation.isPending ? 'Enviando...' : submitLabel}
                 </button>
               </div>
             )}

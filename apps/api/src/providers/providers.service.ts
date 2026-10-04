@@ -113,7 +113,7 @@ export class ProvidersService {
         ...(availableNow ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),
       },
       include: {
-        user: { select: { name: true, avatarUrl: true, addressState: true } },
+        user: { select: { name: true, avatarUrl: true, addressState: true, identityStatus: true } },
         media: { take: 6 },
         subscription: { select: { plan: true, status: true, currentPeriodEnd: true } },
         _count: { select: { reviews: true, media: true } },
@@ -150,6 +150,7 @@ export class ProvidersService {
             avatarUrl: true,
             phone: true,
             verified: true,
+            identityStatus: true,
             addressStreet: true,
             addressNumber: true,
             addressState: true,

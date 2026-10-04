@@ -25,6 +25,7 @@ import { ProductsModule } from './products/products.module.js';
 import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
 import { ReportsModule } from './reports/reports.module.js';
+import { IdentityModule } from './identity/identity.module.js';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { ReportsModule } from './reports/reports.module.js';
     MarketplaceChatModule,
     UploadsModule,
     ReportsModule,
+    IdentityModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

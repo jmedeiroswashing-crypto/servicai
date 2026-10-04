@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, CheckCircle2, PlayCircle, XCircle, Wallet, StickyNote, Phone, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { BookingDisputeSection } from '@/components/BookingDisputeSection';
 import type { Booking, BookingStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
@@ -125,6 +126,8 @@ function BookingCard({ booking }: { booking: Booking }) {
           ))}
         </div>
       )}
+
+      <BookingDisputeSection bookingId={booking.id} bookingStatus={booking.status} />
     </div>
   );
 }

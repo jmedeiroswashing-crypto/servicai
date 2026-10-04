@@ -9,6 +9,7 @@ import { ReportsService } from './reports.service.js';
 import { CreateReportDto } from './dto/create-report.dto.js';
 import { ResolveReportDto } from './dto/resolve-report.dto.js';
 import { ReportFiltersDto } from './dto/report-filters.dto.js';
+import { RespondReportDto } from './dto/respond-report.dto.js';
 
 @Controller('reports')
 @UseGuards(JwtAuthGuard)
@@ -33,5 +34,16 @@ export class ReportsController {
   @Roles(Role.ADMIN)
   resolve(@Param('id') id: string, @CurrentUser() user: AuthUser, @Body() dto: ResolveReportDto) {
     return this.reportsService.resolve(id, user.userId, dto);
+  }
+
+  @Get('booking/:bookingId')
+  getForBooking(@Param('bookingId') bookingId: string, @CurrentUser() user: AuthUser) {
+    return this.reportsService.getForBooking(bookingId, user.userId);
+  }
+
+  @Throttle({ default: { ttl: 60_000, limit: 15 } })
+  @Patch(':id/respond')
+  respond(@Param('id') id: string, @CurrentUser() user: AuthUser, @Body() dto: RespondReportDto) {
+    return this.reportsService.respond(id, user.userId, dto);
   }
 }

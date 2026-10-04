@@ -23,6 +23,8 @@ import {
   BellOff,
   CalendarClock,
   MailWarning,
+  ShieldCheck,
+  Flag,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -414,7 +416,16 @@ export default function MeuPerfilPage() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl text-ink">{user.name}</h1>
-              {user.verified && <BadgeCheck size={18} className="text-accent" />}
+              {user.verified && (
+                <span title="E-mail verificado">
+                  <BadgeCheck size={18} className="text-accent" />
+                </span>
+              )}
+              {user.identityStatus === 'APROVADO' && (
+                <span title="Identidade verificada">
+                  <ShieldCheck size={18} className="text-accent" />
+                </span>
+              )}
             </div>
             {companyName && <p className="text-sm text-foreground-muted">{companyName}</p>}
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-muted">
@@ -486,6 +497,47 @@ export default function MeuPerfilPage() {
               <div>
                 <p className="font-medium text-ink">Minhas reservas</p>
                 <p className="text-sm text-foreground-muted">Acompanhe status e avalie serviços concluídos</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {user.role === 'ADMIN' && (
+        <div className="mt-10">
+          <Link
+            href="/admin/denuncias"
+            className="flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+          >
+            <div className="flex items-center gap-3">
+              <Flag size={18} className="text-foreground-muted" />
+              <div>
+                <p className="font-medium text-ink">Denúncias</p>
+                <p className="text-sm text-foreground-muted">Modere conteúdo e disputas de reserva denunciados</p>
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/admin/identidade"
+            className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+          >
+            <div className="flex items-center gap-3">
+              <ShieldCheck size={18} className="text-foreground-muted" />
+              <div>
+                <p className="font-medium text-ink">Verificação de identidade</p>
+                <p className="text-sm text-foreground-muted">Aprove ou rejeite documentos enviados por prestadores</p>
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/admin/planos"
+            className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+          >
+            <div className="flex items-center gap-3">
+              <FileText size={18} className="text-foreground-muted" />
+              <div>
+                <p className="font-medium text-ink">Planos</p>
+                <p className="text-sm text-foreground-muted">Visão administrativa de monetização</p>
               </div>
             </div>
           </Link>

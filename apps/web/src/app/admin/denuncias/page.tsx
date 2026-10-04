@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Flag, User, Package, Star, Wrench } from 'lucide-react';
+import { Flag, User, Package, Star, Wrench, CalendarClock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { Report, ReportStatus, ReportTargetType } from '@/lib/types';
@@ -13,6 +13,7 @@ const REASON_LABEL: Record<string, string> = {
   GOLPE_FRAUDE: 'Golpe ou fraude',
   CONTEUDO_INAPROPRIADO: 'Conteúdo inapropriado',
   ASSEDIO: 'Assédio ou comportamento abusivo',
+  SERVICO_NAO_CONFORME: 'Serviço não realizado conforme combinado',
   OUTRO: 'Outro motivo',
 };
 
@@ -28,6 +29,7 @@ const TARGET_ICON: Record<ReportTargetType, typeof User> = {
   PRODUTO: Package,
   AVALIACAO: Star,
   SERVICO: Wrench,
+  RESERVA: CalendarClock,
 };
 
 function ReportRow({ report }: { report: Report }) {
@@ -55,6 +57,11 @@ function ReportRow({ report }: { report: Report }) {
           </p>
           <p className="mt-1 text-xs text-foreground-muted">ID do alvo: {report.targetId}</p>
           {report.details && <p className="mt-2 text-sm text-ink">{report.details}</p>}
+          {report.respondentStatement && (
+            <p className="mt-2 border-l-2 border-border pl-2 text-sm text-ink">
+              Resposta de {report.respondent?.name ?? 'outra parte'}: {report.respondentStatement}
+            </p>
+          )}
         </div>
         <span
           className={`shrink-0 border px-2 py-0.5 text-xs font-medium uppercase tracking-wide ${

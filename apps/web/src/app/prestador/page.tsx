@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart, Timer } from 'lucide-react';
+import { MapPin, Clock, Users, MessageCircle, Phone, CalendarCheck, Star, Navigation, Heart, Timer, ShieldCheck } from 'lucide-react';
 import { ScoreBadge } from '@/components/ScoreBadge';
 import { ReportButton } from '@/components/ReportButton';
 import { api } from '@/lib/api';
@@ -74,7 +74,14 @@ function ProviderProfileContent() {
           <span className="font-display text-3xl text-ink">{provider.user.name.charAt(0)}</span>
         </div>
         <div className="flex-1 space-y-2">
-          <h1 className="font-display text-3xl text-ink">{provider.user.name}</h1>
+          <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
+            {provider.user.name}
+            {provider.user.identityStatus === 'APROVADO' && (
+              <span className="flex items-center gap-1 text-sm font-medium text-accent" title="Identidade verificada pela equipe ServiçAi">
+                <ShieldCheck size={18} />
+              </span>
+            )}
+          </h1>
           <p className="text-foreground-muted">{provider.specialty}</p>
           <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-muted">
             <span className="flex items-center gap-1">

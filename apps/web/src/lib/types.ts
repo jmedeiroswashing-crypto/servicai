@@ -83,6 +83,8 @@ export interface AuthUser {
 
 export type PersonType = 'PF' | 'PJ';
 
+export type IdentityStatus = 'NAO_ENVIADO' | 'PENDENTE' | 'APROVADO' | 'REJEITADO';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -94,10 +96,23 @@ export interface UserProfile {
   role: Role;
   avatarUrl?: string | null;
   verified: boolean;
+  identityStatus?: IdentityStatus;
+  identityRejectionReason?: string | null;
   personType?: PersonType | null;
   razaoSocial?: string | null;
   nomeFantasia?: string | null;
   createdAt: string;
+}
+
+export interface IdentityVerification {
+  id: string;
+  name: string;
+  email: string;
+  identityStatus: IdentityStatus;
+  identityDocumentUrl?: string | null;
+  identityRejectionReason?: string | null;
+  identitySubmittedAt?: string | null;
+  identityReviewedAt?: string | null;
 }
 
 export interface ProviderProfile {
@@ -120,6 +135,7 @@ export interface ProviderProfile {
     avatarUrl?: string | null;
     phone?: string | null;
     verified?: boolean;
+    identityStatus?: IdentityStatus;
     addressStreet?: string | null;
     addressNumber?: string | null;
     addressState?: string | null;
@@ -408,8 +424,8 @@ export interface MarketplaceConversation {
   messages?: MarketplaceMessage[];
 }
 
-export type ReportTargetType = 'USUARIO' | 'PRODUTO' | 'AVALIACAO' | 'SERVICO';
-export type ReportReason = 'SPAM' | 'GOLPE_FRAUDE' | 'CONTEUDO_INAPROPRIADO' | 'ASSEDIO' | 'OUTRO';
+export type ReportTargetType = 'USUARIO' | 'PRODUTO' | 'AVALIACAO' | 'SERVICO' | 'RESERVA';
+export type ReportReason = 'SPAM' | 'GOLPE_FRAUDE' | 'CONTEUDO_INAPROPRIADO' | 'ASSEDIO' | 'SERVICO_NAO_CONFORME' | 'OUTRO';
 export type ReportStatus = 'PENDENTE' | 'EM_ANALISE' | 'RESOLVIDO' | 'REJEITADO';
 
 export interface Report {
@@ -424,4 +440,8 @@ export interface Report {
   createdAt: string;
   reporter?: { id: string; name: string; email: string };
   resolvedBy?: { id: string; name: string } | null;
+  respondentId?: string | null;
+  respondent?: { id: string; name: string } | null;
+  respondentStatement?: string | null;
+  respondedAt?: string | null;
 }

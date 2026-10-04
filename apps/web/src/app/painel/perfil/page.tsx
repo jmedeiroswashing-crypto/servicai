@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check } from 'lucide-react';
+import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check, ShieldCheck, ShieldAlert, Clock3 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { ImageUploadField } from '@/components/ImageUploadField';
-import type { MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
+import type { IdentityVerification, MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
 
 function DraftField({ label, value }: { label: string; value?: string }) {
   return (
@@ -486,11 +486,90 @@ function PortfolioManager() {
   );
 }
 
+function IdentityVerificationManager() {
+  const queryClient = useQueryClient();
+  const [documentUrl, setDocumentUrl] = useState('');
+
+  const { data: identity, isLoading } = useQuery({
+    queryKey: ['identity', 'mine'],
+    queryFn: async () => (await api.get<IdentityVerification>('/identity/mine')).data,
+  });
+
+  const mutation = useMutation({
+    mutationFn: async () => (await api.post('/identity/submit', { documentUrl })).data,
+    onSuccess: () => {
+      setDocumentUrl('');
+      queryClient.invalidateQueries({ queryKey: ['identity', 'mine'] });
+    },
+  });
+
+  if (isLoading || !identity) {
+    return <p className="mt-10 text-foreground-muted">Carregando verificação de identidade...</p>;
+  }
+
+  return (
+    <div className="mt-10 max-w-xl space-y-6">
+      <div className="border border-border p-5">
+        {identity.identityStatus === 'APROVADO' && (
+          <p className="flex items-center gap-2 text-sm font-medium text-success">
+            <ShieldCheck size={18} /> Sua identidade foi verificada. O selo aparece no seu perfil público.
+          </p>
+        )}
+        {identity.identityStatus === 'PENDENTE' && (
+          <p className="flex items-center gap-2 text-sm font-medium text-ink">
+            <Clock3 size={18} className="text-warning" /> Documento enviado em{' '}
+            {identity.identitySubmittedAt && new Date(identity.identitySubmittedAt).toLocaleDateString('pt-BR')} — aguardando
+            análise da nossa equipe.
+          </p>
+        )}
+        {identity.identityStatus === 'REJEITADO' && (
+          <div>
+            <p className="flex items-center gap-2 text-sm font-medium text-danger">
+              <ShieldAlert size={18} /> Sua verificação foi rejeitada.
+            </p>
+            {identity.identityRejectionReason && (
+              <p className="mt-1 text-sm text-foreground-muted">Motivo: {identity.identityRejectionReason}</p>
+            )}
+          </div>
+        )}
+        {identity.identityStatus === 'NAO_ENVIADO' && (
+          <p className="text-sm text-foreground-muted">
+            Envie uma foto de um documento oficial com foto (RG, CNH ou passaporte) para ganhar o selo de identidade
+            verificada e aumentar a confiança dos clientes no seu perfil.
+          </p>
+        )}
+      </div>
+
+      {(identity.identityStatus === 'NAO_ENVIADO' || identity.identityStatus === 'REJEITADO') && (
+        <div className="space-y-3">
+          <ImageUploadField value={documentUrl} onChange={setDocumentUrl} label="Enviar foto do documento" previewClassName="h-24 w-36" />
+          {mutation.isError && (
+            <p className="text-xs text-danger">
+              {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+                'Não foi possível enviar. Tente novamente.'}
+            </p>
+          )}
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!documentUrl.trim() || mutation.isPending}
+            className="bg-ink px-5 py-2.5 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
+          >
+            {mutation.isPending ? 'Enviando...' : 'Enviar para análise'}
+          </button>
+          <p className="text-xs text-foreground-muted/70">
+            Seu documento é visto apenas pela nossa equipe de moderação, nunca fica público.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PerfilPrestadorPage() {
   const { user, token } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'ia' | 'formulario' | 'portfolio'>('formulario');
+  const [mode, setMode] = useState<'ia' | 'formulario' | 'portfolio' | 'identidade'>('formulario');
 
   useEffect(() => {
     if (!token) router.push('/login');
@@ -539,6 +618,14 @@ export default function PerfilPrestadorPage() {
         >
           <Images size={14} /> Portfólio
         </button>
+        <button
+          onClick={() => setMode('identidade')}
+          className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 transition-colors ${
+            mode === 'identidade' ? 'border-ink font-medium text-ink' : 'border-transparent text-foreground-muted'
+          }`}
+        >
+          <ShieldCheck size={14} /> Identidade
+        </button>
       </div>
 
       {mode === 'ia' && (
@@ -546,6 +633,7 @@ export default function PerfilPrestadorPage() {
       )}
       {mode === 'formulario' && <ManualProfileForm provider={provider} />}
       {mode === 'portfolio' && <PortfolioManager />}
+      {mode === 'identidade' && <IdentityVerificationManager />}
     </div>
   );
 }

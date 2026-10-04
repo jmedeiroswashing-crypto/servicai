@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, Star, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { BookingDisputeSection } from '@/components/BookingDisputeSection';
 import type { Booking, BookingStatus } from '@/lib/types';
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
@@ -157,6 +158,8 @@ function BookingRow({ booking }: { booking: Booking }) {
           <Star size={12} className="fill-success" /> Você avaliou este serviço com {booking.review.rating.toFixed(1)}
         </p>
       )}
+
+      <BookingDisputeSection bookingId={booking.id} bookingStatus={booking.status} />
     </div>
   );
 }
