@@ -150,7 +150,7 @@ function ModerationPolicyPanel() {
             <li><strong className="text-ink">Serviço não conforme (disputa de reserva):</strong> ouça as duas versões antes de decidir — nunca resolva só com o lado do denunciante.</li>
           </ul>
           <p>
-            "Rejeitar" uma denúncia deve ser reservado para quando ela é infundada ou já foi resolvida fora da plataforma.
+            &ldquo;Rejeitar&rdquo; uma denúncia deve ser reservado para quando ela é infundada ou já foi resolvida fora da plataforma.
             Use a nota de resolução para registrar o motivo da decisão — isso vira seu histórico de auditoria.
           </p>
         </div>

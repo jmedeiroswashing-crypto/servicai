@@ -60,13 +60,11 @@ export class SubscriptionsService {
       });
       const freeConfig = getPlanConfig(Plan.GRATIS);
       const oldConfig = getPlanConfig(subscription.plan);
-      const [providerRecord] = await Promise.all([
-        this.prisma.providerProfile.update({
-          where: { id: providerId },
-          data: { selo: freeConfig.selo, planPriority: freeConfig.planPriority },
-          select: { userId: true },
-        }),
-      ]);
+      const providerRecord = await this.prisma.providerProfile.update({
+        where: { id: providerId },
+        data: { selo: freeConfig.selo, planPriority: freeConfig.planPriority },
+        select: { userId: true },
+      });
       await this.notificationsService.create({
         userId: providerRecord.userId,
         type: NotificationType.PLANO_EXPIRADO,
