@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Flag, User, Package, Star, Wrench, CalendarClock } from 'lucide-react';
+import { Flag, User, Package, Star, Wrench, CalendarClock, ChevronDown, Info } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { Report, ReportStatus, ReportTargetType } from '@/lib/types';
@@ -123,6 +123,42 @@ function ReportRow({ report }: { report: Report }) {
   );
 }
 
+function ModerationPolicyPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-6 border border-border">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-ink"
+      >
+        <span className="flex items-center gap-2">
+          <Info size={14} className="text-foreground-muted" /> Diretriz de moderação (ponto de partida)
+        </span>
+        <ChevronDown size={14} className={`text-foreground-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="space-y-3 border-t border-border px-4 py-4 text-sm text-foreground-muted">
+          <p className="text-xs italic text-foreground-muted/70">
+            Isto é um guia inicial de bom senso, não uma política jurídica validada — revise com um advogado antes de
+            divulgar publicamente como regras oficiais da plataforma.
+          </p>
+          <ul className="list-disc space-y-1.5 pl-5">
+            <li><strong className="text-ink">Spam:</strong> advertir na primeira vez; suspender a conta em caso de reincidência.</li>
+            <li><strong className="text-ink">Golpe/fraude:</strong> suspender a conta imediatamente e documentar evidências antes de resolver.</li>
+            <li><strong className="text-ink">Conteúdo inapropriado:</strong> remover o conteúdo (produto/avaliação) e advertir o autor.</li>
+            <li><strong className="text-ink">Assédio:</strong> suspender a conta; não exigir que a vítima continue a conversa.</li>
+            <li><strong className="text-ink">Serviço não conforme (disputa de reserva):</strong> ouça as duas versões antes de decidir — nunca resolva só com o lado do denunciante.</li>
+          </ul>
+          <p>
+            "Rejeitar" uma denúncia deve ser reservado para quando ela é infundada ou já foi resolvida fora da plataforma.
+            Use a nota de resolução para registrar o motivo da decisão — isso vira seu histórico de auditoria.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDenunciasPage() {
   const { user, token } = useAuthStore();
   const router = useRouter();
@@ -150,6 +186,8 @@ export default function AdminDenunciasPage() {
         <Flag size={26} /> Denúncias
       </h1>
       <p className="mt-2 text-foreground-muted">Modere conteúdo e usuários denunciados por outros usuários.</p>
+
+      <ModerationPolicyPanel />
 
       <div className="mt-6 flex flex-wrap gap-2">
         {(['PENDENTE', 'EM_ANALISE', 'RESOLVIDO', 'REJEITADO', 'TODAS'] as const).map((s) => (

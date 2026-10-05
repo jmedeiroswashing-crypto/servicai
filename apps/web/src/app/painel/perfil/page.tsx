@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check, ShieldCheck, ShieldAlert, Clock3 } from 'lucide-react';
+import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check, ShieldCheck, ShieldAlert, Clock3, ImagePlus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
@@ -488,17 +488,30 @@ function PortfolioManager() {
 
 function IdentityVerificationManager() {
   const queryClient = useQueryClient();
-  const [documentUrl, setDocumentUrl] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   const { data: identity, isLoading } = useQuery({
     queryKey: ['identity', 'mine'],
     queryFn: async () => (await api.get<IdentityVerification>('/identity/mine')).data,
   });
 
+  function handleFile(selected: File | undefined) {
+    if (!selected) return;
+    setFile(selected);
+    setPreviewUrl(URL.createObjectURL(selected));
+  }
+
   const mutation = useMutation({
-    mutationFn: async () => (await api.post('/identity/submit', { documentUrl })).data,
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append('file', file as File);
+      return (await api.post('/identity/submit', formData)).data;
+    },
     onSuccess: () => {
-      setDocumentUrl('');
+      setFile(null);
+      setPreviewUrl('');
       queryClient.invalidateQueries({ queryKey: ['identity', 'mine'] });
     },
   });
@@ -542,7 +555,30 @@ function IdentityVerificationManager() {
 
       {(identity.identityStatus === 'NAO_ENVIADO' || identity.identityStatus === 'REJEITADO') && (
         <div className="space-y-3">
-          <ImageUploadField value={documentUrl} onChange={setDocumentUrl} label="Enviar foto do documento" previewClassName="h-24 w-36" />
+          <div className="flex items-center gap-3">
+            {previewUrl && (
+              <div className="h-24 w-36 shrink-0 overflow-hidden border border-border bg-surface-muted">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="flex items-center gap-1.5 border border-border px-3.5 py-2 text-sm font-medium text-ink hover:border-ink"
+              >
+                <ImagePlus size={14} /> Escolher foto do documento
+              </button>
+            </div>
+          </div>
           {mutation.isError && (
             <p className="text-xs text-danger">
               {(mutation.error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
@@ -551,7 +587,7 @@ function IdentityVerificationManager() {
           )}
           <button
             onClick={() => mutation.mutate()}
-            disabled={!documentUrl.trim() || mutation.isPending}
+            disabled={!file || mutation.isPending}
             className="bg-ink px-5 py-2.5 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
           >
             {mutation.isPending ? 'Enviando...' : 'Enviar para análise'}

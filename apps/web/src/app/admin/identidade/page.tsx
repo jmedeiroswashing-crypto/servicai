@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { AuthenticatedImage } from '@/components/AuthenticatedImage';
 import type { IdentityVerification } from '@/lib/types';
 
 function PendingRow({ item }: { item: IdentityVerification }) {
@@ -35,11 +36,10 @@ function PendingRow({ item }: { item: IdentityVerification }) {
       </div>
 
       {item.identityDocumentUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={item.identityDocumentUrl}
+        <AuthenticatedImage
+          src={`/identity/document/${item.id}`}
           alt={`Documento de ${item.name}`}
-          className="mt-3 max-h-64 border border-border object-contain"
+          className="mt-3 h-64 max-w-full border border-border object-contain"
         />
       )}
 

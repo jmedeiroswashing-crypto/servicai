@@ -26,6 +26,7 @@ import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.modul
 import { UploadsModule } from './uploads/uploads.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { IdentityModule } from './identity/identity.module.js';
+import { SupportModule } from './support/support.module.js';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { IdentityModule } from './identity/identity.module.js';
     UploadsModule,
     ReportsModule,
     IdentityModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

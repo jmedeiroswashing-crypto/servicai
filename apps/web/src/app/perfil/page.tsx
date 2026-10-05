@@ -550,7 +550,10 @@ export default function MeuPerfilPage() {
         <div className="divide-y divide-border border border-border px-5">
           <PushNotificationToggle />
           <ChangePasswordForm />
-          <div className="flex gap-4 py-1 text-xs text-foreground-muted">
+          <div className="flex flex-wrap gap-4 py-1 text-xs text-foreground-muted">
+            <Link href="/ajuda" className="hover:text-ink hover:underline">
+              Central de ajuda
+            </Link>
             <Link href="/privacidade" className="hover:text-ink hover:underline">
               Política de privacidade
             </Link>

@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { IdentityStatus } from '../generated/prisma/enums.js';
-import { SubmitIdentityDto } from './dto/submit-identity.dto.js';
 import { ReviewIdentityDto } from './dto/review-identity.dto.js';
 
 const SELECT_FIELDS = {
@@ -19,12 +18,12 @@ const SELECT_FIELDS = {
 export class IdentityService {
   constructor(private prisma: PrismaService) {}
 
-  async submit(userId: string, dto: SubmitIdentityDto) {
+  async submit(userId: string, documentFilename: string) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         identityStatus: IdentityStatus.PENDENTE,
-        identityDocumentUrl: dto.documentUrl,
+        identityDocumentUrl: documentFilename,
         identitySubmittedAt: new Date(),
         identityRejectionReason: null,
         identityReviewedAt: null,
@@ -36,6 +35,11 @@ export class IdentityService {
 
   async getMine(userId: string) {
     return this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: SELECT_FIELDS });
+  }
+
+  async getDocumentFilename(userId: string): Promise<string | null> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { identityDocumentUrl: true } });
+    return user?.identityDocumentUrl ?? null;
   }
 
   async listPending() {
