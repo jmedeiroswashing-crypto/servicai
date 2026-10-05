@@ -11,7 +11,15 @@ const UPLOAD_DIR = 'uploads';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-mkdirSync(UPLOAD_DIR, { recursive: true });
+// Em serverless (Vercel) o filesystem é somente leitura fora de /tmp — criar essa
+// pasta derruba o bootstrap inteiro do Nest se não for protegido. O upload em si já
+// não funciona nesse ambiente (arquivo some entre requisições), mas o resto da API
+// não pode cair por causa disso.
+try {
+  mkdirSync(UPLOAD_DIR, { recursive: true });
+} catch {
+  // Filesystem somente leitura — upload de arquivo fica indisponível, mas a API continua de pé.
+}
 
 @Controller('uploads')
 @UseGuards(JwtAuthGuard)

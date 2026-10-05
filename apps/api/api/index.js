@@ -18,8 +18,16 @@ async function bootstrap() {
     }),
   );
 
+  // Mantido em sincronia com main.ts (usado no servidor tradicional) — este arquivo
+  // é o ponto de entrada real da Vercel (ver vercel.json), main.ts não é executado lá.
+  const configuredOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const capacitorOrigins = ['capacitor://localhost', 'https://localhost', 'http://localhost'];
+
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    origin: [...new Set([...configuredOrigins, ...capacitorOrigins])],
     credentials: true,
   });
 

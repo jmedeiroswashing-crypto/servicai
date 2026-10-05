@@ -32,7 +32,14 @@ const IDENTITY_UPLOAD_DIR = 'uploads-private/identity';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 
-mkdirSync(IDENTITY_UPLOAD_DIR, { recursive: true });
+// Em serverless (Vercel) o filesystem é somente leitura fora de /tmp — criar essa
+// pasta sem proteção derruba o bootstrap inteiro do Nest. Upload de documento já não
+// funciona nesse ambiente (arquivo some entre requisições), mas a API não pode cair.
+try {
+  mkdirSync(IDENTITY_UPLOAD_DIR, { recursive: true });
+} catch {
+  // Filesystem somente leitura — verificação de identidade fica indisponível, mas a API continua de pé.
+}
 
 /**
  * Documento de identidade NUNCA passa pelo /uploads genérico (servido publicamente

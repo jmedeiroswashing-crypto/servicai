@@ -6,6 +6,12 @@ import { ConfigService } from '@nestjs/config';
 import { join } from 'node:path';
 import { AppModule } from './app.module.js';
 
+/**
+ * ATENÇÃO: este bootstrap só roda em servidor tradicional (local, Railway, etc).
+ * Em produção na Vercel, quem realmente executa é `api/index.js` — um ponto de
+ * entrada serverless separado, com seu próprio bootstrap simplificado. Qualquer
+ * mudança de CORS/config feita aqui precisa ser replicada manualmente lá também.
+ */
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
