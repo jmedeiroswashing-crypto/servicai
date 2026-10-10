@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, TrendingUp, TrendingDown, Receipt, Info, Plus, Trash2, Scale, Repeat } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Receipt, Info, Plus, Trash2, Scale, Repeat, HandCoins } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { EXPENSE_CATEGORIES, suggestExpenseCategory } from '@/lib/expense-categories';
 import { ReceiptScanButton } from '@/components/ReceiptScanButton';
-import type { Earnings, Expense } from '@/lib/types';
+import type { Earnings, Expense, Income } from '@/lib/types';
 
 function formatMoney(v: number) {
   const sign = v < 0 ? '-' : '';
@@ -38,6 +38,114 @@ function EarningsChart({ months }: { months: Earnings['months'] }) {
         </div>
       ))}
       <div className="sr-only">Barra escura: receita. Barra vermelha: despesas.</div>
+    </div>
+  );
+}
+
+function AddIncomeForm({ onAdded }: { onAdded: () => void }) {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () => (await api.post('/incomes', { description, amount: Number(amount) })).data,
+    onSuccess: () => {
+      setDescription('');
+      setAmount('');
+      onAdded();
+    },
+  });
+
+  const inputClass =
+    'w-full border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
+
+  return (
+    <div className="border border-border p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
+          <Plus size={14} /> Lançar receita
+        </p>
+        <ReceiptScanButton onExtracted={(value) => value !== null && setAmount(String(value))} />
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-[2fr_1fr_auto]">
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className={inputClass}
+          placeholder="O que você ganhou? Ex: serviço cobrado no pix"
+        />
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className={inputClass}
+          placeholder="R$ 0,00"
+        />
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={!description.trim() || !amount || Number(amount) <= 0 || mutation.isPending}
+          className="bg-ink px-4 py-2 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
+        >
+          {mutation.isPending ? '...' : 'Lançar'}
+        </button>
+      </div>
+      <p className="mt-2 text-xs text-foreground-muted/70">
+        Pra serviços feitos fora de uma reserva do app (ex: combinado por fora, dinheiro, pix direto).
+      </p>
+      {mutation.isError && <p className="mt-2 text-xs text-danger">Não foi possível lançar a receita. Tente novamente.</p>}
+    </div>
+  );
+}
+
+function IncomesList() {
+  const queryClient = useQueryClient();
+  const { data: incomes, isLoading } = useQuery({
+    queryKey: ['incomes', 'mine'],
+    queryFn: async () => (await api.get<Income[]>('/incomes/mine')).data,
+  });
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ['incomes', 'mine'] });
+    queryClient.invalidateQueries({ queryKey: ['bookings', 'earnings'] });
+  }
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => api.delete(`/incomes/${id}`),
+    onSuccess: refresh,
+  });
+
+  return (
+    <div className="mt-10">
+      <h2 className="mb-3 flex items-center gap-1.5 font-display text-xl text-ink">
+        <HandCoins size={18} className="text-foreground-muted" /> Receita lançada manualmente
+      </h2>
+      <div className="space-y-3">
+        <AddIncomeForm onAdded={refresh} />
+        {isLoading && <p className="text-sm text-foreground-muted">Carregando receitas...</p>}
+        {!isLoading && incomes?.length === 0 && (
+          <p className="text-sm text-foreground-muted">Nenhuma receita avulsa lançada ainda.</p>
+        )}
+        {incomes?.map((inc) => (
+          <div key={inc.id} className="flex items-center justify-between border border-border px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-ink">{inc.description}</p>
+              <p className="text-xs text-foreground-muted">{new Date(inc.date).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-success">+{formatMoney(inc.amount)}</span>
+              <button
+                onClick={() => deleteMutation.mutate(inc.id)}
+                disabled={deleteMutation.isPending}
+                className="text-foreground-muted hover:text-danger disabled:opacity-40"
+                aria-label="Remover receita"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -217,9 +325,10 @@ export default function FaturamentoPage() {
       <div className="mt-4 flex items-start gap-2 border border-accent/30 bg-accent/5 p-4 text-sm text-foreground-muted">
         <Info size={15} className="mt-0.5 shrink-0 text-accent" />
         <p>
-          A receita é o que foi <strong className="text-ink">combinado</strong> nas reservas concluídas — o app
-          ainda não processa pagamento, então isso não é uma confirmação financeira auditada. As despesas são
-          lançadas manualmente por você.
+          A receita soma o que foi <strong className="text-ink">combinado</strong> nas reservas concluídas pelo app
+          com o que você lança manualmente abaixo (serviços fechados por fora, por exemplo) — o app ainda não
+          processa pagamento, então nada aqui é uma confirmação financeira auditada. Despesas também são lançadas
+          manualmente.
         </p>
       </div>
 
@@ -267,6 +376,8 @@ export default function FaturamentoPage() {
           <span className="mr-1 ml-4 inline-block h-2 w-2 bg-danger/60 align-middle" /> Despesas
         </p>
       </div>
+
+      <IncomesList />
 
       <ExpensesList />
 

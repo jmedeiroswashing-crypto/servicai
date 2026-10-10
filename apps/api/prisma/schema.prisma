@@ -69,6 +69,7 @@ enum NotificationType {
   LEMBRETE_MANUTENCAO
   LEMBRETE_AVALIACAO
   RESUMO_SEMANAL
+  LEMBRETE_COMPROMISSO
 }
 
 enum DealStatus {
@@ -234,6 +235,8 @@ model ProviderProfile {
   proposals     Proposal[]
   lastMinuteDeals LastMinuteDeal[]
   expenses      Expense[]
+  incomes       Income[]
+  appointments  Appointment[]
 }
 
 model Expense {
@@ -254,6 +257,35 @@ model Expense {
   createdAt   DateTime @default(now())
 
   @@index([providerId, date])
+}
+
+model Income {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  description String
+  amount      Float
+  date        DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+
+  @@index([providerId, date])
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  title       String
+  notes       String?
+  scheduledAt DateTime
+  notifiedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([providerId, scheduledAt])
 }
 
 model Subscription {

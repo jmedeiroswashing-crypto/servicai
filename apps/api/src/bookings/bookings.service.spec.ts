@@ -9,6 +9,7 @@ function buildService() {
     service: { findUnique: vi.fn() },
     providerProfile: { findUnique: vi.fn() },
     expense: { findMany: vi.fn().mockResolvedValue([]) },
+    income: { findMany: vi.fn().mockResolvedValue([]) },
   };
   const providersService = {
     assertOwnership: vi.fn(),
@@ -152,6 +153,22 @@ describe('BookingsService', () => {
       expect(result.currentMonthExpenses).toBe(0);
       expect(result.netProfitCurrentMonth).toBe(100);
       expect(result.totalExpensesAllTime).toBe(999);
+    });
+
+    it('soma receita lançada manualmente à receita total, mas não ao ticket médio', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      const now = new Date();
+      prisma.booking.findMany.mockResolvedValue([{ priceQuoted: 200, updatedAt: now }]);
+      prisma.income.findMany.mockResolvedValue([{ amount: 150, date: now }]);
+
+      const result = await service.getEarnings('user1');
+
+      expect(result.currentMonthTotal).toBe(350);
+      expect(result.totalAllTime).toBe(350);
+      // ticket médio é só sobre reservas de verdade: 200 / 1 serviço, não 350 / 1
+      expect(result.avgTicket).toBe(200);
+      expect(result.totalServicesCompleted).toBe(1);
     });
   });
 });

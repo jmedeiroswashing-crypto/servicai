@@ -240,6 +240,23 @@ export interface Expense {
   recurringParentId?: string | null;
 }
 
+export interface Income {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  createdAt: string;
+}
+
+export interface Appointment {
+  id: string;
+  title: string;
+  notes?: string | null;
+  scheduledAt: string;
+  notifiedAt?: string | null;
+  createdAt: string;
+}
+
 export interface SearchIntent {
   category: string;
   keywords: string[];
@@ -316,7 +333,8 @@ export type NotificationType =
   | 'VAGA_RESERVADA'
   | 'LEMBRETE_MANUTENCAO'
   | 'LEMBRETE_AVALIACAO'
-  | 'RESUMO_SEMANAL';
+  | 'RESUMO_SEMANAL'
+  | 'LEMBRETE_COMPROMISSO';
 
 export interface NotificationItem {
   id: string;
