@@ -1,13 +1,58 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, PlayCircle, XCircle, Wallet, StickyNote, Phone, ChevronDown } from 'lucide-react';
+import { CalendarDays, CheckCircle2, PlayCircle, XCircle, Wallet, StickyNote, Phone, ChevronDown, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { BookingDisputeSection } from '@/components/BookingDisputeSection';
-import type { Booking, BookingStatus } from '@/lib/types';
+import type { Booking, BookingStatus, Earnings } from '@/lib/types';
+
+function formatMoney(v: number) {
+  const sign = v < 0 ? '-' : '';
+  return `${sign}R$ ${Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function FaturamentoWidget() {
+  const { data: earnings, isLoading } = useQuery({
+    queryKey: ['bookings', 'earnings'],
+    queryFn: async () => (await api.get<Earnings>('/bookings/earnings')).data,
+  });
+
+  if (isLoading || !earnings) return null;
+
+  const profitPositive = earnings.netProfitCurrentMonth >= 0;
+
+  return (
+    <Link
+      href="/painel/faturamento"
+      className="mt-6 flex items-center justify-between gap-4 border border-border p-4 transition-colors hover:border-ink"
+    >
+      <div className="flex items-center gap-2.5">
+        <Wallet size={18} className="shrink-0 text-accent" />
+        <div>
+          <p className="text-xs uppercase tracking-wide text-foreground-muted">Faturamento deste mês</p>
+          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+            <span className="text-ink">
+              Receita <strong className="font-display text-base">{formatMoney(earnings.currentMonthTotal)}</strong>
+            </span>
+            <span className="text-foreground-muted">
+              Despesas <strong className="text-danger">{formatMoney(earnings.currentMonthExpenses)}</strong>
+            </span>
+            <span className={profitPositive ? 'text-success' : 'text-danger'}>
+              Lucro líquido <strong>{formatMoney(earnings.netProfitCurrentMonth)}</strong>
+            </span>
+          </p>
+        </div>
+      </div>
+      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-accent">
+        Ver completo <ArrowRight size={13} />
+      </span>
+    </Link>
+  );
+}
 
 const STATUS_LABEL: Record<BookingStatus, string> = {
   SOLICITADO: 'Solicitado',
@@ -176,6 +221,8 @@ export default function AgendaPage() {
       <p className="mt-2 text-foreground-muted">
         Suas reservas confirmadas, vagas de última hora e propostas aceitas, tudo em um só lugar.
       </p>
+
+      <FaturamentoWidget />
 
       {active.length === 0 && (
         <p className="mt-10 text-foreground-muted">Nenhum compromisso ativo agora. Novos serviços aceitos aparecem aqui.</p>

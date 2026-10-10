@@ -27,6 +27,7 @@ import { UploadsModule } from './uploads/uploads.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { IdentityModule } from './identity/identity.module.js';
 import { SupportModule } from './support/support.module.js';
+import { ExpensesModule } from './expenses/expenses.module.js';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { SupportModule } from './support/support.module.js';
     ReportsModule,
     IdentityModule,
     SupportModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -8,6 +8,7 @@ function buildService() {
     booking: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), findMany: vi.fn() },
     service: { findUnique: vi.fn() },
     providerProfile: { findUnique: vi.fn() },
+    expense: { findMany: vi.fn().mockResolvedValue([]) },
   };
   const providersService = {
     assertOwnership: vi.fn(),
@@ -118,6 +119,39 @@ describe('BookingsService', () => {
       expect(result.totalAllTime).toBe(0);
       expect(result.avgTicket).toBe(0);
       expect(result.months).toHaveLength(6);
+    });
+
+    it('calcula lucro líquido descontando despesas da receita, no mês atual e no total', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      const now = new Date();
+      prisma.booking.findMany.mockResolvedValue([{ priceQuoted: 300, updatedAt: now }]);
+      prisma.expense.findMany.mockResolvedValue([
+        { amount: 50, date: now },
+        { amount: 30, date: now },
+      ]);
+
+      const result = await service.getEarnings('user1');
+
+      expect(result.totalExpensesAllTime).toBe(80);
+      expect(result.netProfitAllTime).toBe(220);
+      expect(result.currentMonthExpenses).toBe(80);
+      expect(result.netProfitCurrentMonth).toBe(220);
+    });
+
+    it('não mistura despesas de outros meses no cálculo do mês atual', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+      prisma.booking.findMany.mockResolvedValue([{ priceQuoted: 100, updatedAt: now }]);
+      prisma.expense.findMany.mockResolvedValue([{ amount: 999, date: lastMonth }]);
+
+      const result = await service.getEarnings('user1');
+
+      expect(result.currentMonthExpenses).toBe(0);
+      expect(result.netProfitCurrentMonth).toBe(100);
+      expect(result.totalExpensesAllTime).toBe(999);
     });
   });
 });

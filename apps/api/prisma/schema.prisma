@@ -233,6 +233,22 @@ model ProviderProfile {
   subscription  Subscription?
   proposals     Proposal[]
   lastMinuteDeals LastMinuteDeal[]
+  expenses      Expense[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  description String
+  category    String
+  amount      Float
+  date        DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+
+  @@index([providerId, date])
 }
 
 model Subscription {

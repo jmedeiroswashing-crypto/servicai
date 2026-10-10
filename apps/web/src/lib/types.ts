@@ -213,15 +213,29 @@ export interface EarningsMonth {
   label: string;
   total: number;
   count: number;
+  expenses: number;
 }
 
 export interface Earnings {
   currentMonthTotal: number;
   currentMonthCount: number;
+  currentMonthExpenses: number;
+  netProfitCurrentMonth: number;
   totalAllTime: number;
+  totalExpensesAllTime: number;
+  netProfitAllTime: number;
   totalServicesCompleted: number;
   avgTicket: number;
   months: EarningsMonth[];
+}
+
+export interface Expense {
+  id: string;
+  description: string;
+  category: string;
+  amount: number;
+  date: string;
+  createdAt: string;
 }
 
 export interface SearchIntent {
