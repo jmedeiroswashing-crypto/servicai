@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { TermsGate } from "@/components/TermsGate";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
+          <TermsGate />
         </Providers>
       </body>
     </html>
