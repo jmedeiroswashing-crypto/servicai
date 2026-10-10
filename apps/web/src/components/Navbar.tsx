@@ -1,49 +1,125 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ChevronDown, LogOut, LayoutDashboard, CreditCard, MessageCircle, Sparkles, FileText, UserCog, Zap, Menu, X, User, CalendarDays, Wallet, CalendarClock, ShoppingBag } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LogOut,
+  LayoutDashboard,
+  CreditCard,
+  MessageCircle,
+  Sparkles,
+  FileText,
+  UserCog,
+  Zap,
+  Menu,
+  X,
+  User,
+  CalendarDays,
+  Wallet,
+  CalendarClock,
+  ShoppingBag,
+  Search,
+  Megaphone,
+  Tag,
+  Flag,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { NotificationBell } from './NotificationBell';
 import { useState } from 'react';
 
+interface NavLink {
+  href: string;
+  label: string;
+  icon: typeof Search;
+}
+
+function getNavLinks(role?: string): NavLink[] {
+  if (role === 'PRESTADOR') {
+    return [
+      { href: '/painel', label: 'Painel', icon: LayoutDashboard },
+      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
+      { href: '/painel/faturamento', label: 'Faturamento', icon: Wallet },
+      { href: '/painel/oportunidades', label: 'Oportunidades', icon: Sparkles },
+      { href: '/painel/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
+      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
+      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
+      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
+      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
+  if (role === 'CLIENTE') {
+    return [
+      { href: '/buscar', label: 'Buscar serviços', icon: Search },
+      { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
+      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+      { href: '/solicitar', label: 'Publicar solicitação', icon: FileText },
+      { href: '/minhas-solicitacoes', label: 'Minhas solicitações', icon: LayoutDashboard },
+      { href: '/minhas-reservas', label: 'Minhas reservas', icon: CalendarClock },
+      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
+      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
+  if (role === 'ADMIN') {
+    return [
+      { href: '/admin/denuncias', label: 'Denúncias', icon: Flag },
+      { href: '/admin/identidade', label: 'Verificação de identidade', icon: ShieldCheck },
+      { href: '/admin/planos', label: 'Planos', icon: CreditCard },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
+  // Visitante (não logado)
+  return [
+    { href: '/buscar', label: 'Buscar serviços', icon: Search },
+    { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
+    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
+    { href: '/cadastro?tipo=PRESTADOR', label: 'Anuncie seu serviço', icon: Megaphone },
+    { href: '/precos', label: 'Planos', icon: CreditCard },
+  ];
+}
+
 export function Navbar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  const links = getNavLinks(user?.role);
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5">
+      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-icon.png" alt="" className="h-8 w-auto" />
-          <span className="font-display text-xl font-medium tracking-tight">
+          <span className="font-display hidden text-xl font-medium tracking-tight sm:inline">
             <span className="text-white">Servic</span>
             <span className="text-accent">AI</span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-[0.9rem] text-white/70 sm:flex">
-          <Link href="/buscar" className="link-underline pb-0.5 hover:text-white">
-            Buscar serviços
-          </Link>
-          <Link href="/vagas-ultima-hora" className="link-underline flex items-center gap-1 pb-0.5 hover:text-white">
-            <Zap size={13} /> Vagas de última hora
-          </Link>
-          <Link href="/marketplace" className="link-underline flex items-center gap-1 pb-0.5 hover:text-white">
-            <ShoppingBag size={13} /> Marketplace
-          </Link>
-          <Link href="/cadastro?tipo=PRESTADOR" className="link-underline pb-0.5 hover:text-white">
-            Anuncie seu serviço
-          </Link>
-          <Link href="/precos" className="link-underline pb-0.5 hover:text-white">
-            Planos
-          </Link>
+        {/* Todas as funções, em fila, direto na barra — sem menu escondido */}
+        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto sm:flex" aria-label="Navegação principal">
+          {links.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-[0.82rem] transition-colors ${
+                  active ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <link.icon size={13} /> {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
           <button
             onClick={() => setMobileNavOpen((v) => !v)}
             aria-label="Abrir menu"
@@ -53,136 +129,20 @@ export function Navbar() {
           </button>
           {user ? (
             <>
-            <NotificationBell />
-            <div className="relative">
+              <NotificationBell />
               <button
-                onClick={() => setMenuOpen((v) => !v)}
-                className="flex items-center gap-2 border border-white/25 px-3 py-1.5 text-sm text-white hover:border-white/50"
+                onClick={() => {
+                  logout();
+                  router.push('/');
+                }}
+                className="hidden items-center gap-1.5 border border-white/25 px-3 py-1.5 text-sm text-white hover:border-danger hover:text-danger sm:flex"
               >
-                {user.name.split(' ')[0]}
-                <ChevronDown size={14} className={`transition-transform ${menuOpen ? 'rotate-180' : ''}`} />
+                <LogOut size={14} /> Sair
               </button>
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-52 border border-border bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)]">
-                  <Link
-                    href="/perfil"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                  >
-                    <User size={15} className="text-foreground-muted" /> Meu perfil
-                  </Link>
-                  <Link
-                    href="/marketplace/meus-anuncios"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                  >
-                    <ShoppingBag size={15} className="text-foreground-muted" /> Meus anúncios
-                  </Link>
-                  {user.role === 'PRESTADOR' && (
-                    <>
-                      <Link
-                        href="/painel"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <LayoutDashboard size={15} className="text-foreground-muted" /> Meu painel
-                      </Link>
-                      <Link
-                        href="/painel/agenda"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <CalendarDays size={15} className="text-foreground-muted" /> Agenda
-                      </Link>
-                      <Link
-                        href="/painel/faturamento"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <Wallet size={15} className="text-foreground-muted" /> Faturamento
-                      </Link>
-                      <Link
-                        href="/painel/oportunidades"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <Sparkles size={15} className="text-foreground-muted" /> Oportunidades
-                      </Link>
-                      <Link
-                        href="/painel/vagas-ultima-hora"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <Zap size={15} className="text-foreground-muted" /> Vagas de última hora
-                      </Link>
-                      <Link
-                        href="/painel/perfil"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <UserCog size={15} className="text-foreground-muted" /> Dados profissionais
-                      </Link>
-                      <Link
-                        href="/painel/plano"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <CreditCard size={15} className="text-foreground-muted" /> Meu plano
-                      </Link>
-                    </>
-                  )}
-                  {user.role === 'CLIENTE' && (
-                    <>
-                      <Link
-                        href="/solicitar"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <FileText size={15} className="text-foreground-muted" /> Publicar solicitação
-                      </Link>
-                      <Link
-                        href="/minhas-solicitacoes"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <LayoutDashboard size={15} className="text-foreground-muted" /> Minhas solicitações
-                      </Link>
-                      <Link
-                        href="/minhas-reservas"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                      >
-                        <CalendarClock size={15} className="text-foreground-muted" /> Minhas reservas
-                      </Link>
-                    </>
-                  )}
-                  <Link
-                    href="/mensagens"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2.5 border-b border-border px-4 py-3 text-sm hover:bg-surface-muted"
-                  >
-                    <MessageCircle size={15} className="text-foreground-muted" /> Mensagens
-                  </Link>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMenuOpen(false);
-                      router.push('/');
-                    }}
-                    className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-sm text-danger hover:bg-surface-muted"
-                  >
-                    <LogOut size={15} /> Sair
-                  </button>
-                </div>
-              )}
-            </div>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block"
-              >
+              <Link href="/login" className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block">
                 Entrar
               </Link>
               <Link
@@ -197,32 +157,30 @@ export function Navbar() {
       </div>
 
       {mobileNavOpen && (
-        <nav className="flex flex-col border-t border-white/15 bg-ink px-4 py-3 text-sm text-white/80 sm:hidden">
-          <Link href="/buscar" onClick={() => setMobileNavOpen(false)} className="border-b border-white/10 py-3">
-            Buscar serviços
-          </Link>
-          <Link
-            href="/vagas-ultima-hora"
-            onClick={() => setMobileNavOpen(false)}
-            className="flex items-center gap-1.5 border-b border-white/10 py-3"
-          >
-            <Zap size={14} /> Vagas de última hora
-          </Link>
-          <Link
-            href="/marketplace"
-            onClick={() => setMobileNavOpen(false)}
-            className="flex items-center gap-1.5 border-b border-white/10 py-3"
-          >
-            <ShoppingBag size={14} /> Marketplace
-          </Link>
-          <Link href="/cadastro?tipo=PRESTADOR" onClick={() => setMobileNavOpen(false)} className="border-b border-white/10 py-3">
-            Anuncie seu serviço
-          </Link>
-          <Link href="/precos" onClick={() => setMobileNavOpen(false)} className="py-3">
-            Planos
-          </Link>
-          {!user && (
-            <Link href="/login" onClick={() => setMobileNavOpen(false)} className="border-t border-white/10 py-3">
+        <nav className="flex max-h-[75vh] flex-col overflow-y-auto border-t border-white/15 bg-ink px-4 py-2 text-sm text-white/85 sm:hidden">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileNavOpen(false)}
+              className="flex items-center gap-2.5 border-b border-white/10 py-3"
+            >
+              <link.icon size={15} className="shrink-0 text-white/60" /> {link.label}
+            </Link>
+          ))}
+          {user ? (
+            <button
+              onClick={() => {
+                logout();
+                setMobileNavOpen(false);
+                router.push('/');
+              }}
+              className="flex items-center gap-2.5 py-3 text-left text-danger"
+            >
+              <LogOut size={15} /> Sair
+            </button>
+          ) : (
+            <Link href="/login" onClick={() => setMobileNavOpen(false)} className="py-3">
               Entrar
             </Link>
           )}
