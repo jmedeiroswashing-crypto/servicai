@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottleGuard } from './common/throttle/throttle.guard.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -33,9 +33,6 @@ import { ExpensesModule } from './expenses/expenses.module.js';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
-    // Limite geral contra abuso (spam de cadastro, força bruta de login, custo de IA).
-    // Rotas sensíveis (login/registro) têm um limite mais apertado no próprio controller.
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -61,6 +58,9 @@ import { ExpensesModule } from './expenses/expenses.module.js';
     ExpensesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  // Limite geral contra abuso (spam de cadastro, força bruta de login, custo de IA)
+  // aplicado globalmente pelo ThrottleGuard (ver common/throttle) — rotas sensíveis
+  // (login/registro) têm um limite mais apertado via @Throttle() no próprio controller.
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottleGuard }],
 })
 export class AppModule {}

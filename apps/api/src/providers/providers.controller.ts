@@ -7,7 +7,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { ProvidersService } from './providers.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
 import { ProviderAiIntakeDto } from './dto/provider-ai-intake.dto.js';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle } from '../common/throttle/throttle.decorator.js';
 import { AiService } from '../ai/ai.service.js';
 
 @Controller('providers')

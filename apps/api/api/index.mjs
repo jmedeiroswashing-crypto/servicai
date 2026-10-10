@@ -6,6 +6,7 @@ import { AppModule } from '../dist/app.module.js';
 import { resolveCorsOrigins } from '../dist/common/cors-origins.js';
 
 const expressApp = express();
+expressApp.set('trust proxy', 1);
 let ready;
 
 async function bootstrap() {

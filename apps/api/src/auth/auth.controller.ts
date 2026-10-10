@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle } from '../common/throttle/throttle.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CurrentUser, type AuthUser } from './decorators/current-user.decorator.js';
 import { AuthService } from './auth.service.js';
