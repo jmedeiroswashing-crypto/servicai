@@ -19,7 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -27,19 +27,11 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { IdentityService } from './identity.service.js';
 import { ReviewIdentityDto } from './dto/review-identity.dto.js';
+import { safeDiskDestination } from '../common/safe-disk-destination.js';
 
 const IDENTITY_UPLOAD_DIR = 'uploads-private/identity';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
-
-// Em serverless (Vercel) o filesystem é somente leitura fora de /tmp — criar essa
-// pasta sem proteção derruba o bootstrap inteiro do Nest. Upload de documento já não
-// funciona nesse ambiente (arquivo some entre requisições), mas a API não pode cair.
-try {
-  mkdirSync(IDENTITY_UPLOAD_DIR, { recursive: true });
-} catch {
-  // Filesystem somente leitura — verificação de identidade fica indisponível, mas a API continua de pé.
-}
 
 /**
  * Documento de identidade NUNCA passa pelo /uploads genérico (servido publicamente
@@ -59,7 +51,7 @@ export class IdentityController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: IDENTITY_UPLOAD_DIR,
+        destination: safeDiskDestination(IDENTITY_UPLOAD_DIR),
         filename: (_req, file, cb) => cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`),
       }),
       limits: { fileSize: MAX_SIZE_BYTES },
