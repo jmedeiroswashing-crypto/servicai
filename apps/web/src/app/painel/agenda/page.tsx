@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, CheckCircle2, PlayCircle, XCircle, Wallet, StickyNote, Phone, ChevronDown, ArrowRight } from 'lucide-react';
+import { CalendarDays, CheckCircle2, PlayCircle, XCircle, Wallet, StickyNote, Phone, ChevronDown, ArrowRight, Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { BookingDisputeSection } from '@/components/BookingDisputeSection';
+import { suggestExpenseCategory } from '@/lib/expense-categories';
+import { ReceiptScanButton } from '@/components/ReceiptScanButton';
 import type { Booking, BookingStatus, Earnings } from '@/lib/types';
 
 function formatMoney(v: number) {
@@ -15,7 +17,80 @@ function formatMoney(v: number) {
   return `${sign}R$ ${Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function QuickExpenseModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async () =>
+      (
+        await api.post('/expenses', {
+          description,
+          category: suggestExpenseCategory(description),
+          amount: Number(amount),
+        })
+      ).data,
+    onSuccess: () => {
+      onAdded();
+      onClose();
+    },
+  });
+
+  const inputClass =
+    'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 px-4" onClick={onClose}>
+      <div className="w-full max-w-sm border border-border bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-2 font-display text-lg text-ink">
+            <Wallet size={16} /> Lançar despesa rápida
+          </h2>
+          <button onClick={onClose} className="text-foreground-muted hover:text-ink">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="space-y-3">
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={inputClass}
+            placeholder="O que foi? Ex: gasolina"
+            autoFocus
+          />
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={inputClass}
+              placeholder="R$ 0,00"
+            />
+            <ReceiptScanButton onExtracted={(value) => value !== null && setAmount(String(value))} />
+          </div>
+          <p className="text-xs text-foreground-muted/70">
+            A categoria é sugerida automaticamente pela descrição. Pra mais opções (categoria manual, repetir todo
+            mês), use o Faturamento completo.
+          </p>
+          {mutation.isError && <p className="text-xs text-danger">Não foi possível lançar. Tente novamente.</p>}
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!description.trim() || !amount || Number(amount) <= 0 || mutation.isPending}
+            className="w-full bg-ink py-2.5 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
+          >
+            {mutation.isPending ? 'Lançando...' : 'Lançar despesa'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FaturamentoWidget() {
+  const queryClient = useQueryClient();
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { data: earnings, isLoading } = useQuery({
     queryKey: ['bookings', 'earnings'],
     queryFn: async () => (await api.get<Earnings>('/bookings/earnings')).data,
@@ -26,31 +101,44 @@ function FaturamentoWidget() {
   const profitPositive = earnings.netProfitCurrentMonth >= 0;
 
   return (
-    <Link
-      href="/painel/faturamento"
-      className="mt-6 flex items-center justify-between gap-4 border border-border p-4 transition-colors hover:border-ink"
-    >
-      <div className="flex items-center gap-2.5">
-        <Wallet size={18} className="shrink-0 text-accent" />
-        <div>
-          <p className="text-xs uppercase tracking-wide text-foreground-muted">Faturamento deste mês</p>
-          <p className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
-            <span className="text-ink">
-              Receita <strong className="font-display text-base">{formatMoney(earnings.currentMonthTotal)}</strong>
-            </span>
-            <span className="text-foreground-muted">
-              Despesas <strong className="text-danger">{formatMoney(earnings.currentMonthExpenses)}</strong>
-            </span>
-            <span className={profitPositive ? 'text-success' : 'text-danger'}>
-              Lucro líquido <strong>{formatMoney(earnings.netProfitCurrentMonth)}</strong>
-            </span>
-          </p>
+    <div className="mt-6 border border-border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <Wallet size={18} className="shrink-0 text-accent" />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-foreground-muted">Faturamento deste mês</p>
+            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+              <span className="text-ink">
+                Receita <strong className="font-display text-base">{formatMoney(earnings.currentMonthTotal)}</strong>
+              </span>
+              <span className="text-foreground-muted">
+                Despesas <strong className="text-danger">{formatMoney(earnings.currentMonthExpenses)}</strong>
+              </span>
+              <span className={profitPositive ? 'text-success' : 'text-danger'}>
+                Lucro líquido <strong>{formatMoney(earnings.netProfitCurrentMonth)}</strong>
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            onClick={() => setQuickAddOpen(true)}
+            className="flex items-center gap-1 border border-border px-2.5 py-1.5 text-xs font-medium text-ink hover:border-ink"
+          >
+            <Plus size={13} /> Despesa
+          </button>
+          <Link href="/painel/faturamento" className="flex items-center gap-1 text-xs font-medium text-accent hover:underline">
+            Ver completo <ArrowRight size={13} />
+          </Link>
         </div>
       </div>
-      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-accent">
-        Ver completo <ArrowRight size={13} />
-      </span>
-    </Link>
+      {quickAddOpen && (
+        <QuickExpenseModal
+          onClose={() => setQuickAddOpen(false)}
+          onAdded={() => queryClient.invalidateQueries({ queryKey: ['bookings', 'earnings'] })}
+        />
+      )}
+    </div>
   );
 }
 

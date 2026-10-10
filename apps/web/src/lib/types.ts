@@ -236,6 +236,8 @@ export interface Expense {
   amount: number;
   date: string;
   createdAt: string;
+  isRecurring: boolean;
+  recurringParentId?: string | null;
 }
 
 export interface SearchIntent {

@@ -9,22 +9,31 @@ import { CreateExpenseDto } from './dto/create-expense.dto.js';
 
 @Controller('expenses')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.PRESTADOR)
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
 
   @Post()
+  @Roles(Role.PRESTADOR)
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateExpenseDto) {
     return this.expensesService.create(user.userId, dto);
   }
 
   @Get('mine')
+  @Roles(Role.PRESTADOR)
   findMine(@CurrentUser() user: AuthUser) {
     return this.expensesService.findMine(user.userId);
   }
 
   @Delete(':id')
+  @Roles(Role.PRESTADOR)
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.expensesService.remove(user.userId, id);
+  }
+
+  /** Disparo manual para verificação/operação — a execução automática é mensal via cron. */
+  @Post('run-recurring')
+  @Roles(Role.ADMIN)
+  runRecurring() {
+    return this.expensesService.generateRecurringExpenses();
   }
 }

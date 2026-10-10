@@ -136,22 +136,25 @@ export class RemindersService {
 
     let sent = 0;
     for (const provider of providers) {
-      const [earningsAgg, newReviewsCount, pendingProposalsCount, openDealsCount] = await Promise.all([
-        this.prisma.booking.aggregate({
-          where: {
-            providerId: provider.id,
-            status: BookingStatus.CONCLUIDO,
-            updatedAt: { gte: weekAgo },
-            priceQuoted: { not: null },
-          },
-          _sum: { priceQuoted: true },
-        }),
-        this.prisma.review.count({ where: { providerId: provider.id, createdAt: { gte: weekAgo } } }),
-        this.prisma.proposal.count({ where: { providerId: provider.id, status: 'ENVIADA' } }),
-        this.prisma.lastMinuteDeal.count({
-          where: { providerId: provider.id, status: 'ATIVA', scheduledAt: { gt: new Date() } },
-        }),
-      ]);
+      const [earningsAgg, newReviewsCount, pendingProposalsCount, openDealsCount, expensesThisWeek, hasEverLoggedExpense] =
+        await Promise.all([
+          this.prisma.booking.aggregate({
+            where: {
+              providerId: provider.id,
+              status: BookingStatus.CONCLUIDO,
+              updatedAt: { gte: weekAgo },
+              priceQuoted: { not: null },
+            },
+            _sum: { priceQuoted: true },
+          }),
+          this.prisma.review.count({ where: { providerId: provider.id, createdAt: { gte: weekAgo } } }),
+          this.prisma.proposal.count({ where: { providerId: provider.id, status: 'ENVIADA' } }),
+          this.prisma.lastMinuteDeal.count({
+            where: { providerId: provider.id, status: 'ATIVA', scheduledAt: { gt: new Date() } },
+          }),
+          this.prisma.expense.count({ where: { providerId: provider.id, date: { gte: weekAgo } } }),
+          this.prisma.expense.count({ where: { providerId: provider.id } }),
+        ]);
 
       const weeklyEarnings = earningsAgg._sum.priceQuoted ?? 0;
       if (weeklyEarnings === 0 && newReviewsCount === 0 && pendingProposalsCount === 0 && openDealsCount === 0) {
@@ -163,6 +166,11 @@ export class RemindersService {
       if (pendingProposalsCount > 0) parts.push(`${pendingProposalsCount} proposta(s) aguardando resposta`);
       if (newReviewsCount > 0) parts.push(`${newReviewsCount} avaliação(ões) nova(s)`);
       if (openDealsCount > 0) parts.push(`${openDealsCount} vaga(s) de última hora aberta(s)`);
+      // Só lembra de lançar despesa quem já usou a função alguma vez — pra quem nunca
+      // lançou nada, isso seria uma sugestão de feature, não um lembrete de hábito.
+      if (expensesThisWeek === 0 && hasEverLoggedExpense > 0) {
+        parts.push('nenhuma despesa lançada essa semana — não esqueça de registrar');
+      }
 
       const notification = await this.notificationsService.createIfNotRecentlyNotified(
         {

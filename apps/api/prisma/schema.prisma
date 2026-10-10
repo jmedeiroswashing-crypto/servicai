@@ -246,6 +246,11 @@ model Expense {
   amount      Float
   date        DateTime @default(now())
 
+  isRecurring       Boolean  @default(false)
+  recurringParentId String?
+  recurringParent   Expense?  @relation("RecurringExpenseClones", fields: [recurringParentId], references: [id], onDelete: Cascade)
+  recurringClones   Expense[] @relation("RecurringExpenseClones")
+
   createdAt   DateTime @default(now())
 
   @@index([providerId, date])

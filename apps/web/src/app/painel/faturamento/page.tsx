@@ -3,19 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, TrendingUp, TrendingDown, Receipt, Info, Plus, Trash2, Scale } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Receipt, Info, Plus, Trash2, Scale, Repeat } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
+import { EXPENSE_CATEGORIES, suggestExpenseCategory } from '@/lib/expense-categories';
+import { ReceiptScanButton } from '@/components/ReceiptScanButton';
 import type { Earnings, Expense } from '@/lib/types';
-
-const EXPENSE_CATEGORIES = [
-  'Material/insumos',
-  'Transporte/combustível',
-  'Ferramentas e equipamentos',
-  'Marketing/anúncios',
-  'Impostos e taxas',
-  'Outro',
-];
 
 function formatMoney(v: number) {
   const sign = v < 0 ? '-' : '';
@@ -52,29 +45,54 @@ function EarningsChart({ months }: { months: Earnings['months'] }) {
 function AddExpenseForm({ onAdded }: { onAdded: () => void }) {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const [amount, setAmount] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
 
   const mutation = useMutation({
     mutationFn: async () =>
-      (await api.post('/expenses', { description, category, amount: Number(amount) })).data,
+      (await api.post('/expenses', { description, category, amount: Number(amount), isRecurring })).data,
     onSuccess: () => {
       setDescription('');
       setAmount('');
+      setIsRecurring(false);
+      setCategoryTouched(false);
+      setCategory(EXPENSE_CATEGORIES[0]);
       onAdded();
     },
   });
+
+  function handleDescriptionChange(value: string) {
+    setDescription(value);
+    if (!categoryTouched) setCategory(suggestExpenseCategory(value));
+  }
 
   const inputClass =
     'w-full border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
 
   return (
     <div className="border border-border p-4">
-      <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-ink">
-        <Plus size={14} /> Lançar despesa
-      </p>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
+          <Plus size={14} /> Lançar despesa
+        </p>
+        <ReceiptScanButton onExtracted={(value) => value !== null && setAmount(String(value))} />
+      </div>
       <div className="grid gap-2.5 sm:grid-cols-[1.5fr_1fr_0.8fr_auto]">
-        <input value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass} placeholder="Descrição" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputClass}>
+        <input
+          value={description}
+          onChange={(e) => handleDescriptionChange(e.target.value)}
+          className={inputClass}
+          placeholder="Descrição"
+        />
+        <select
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setCategoryTouched(true);
+          }}
+          className={inputClass}
+        >
           {EXPENSE_CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -98,6 +116,10 @@ function AddExpenseForm({ onAdded }: { onAdded: () => void }) {
           {mutation.isPending ? '...' : 'Lançar'}
         </button>
       </div>
+      <label className="mt-3 flex w-fit items-center gap-2 text-xs text-foreground-muted">
+        <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="accent-ink" />
+        <Repeat size={12} /> Repetir todo mês automaticamente
+      </label>
       {mutation.isError && <p className="mt-2 text-xs text-danger">Não foi possível lançar a despesa. Tente novamente.</p>}
     </div>
   );
@@ -134,7 +156,14 @@ function ExpensesList() {
         {expenses?.map((e) => (
           <div key={e.id} className="flex items-center justify-between border border-border px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-ink">{e.description}</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                {e.description}
+                {(e.isRecurring || e.recurringParentId) && (
+                  <span title="Despesa recorrente">
+                    <Repeat size={11} className="text-accent" />
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-foreground-muted">
                 {e.category} · {new Date(e.date).toLocaleDateString('pt-BR')}
               </p>
