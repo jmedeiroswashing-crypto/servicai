@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { join } from 'node:path';
 import { AppModule } from './app.module.js';
+import { resolveCorsOrigins } from './common/cors-origins.js';
 
 /**
  * ATENÇÃO: este bootstrap só roda em servidor tradicional (local, Railway, etc).
@@ -29,18 +30,8 @@ async function bootstrap() {
     }),
   );
 
-  // CORS_ORIGIN aceita uma lista separada por vírgula (ex: para liberar o site E o
-  // app nativo ao mesmo tempo). As origens do Capacitor (apps Android/iOS
-  // empacotados com o site) são sempre liberadas, já que não são configuráveis
-  // pelo usuário final e não têm risco de CSRF entre sites como um domínio público teria.
-  const configuredOrigins = (config.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
-  const capacitorOrigins = ['capacitor://localhost', 'https://localhost', 'http://localhost'];
-
   app.enableCors({
-    origin: [...new Set([...configuredOrigins, ...capacitorOrigins])],
+    origin: resolveCorsOrigins(config.get<string>('CORS_ORIGIN')),
     credentials: true,
   });
 

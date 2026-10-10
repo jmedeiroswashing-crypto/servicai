@@ -1,8 +1,9 @@
 import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { resolveCorsOrigins } from '../common/cors-origins.js';
 
-@WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' }, namespace: 'notifications' })
+@WebSocketGateway({ cors: { origin: resolveCorsOrigins(process.env.CORS_ORIGIN) }, namespace: 'notifications' })
 export class NotificationsGateway implements OnGatewayConnection {
   @WebSocketServer()
   server!: Server;

@@ -9,6 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service.js';
+import { resolveCorsOrigins } from '../common/cors-origins.js';
 
 interface JoinConversationPayload {
   conversationId: string;
@@ -20,7 +21,7 @@ interface SendMessagePayload {
   type?: string;
 }
 
-@WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' }, namespace: 'chat' })
+@WebSocketGateway({ cors: { origin: resolveCorsOrigins(process.env.CORS_ORIGIN) }, namespace: 'chat' })
 export class ChatGateway implements OnGatewayConnection {
   @WebSocketServer()
   server!: Server;
