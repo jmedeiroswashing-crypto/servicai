@@ -37,6 +37,12 @@ export class BookingsController {
     return this.bookingsService.getEarnings(user.userId);
   }
 
+  @Get('clients')
+  @Roles(Role.PRESTADOR)
+  getClients(@CurrentUser() user: AuthUser) {
+    return this.bookingsService.getClients(user.userId);
+  }
+
   @Patch(':id/status')
   @Roles(Role.PRESTADOR)
   updateStatus(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateBookingStatusDto) {

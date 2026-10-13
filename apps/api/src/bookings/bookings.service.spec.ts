@@ -171,4 +171,38 @@ describe('BookingsService', () => {
       expect(result.totalServicesCompleted).toBe(1);
     });
   });
+
+  describe('getClients', () => {
+    it('agrupa reservas concluídas por cliente, somando total gasto e contagem', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      const older = new Date('2026-01-01');
+      const newer = new Date('2026-02-01');
+      prisma.booking.findMany.mockResolvedValue([
+        { clientId: 'client1', priceQuoted: 100, updatedAt: older, client: { name: 'Ana', phone: '11999990000', avatarUrl: null } },
+        { clientId: 'client1', priceQuoted: 200, updatedAt: newer, client: { name: 'Ana', phone: '11999990000', avatarUrl: null } },
+        { clientId: 'client2', priceQuoted: 50, updatedAt: older, client: { name: 'Bruno', phone: null, avatarUrl: null } },
+      ]);
+
+      const result = await service.getClients('user1');
+
+      expect(result).toEqual([
+        { clientId: 'client1', name: 'Ana', phone: '11999990000', avatarUrl: null, totalSpent: 300, servicesCount: 2, lastServiceAt: newer },
+        { clientId: 'client2', name: 'Bruno', phone: null, avatarUrl: null, totalSpent: 50, servicesCount: 1, lastServiceAt: older },
+      ]);
+      expect(prisma.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { providerId: 'provider1', status: BookingStatus.CONCLUIDO } }),
+      );
+    });
+
+    it('retorna lista vazia quando não há reservas concluídas', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      prisma.booking.findMany.mockResolvedValue([]);
+
+      const result = await service.getClients('user1');
+
+      expect(result).toEqual([]);
+    });
+  });
 });

@@ -170,7 +170,7 @@ function DealRow({ deal, onCancel, cancelling }: { deal: MyDeal; onCancel: (id: 
   );
 }
 
-export default function VagasUltimaHoraPainelPage() {
+export default function VagasUltimaHoraPainelPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, token } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -196,14 +196,18 @@ export default function VagasUltimaHoraPainelPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
-        <Zap size={13} /> Área separada
-      </p>
-      <h1 className="font-display text-3xl text-ink">Vagas de última hora</h1>
-      <p className="mt-2 text-foreground-muted">
-        Quando um cliente cancela um horário, publique essa vaga aqui com um preço especial para não perder a receita.
-      </p>
+    <div className={`mx-auto max-w-3xl px-4 sm:px-6 ${embedded ? 'py-6' : 'py-12 sm:py-16'}`}>
+      {!embedded && (
+        <>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
+            <Zap size={13} /> Área separada
+          </p>
+          <h1 className="font-display text-3xl text-ink">Vagas de última hora</h1>
+          <p className="mt-2 text-foreground-muted">
+            Quando um cliente cancela um horário, publique essa vaga aqui com um preço especial para não perder a receita.
+          </p>
+        </>
+      )}
 
       <div className="mt-8 grid gap-8 sm:grid-cols-[1fr_1.1fr]">
         <CreateDealForm onCreated={refresh} />

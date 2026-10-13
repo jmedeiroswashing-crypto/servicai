@@ -257,6 +257,16 @@ export interface Appointment {
   createdAt: string;
 }
 
+export interface ClientSummary {
+  clientId: string;
+  name: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  totalSpent: number;
+  servicesCount: number;
+  lastServiceAt: string;
+}
+
 export interface SearchIntent {
   category: string;
   keywords: string[];

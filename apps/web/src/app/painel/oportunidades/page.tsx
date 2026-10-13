@@ -164,7 +164,7 @@ function OpportunityCard({ opportunity }: { opportunity: OpportunityMatch }) {
   );
 }
 
-export default function OportunidadesPage() {
+export default function OportunidadesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, token } = useAuthStore();
   const router = useRouter();
 
@@ -201,9 +201,13 @@ export default function OportunidadesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
-      <h1 className="font-display text-3xl text-ink">Oportunidades</h1>
-      <p className="mt-2 text-foreground-muted">Clientes procurando por serviços que combinam com o seu perfil.</p>
+    <div className={`mx-auto max-w-3xl px-4 sm:px-6 ${embedded ? 'py-6' : 'py-12 sm:py-16'}`}>
+      {!embedded && (
+        <>
+          <h1 className="font-display text-3xl text-ink">Oportunidades</h1>
+          <p className="mt-2 text-foreground-muted">Clientes procurando por serviços que combinam com o seu perfil.</p>
+        </>
+      )}
 
       {performance && performance.proposalsLimit < UNLIMITED && (
         <div className="mt-6 flex items-center justify-between gap-3 border border-border px-4 py-3 text-sm">

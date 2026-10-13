@@ -168,6 +168,41 @@ export class BookingsService {
     };
   }
 
+  async getClients(userId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    const completed = await this.prisma.booking.findMany({
+      where: { providerId: provider.id, status: BookingStatus.CONCLUIDO },
+      select: {
+        clientId: true,
+        priceQuoted: true,
+        updatedAt: true,
+        client: { select: { name: true, phone: true, avatarUrl: true } },
+      },
+    });
+
+    const byClient = new Map<
+      string,
+      { clientId: string; name: string; phone: string | null; avatarUrl: string | null; totalSpent: number; servicesCount: number; lastServiceAt: Date }
+    >();
+    for (const b of completed) {
+      const entry = byClient.get(b.clientId) ?? {
+        clientId: b.clientId,
+        name: b.client.name,
+        phone: b.client.phone,
+        avatarUrl: b.client.avatarUrl,
+        totalSpent: 0,
+        servicesCount: 0,
+        lastServiceAt: b.updatedAt,
+      };
+      entry.totalSpent += b.priceQuoted ?? 0;
+      entry.servicesCount += 1;
+      if (b.updatedAt > entry.lastServiceAt) entry.lastServiceAt = b.updatedAt;
+      byClient.set(b.clientId, entry);
+    }
+
+    return Array.from(byClient.values()).sort((a, b) => b.totalSpent - a.totalSpent);
+  }
+
   async cancelAsClient(clientId: string, bookingId: string) {
     const booking = await this.getOrThrow(bookingId);
     if (booking.clientId !== clientId) throw new ForbiddenException('Reserva não pertence a este cliente');
