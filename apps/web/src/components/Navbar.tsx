@@ -18,10 +18,8 @@ import {
   CalendarDays,
   Wallet,
   CalendarClock,
-  ShoppingBag,
   Search,
   Megaphone,
-  Tag,
   Flag,
   ShieldCheck,
 } from 'lucide-react';
@@ -45,8 +43,6 @@ function getNavLinks(role?: string): NavLink[] {
       { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
       { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
-      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
-      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
       { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
       { href: '/perfil', label: 'Meu perfil', icon: User },
     ];
@@ -55,11 +51,9 @@ function getNavLinks(role?: string): NavLink[] {
     return [
       { href: '/buscar', label: 'Buscar serviços', icon: Search },
       { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
       { href: '/solicitar', label: 'Publicar solicitação', icon: FileText },
       { href: '/minhas-solicitacoes', label: 'Minhas solicitações', icon: LayoutDashboard },
       { href: '/minhas-reservas', label: 'Minhas reservas', icon: CalendarClock },
-      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
       { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
       { href: '/perfil', label: 'Meu perfil', icon: User },
     ];
@@ -76,7 +70,6 @@ function getNavLinks(role?: string): NavLink[] {
   return [
     { href: '/buscar', label: 'Buscar serviços', icon: Search },
     { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
     { href: '/cadastro?tipo=PRESTADOR', label: 'Anuncie seu serviço', icon: Megaphone },
     { href: '/precos', label: 'Planos', icon: CreditCard },
   ];

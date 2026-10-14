@@ -21,8 +21,6 @@ import { RequestsModule } from './requests/requests.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { DealsModule } from './deals/deals.module.js';
 import { RemindersModule } from './reminders/reminders.module.js';
-import { ProductsModule } from './products/products.module.js';
-import { MarketplaceChatModule } from './marketplace-chat/marketplace-chat.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { IdentityModule } from './identity/identity.module.js';
@@ -52,8 +50,6 @@ import { GoalsModule } from './goals/goals.module.js';
     NotificationsModule,
     DealsModule,
     RemindersModule,
-    ProductsModule,
-    MarketplaceChatModule,
     UploadsModule,
     ReportsModule,
     IdentityModule,

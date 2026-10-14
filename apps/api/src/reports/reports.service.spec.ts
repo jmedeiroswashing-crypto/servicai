@@ -6,7 +6,6 @@ import { ReportReason, ReportStatus, ReportTargetType } from '../generated/prism
 function buildService() {
   const prisma = {
     user: { findUnique: vi.fn() },
-    product: { findUnique: vi.fn() },
     review: { findUnique: vi.fn() },
     service: { findUnique: vi.fn() },
     booking: { findUnique: vi.fn() },
@@ -58,14 +57,14 @@ describe('ReportsService', () => {
       );
     });
 
-    it('valida o alvo contra a tabela certa por tipo (PRODUTO -> product)', async () => {
+    it('valida o alvo contra a tabela certa por tipo (SERVICO -> service)', async () => {
       const { service, prisma } = buildService();
-      prisma.product.findUnique.mockResolvedValue({ id: 'prod1' });
+      prisma.service.findUnique.mockResolvedValue({ id: 'serv1' });
       prisma.report.create.mockResolvedValue({ id: 'r2' });
 
-      await service.create('reporter1', { targetType: ReportTargetType.PRODUTO, targetId: 'prod1', reason: ReportReason.SPAM });
+      await service.create('reporter1', { targetType: ReportTargetType.SERVICO, targetId: 'serv1', reason: ReportReason.SPAM });
 
-      expect(prisma.product.findUnique).toHaveBeenCalledWith({ where: { id: 'prod1' }, select: { id: true } });
+      expect(prisma.service.findUnique).toHaveBeenCalledWith({ where: { id: 'serv1' }, select: { id: true } });
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
