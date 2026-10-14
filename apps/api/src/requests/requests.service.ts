@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RequestStatus, NotificationType } from '../generated/prisma/enums.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
@@ -33,6 +33,8 @@ function timeAgo(date: Date): string {
 
 @Injectable()
 export class RequestsService {
+  private readonly logger = new Logger(RequestsService.name);
+
   constructor(
     private prisma: PrismaService,
     private subscriptionsService: SubscriptionsService,
@@ -40,7 +42,7 @@ export class RequestsService {
   ) {}
 
   async create(clientId: string, dto: CreateRequestDto) {
-    return this.prisma.serviceRequest.create({
+    const request = await this.prisma.serviceRequest.create({
       data: {
         clientId,
         category: dto.category,
@@ -54,6 +56,50 @@ export class RequestsService {
         desiredTime: dto.desiredTime,
       },
     });
+
+    await this.notifyAvailableProvidersOfNewRequest(request).catch((err) =>
+      this.logger.error('Falha ao notificar prestadores disponíveis sobre nova oportunidade', err as Error),
+    );
+
+    return request;
+  }
+
+  /**
+   * Favoritar não era sinal suficiente de interesse real — prestador com
+   * "disponível agora" ligado quer saber na hora de um pedido compatível
+   * pra puxar papo, não só quando alguém favorita o perfil dele. Igual ao
+   * feed de Oportunidades, nunca inclui nome/telefone do cliente aqui — só
+   * depois que o prestador entra na conversa é que o nome aparece (e o
+   * telefone continua só liberado em Favoritados).
+   */
+  private async notifyAvailableProvidersOfNewRequest(request: {
+    id: string;
+    clientId: string;
+    category: string;
+    title: string;
+  }) {
+    const now = new Date();
+    const availableProviders = await this.prisma.providerProfile.findMany({
+      where: { availableNow: true, availableUntil: { gt: now } },
+      select: { userId: true, specialty: true, categories: true },
+    });
+
+    const matching = availableProviders.filter((p) => {
+      const categories = p.categories.length > 0 ? p.categories : [p.specialty];
+      return categories.some((c) => c.toLowerCase() === request.category.toLowerCase());
+    });
+
+    await Promise.all(
+      matching.map((provider) =>
+        this.notificationsService.create({
+          userId: provider.userId,
+          type: NotificationType.NOVA_OPORTUNIDADE,
+          title: `Novo pedido de ${request.category.toLowerCase()} perto de você`,
+          body: request.title,
+          link: `/mensagens?novoCliente=${request.clientId}`,
+        }),
+      ),
+    );
   }
 
   async findMineAsClient(clientId: string) {

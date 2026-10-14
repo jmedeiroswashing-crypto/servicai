@@ -10,10 +10,10 @@ function buildService() {
     booking: { create: vi.fn() },
   };
   const prisma = {
-    serviceRequest: { findUnique: vi.fn(), update: vi.fn() },
+    serviceRequest: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     proposal: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     booking: { create: vi.fn() },
-    providerProfile: { findUnique: vi.fn() },
+    providerProfile: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
     $transaction: vi.fn(async (cb: (tx: typeof tx) => unknown) => cb(tx)),
   };
   const subscriptionsService = {};
@@ -21,6 +21,52 @@ function buildService() {
   const service = new RequestsService(prisma as never, subscriptionsService as never, notificationsService as never);
   return { service, prisma, tx, notificationsService };
 }
+
+describe('RequestsService.create', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('notifica prestadores disponíveis agora cuja categoria combina com o pedido', async () => {
+    const { service, prisma, notificationsService } = buildService();
+    const created = { id: 'req1', clientId: 'client1', category: 'Encanador', title: 'Vazamento na pia' };
+    prisma.serviceRequest.create.mockResolvedValue(created);
+    prisma.providerProfile.findMany.mockResolvedValue([
+      { userId: 'providerUser1', specialty: 'Encanador', categories: [] },
+      { userId: 'providerUser2', specialty: 'Pintor', categories: ['Pintor'] },
+    ]);
+
+    await service.create('client1', { category: 'Encanador', title: 'Vazamento na pia', description: 'x', city: 'SP' });
+
+    expect(notificationsService.create).toHaveBeenCalledTimes(1);
+    expect(notificationsService.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'providerUser1', type: 'NOVA_OPORTUNIDADE', body: 'Vazamento na pia' }),
+    );
+  });
+
+  it('só busca prestadores com disponível agora ligado e ainda válido', async () => {
+    const { service, prisma } = buildService();
+    prisma.serviceRequest.create.mockResolvedValue({ id: 'req1', clientId: 'client1', category: 'Encanador', title: 'x' });
+
+    await service.create('client1', { category: 'Encanador', title: 'x', description: 'y', city: 'SP' });
+
+    expect(prisma.providerProfile.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { availableNow: true, availableUntil: { gt: expect.any(Date) } } }),
+    );
+  });
+
+  it('não notifica nem a falha na notificação impede a criação do pedido', async () => {
+    const { service, prisma, notificationsService } = buildService();
+    const created = { id: 'req1', clientId: 'client1', category: 'Encanador', title: 'x' };
+    prisma.serviceRequest.create.mockResolvedValue(created);
+    prisma.providerProfile.findMany.mockRejectedValue(new Error('db down'));
+    notificationsService.create.mockResolvedValue(undefined);
+
+    const result = await service.create('client1', { category: 'Encanador', title: 'x', description: 'y', city: 'SP' });
+
+    expect(result).toEqual(created);
+  });
+});
 
 describe('RequestsService.acceptProposal', () => {
   beforeEach(() => {

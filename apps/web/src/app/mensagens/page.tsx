@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Socket } from 'socket.io-client';
 import { ArrowLeft, Send } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -152,6 +152,7 @@ function Thread({ conversationId, onBack }: { conversationId: string; onBack: ()
 function MensagensContent() {
   const { user, token } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const [activeId, setActiveId] = useState<string | null>(searchParams.get('c'));
 
@@ -169,6 +170,27 @@ function MensagensContent() {
     const fromQuery = searchParams.get('c');
     if (fromQuery) setActiveId(fromQuery);
   }, [searchParams]);
+
+  // Veio do alerta de "novo pedido perto de você, disponível agora" — abre
+  // (ou reaproveita) a conversa com esse cliente direto, sem o prestador
+  // precisar procurar.
+  const startWithClientMutation = useMutation({
+    mutationFn: async (clientId: string) =>
+      (await api.post<ChatConversation>('/chat/conversations/with-client', { clientId })).data,
+    onSuccess: (conversation) => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+      setActiveId(conversation.id);
+    },
+  });
+  const { mutate: startWithClient } = startWithClientMutation;
+
+  useEffect(() => {
+    const novoCliente = searchParams.get('novoCliente');
+    if (novoCliente && user?.role === 'PRESTADOR') {
+      startWithClient(novoCliente);
+      router.replace('/mensagens');
+    }
+  }, [searchParams, user, startWithClient, router]);
 
   if (!token) return null;
 
