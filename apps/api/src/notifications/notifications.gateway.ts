@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
@@ -5,6 +6,8 @@ import { resolveCorsOrigins } from '../common/cors-origins.js';
 
 @WebSocketGateway({ cors: { origin: resolveCorsOrigins(process.env.CORS_ORIGIN) }, namespace: 'notifications' })
 export class NotificationsGateway implements OnGatewayConnection {
+  private readonly logger = new Logger(NotificationsGateway.name);
+
   @WebSocketServer()
   server!: Server;
 
@@ -21,7 +24,18 @@ export class NotificationsGateway implements OnGatewayConnection {
     }
   }
 
+  /**
+   * A entrega em tempo real é um complemento (push + notificação salva no
+   * banco já garantem a entrega) — nunca deve derrubar quem está criando a
+   * notificação. Em ambiente serverless o servidor Socket.IO pode não estar
+   * disponível nesta invocação específica, então `this.server` precisa ser
+   * tratado como algo que pode falhar.
+   */
   emitToUser(userId: string, notification: unknown) {
-    this.server.to(userId).emit('notification', notification);
+    try {
+      this.server?.to(userId).emit('notification', notification);
+    } catch (err) {
+      this.logger.error('Falha ao emitir notificação em tempo real via WebSocket', err as Error);
+    }
   }
 }
