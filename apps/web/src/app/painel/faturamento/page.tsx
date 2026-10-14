@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -17,12 +18,21 @@ import {
   Target,
   Sparkles,
   CalendarCheck,
+  ListChecks,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { EXPENSE_CATEGORIES, suggestExpenseCategory } from '@/lib/expense-categories';
 import { ReceiptScanButton } from '@/components/ReceiptScanButton';
-import type { Earnings, Expense, FinancialGoal, Income } from '@/lib/types';
+import type { Booking, Earnings, Expense, FinancialGoal, Income } from '@/lib/types';
+
+function isToday(dateStr: string) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
 
 function monthLabel(monthKey: string) {
   const [year, month] = monthKey.split('-').map(Number);
@@ -113,6 +123,100 @@ function AddIncomeForm({ onAdded }: { onAdded: () => void }) {
         Pra serviços feitos fora de uma reserva do app (ex: combinado por fora, dinheiro, pix direto).
       </p>
       {mutation.isError && <p className="mt-2 text-xs text-danger">Não foi possível lançar a receita. Tente novamente.</p>}
+    </div>
+  );
+}
+
+function ChecklistItem({
+  label,
+  done,
+  doneAt,
+  href,
+  cta,
+}: {
+  label: string;
+  done: boolean;
+  doneAt?: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className={`flex items-center justify-between gap-3 border p-4 ${done ? 'border-border' : 'border-warning/40 bg-warning/5'}`}>
+      <div className="flex items-center gap-2.5">
+        {done ? <CheckCircle2 size={18} className="text-success shrink-0" /> : <Circle size={18} className="text-warning shrink-0" />}
+        <span className="text-sm font-medium text-ink">{label}</span>
+      </div>
+      {done ? (
+        <span className="shrink-0 text-xs text-foreground-muted">
+          {doneAt ? `feito às ${new Date(doneAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'feito'}
+        </span>
+      ) : (
+        <Link href={href} className="shrink-0 text-xs font-medium text-accent hover:underline">
+          {cta}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Adaptado do que o ServiçAi realmente tem hoje — não existe emissão de nota
+ * fiscal nem fechamento de caixa no sistema, então os itens equivalentes são
+ * lançar venda/despesa do dia e revisar reservas que ainda esperam resposta.
+ * Cada item reflete dado real (não é uma lista estática) — "feito" só aparece
+ * quando existe mesmo um lançamento de hoje.
+ */
+function DailyChecklist() {
+  const { data: incomes } = useQuery({
+    queryKey: ['incomes', 'mine'],
+    queryFn: async () => (await api.get<Income[]>('/incomes/mine')).data,
+  });
+  const { data: expenses } = useQuery({
+    queryKey: ['expenses', 'mine'],
+    queryFn: async () => (await api.get<Expense[]>('/expenses/mine')).data,
+  });
+  const { data: bookings } = useQuery({
+    queryKey: ['bookings', 'provider'],
+    queryFn: async () => (await api.get<Booking[]>('/bookings/provider')).data,
+  });
+
+  if (!incomes || !expenses || !bookings) return null;
+
+  const todaysIncome = [...incomes].filter((i) => isToday(i.date)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const todaysExpense = [...expenses].filter((e) => isToday(e.date)).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const pendingBookings = bookings.filter((b) => b.status === 'SOLICITADO');
+
+  return (
+    <div className="mb-10">
+      <h2 className="mb-3 flex items-center gap-1.5 font-display text-xl text-ink">
+        <ListChecks size={18} className="text-foreground-muted" /> Rotina do dia
+      </h2>
+      <div className="space-y-2">
+        <ChecklistItem
+          label="Lançar vendas do dia"
+          done={!!todaysIncome}
+          doneAt={todaysIncome?.date}
+          href="#lancar-receita"
+          cta="Lançar agora"
+        />
+        <ChecklistItem
+          label="Lançar despesas do dia"
+          done={!!todaysExpense}
+          doneAt={todaysExpense?.date}
+          href="#lancar-despesa"
+          cta="Lançar agora"
+        />
+        <ChecklistItem
+          label={
+            pendingBookings.length > 0
+              ? `Revisar ${pendingBookings.length} reserva${pendingBookings.length > 1 ? 's' : ''} pendente${pendingBookings.length > 1 ? 's' : ''}`
+              : 'Nenhuma reserva pendente'
+          }
+          done={pendingBookings.length === 0}
+          href="/painel/agenda"
+          cta="Ver agenda"
+        />
+      </div>
     </div>
   );
 }
@@ -249,7 +353,7 @@ function IncomesList() {
   });
 
   return (
-    <div className="mt-10">
+    <div id="lancar-receita" className="mt-10 scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-1.5 font-display text-xl text-ink">
         <HandCoins size={18} className="text-foreground-muted" /> Receita lançada manualmente
       </h2>
@@ -397,7 +501,7 @@ function ExpensesList() {
   });
 
   return (
-    <div className="mt-10">
+    <div id="lancar-despesa" className="mt-10 scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-1.5 font-display text-xl text-ink">
         <Receipt size={18} className="text-foreground-muted" /> Despesas
       </h2>
@@ -478,9 +582,9 @@ export default function FaturamentoPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16">
       <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
-        <Wallet size={26} className="text-accent" /> Faturamento
+        <Wallet size={26} className="text-accent" /> Gestão
       </h1>
-      <p className="mt-2 text-foreground-muted">Receita, despesas e lucro líquido para ajudar na gestão do seu negócio.</p>
+      <p className="mt-2 text-foreground-muted">Rotina do dia, receita, despesas e lucro líquido para ajudar na gestão do seu negócio.</p>
 
       <div className="mt-4 flex items-start gap-2 border border-accent/30 bg-accent/5 p-4 text-sm text-foreground-muted">
         <Info size={15} className="mt-0.5 shrink-0 text-accent" />
@@ -490,6 +594,10 @@ export default function FaturamentoPage() {
           processa pagamento, então nada aqui é uma confirmação financeira auditada. Despesas também são lançadas
           manualmente.
         </p>
+      </div>
+
+      <div className="mt-8">
+        <DailyChecklist />
       </div>
 
       <div className="mt-8 grid grid-cols-2 border border-border sm:grid-cols-4">

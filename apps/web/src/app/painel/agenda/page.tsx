@@ -320,7 +320,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               <p className="text-sm font-medium text-ink">{recognition.title}</p>
               <p className="mt-1 text-xs text-foreground-muted">{recognition.body}</p>
               <Link href="/painel/faturamento" className="mt-2 inline-block text-xs font-medium text-accent hover:underline">
-                Ver meu Faturamento
+                Ver minha Gestão
               </Link>
             </div>
           </div>

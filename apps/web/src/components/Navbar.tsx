@@ -40,7 +40,7 @@ function getNavLinks(role?: string): NavLink[] {
     return [
       { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
       { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/faturamento', label: 'Faturamento', icon: Wallet },
+      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
       { href: '/painel/clientes', label: 'Clientes', icon: Users },
       { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
