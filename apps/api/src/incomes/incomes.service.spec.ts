@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IncomesService } from './incomes.service.js';
 
 function buildService() {
@@ -75,12 +75,21 @@ describe('IncomesService', () => {
     it('remove a própria receita com sucesso', async () => {
       const { service, prisma, providersService } = buildService();
       providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
-      prisma.income.findUnique.mockResolvedValue({ id: 'i1', providerId: 'provider1' });
+      prisma.income.findUnique.mockResolvedValue({ id: 'i1', providerId: 'provider1', source: 'MANUAL' });
       prisma.income.delete.mockResolvedValue({ id: 'i1' });
 
       await service.remove('user1', 'i1');
 
       expect(prisma.income.delete).toHaveBeenCalledWith({ where: { id: 'i1' } });
+    });
+
+    it('rejeita remover receita registrada automaticamente por uma reserva', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      prisma.income.findUnique.mockResolvedValue({ id: 'i1', providerId: 'provider1', source: 'RESERVA' });
+
+      await expect(service.remove('user1', 'i1')).rejects.toThrow(BadRequestException);
+      expect(prisma.income.delete).not.toHaveBeenCalled();
     });
   });
 });

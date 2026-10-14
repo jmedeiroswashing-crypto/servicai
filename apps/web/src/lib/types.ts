@@ -240,12 +240,23 @@ export interface Expense {
   recurringParentId?: string | null;
 }
 
+export type IncomeSource = 'MANUAL' | 'RESERVA';
+
 export interface Income {
   id: string;
   description: string;
   amount: number;
   date: string;
   createdAt: string;
+  source: IncomeSource;
+  bookingId?: string | null;
+}
+
+export interface FinancialGoal {
+  id: string;
+  month: string;
+  targetAmount: number;
+  reachedAt?: string | null;
 }
 
 export interface Appointment {
@@ -344,7 +355,9 @@ export type NotificationType =
   | 'LEMBRETE_MANUTENCAO'
   | 'LEMBRETE_AVALIACAO'
   | 'RESUMO_SEMANAL'
-  | 'LEMBRETE_COMPROMISSO';
+  | 'LEMBRETE_COMPROMISSO'
+  | 'VENDA_REGISTRADA'
+  | 'META_ATINGIDA';
 
 export interface NotificationItem {
   id: string;

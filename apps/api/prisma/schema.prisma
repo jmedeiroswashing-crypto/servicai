@@ -70,6 +70,13 @@ enum NotificationType {
   LEMBRETE_AVALIACAO
   RESUMO_SEMANAL
   LEMBRETE_COMPROMISSO
+  VENDA_REGISTRADA
+  META_ATINGIDA
+}
+
+enum IncomeSource {
+  MANUAL
+  RESERVA
 }
 
 enum DealStatus {
@@ -237,6 +244,7 @@ model ProviderProfile {
   expenses      Expense[]
   incomes       Income[]
   appointments  Appointment[]
+  financialGoals FinancialGoal[]
 }
 
 model Expense {
@@ -268,9 +276,28 @@ model Income {
   amount      Float
   date        DateTime @default(now())
 
+  source      IncomeSource @default(MANUAL)
+  bookingId   String?  @unique
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime @default(now())
 
   @@index([providerId, date])
+}
+
+model FinancialGoal {
+  id           String   @id @default(cuid())
+  providerId   String
+  provider     ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  month        String   // "YYYY-MM"
+  targetAmount Float
+  reachedAt    DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([providerId, month])
 }
 
 model Appointment {
@@ -392,6 +419,7 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   review        Review?
+  income        Income?
 }
 
 model Conversation {

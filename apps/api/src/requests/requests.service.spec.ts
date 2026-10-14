@@ -4,17 +4,22 @@ import { RequestsService } from './requests.service.js';
 import { RequestStatus } from '../generated/prisma/enums.js';
 
 function buildService() {
+  const tx = {
+    serviceRequest: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    proposal: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    booking: { create: vi.fn() },
+  };
   const prisma = {
     serviceRequest: { findUnique: vi.fn(), update: vi.fn() },
     proposal: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     booking: { create: vi.fn() },
     providerProfile: { findUnique: vi.fn() },
-    $transaction: vi.fn(),
+    $transaction: vi.fn(async (cb: (tx: typeof tx) => unknown) => cb(tx)),
   };
   const subscriptionsService = {};
   const notificationsService = { create: vi.fn().mockResolvedValue(undefined) };
   const service = new RequestsService(prisma as never, subscriptionsService as never, notificationsService as never);
-  return { service, prisma, notificationsService };
+  return { service, prisma, tx, notificationsService };
 }
 
 describe('RequestsService.acceptProposal', () => {
@@ -60,7 +65,7 @@ describe('RequestsService.acceptProposal', () => {
   });
 
   it('cria a reserva, recusa as demais propostas e fecha a solicitação ao aceitar', async () => {
-    const { service, prisma, notificationsService } = buildService();
+    const { service, prisma, tx, notificationsService } = buildService();
     prisma.serviceRequest.findUnique.mockResolvedValue({
       id: 'req1',
       clientId: 'client1',
@@ -78,20 +83,28 @@ describe('RequestsService.acceptProposal', () => {
       deadline: null,
     });
     const createdBooking = { id: 'booking1', status: 'ACEITO', priceQuoted: 200 };
-    prisma.$transaction.mockResolvedValue([createdBooking, {}, {}, {}]);
+    tx.booking.create.mockResolvedValue(createdBooking);
     prisma.providerProfile.findUnique.mockResolvedValue({ id: 'provider1', userId: 'providerUser1' });
 
     const result = await service.acceptProposal('client1', 'req1', 'prop1');
 
     expect(result).toEqual(createdBooking);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.serviceRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: 'req1', status: RequestStatus.ABERTA },
+      data: { status: RequestStatus.FECHADA },
+    });
+    expect(tx.proposal.updateMany).toHaveBeenCalledWith({
+      where: { id: 'prop1', status: 'ENVIADA' },
+      data: { status: 'ACEITA' },
+    });
     expect(notificationsService.create).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'providerUser1', type: 'PROPOSTA_ACEITA' }),
     );
   });
 
   it('não falha se o prestador não for encontrado ao notificar (sem notificação, mas reserva criada)', async () => {
-    const { service, prisma, notificationsService } = buildService();
+    const { service, prisma, tx, notificationsService } = buildService();
     prisma.serviceRequest.findUnique.mockResolvedValue({
       id: 'req1',
       clientId: 'client1',
@@ -109,12 +122,63 @@ describe('RequestsService.acceptProposal', () => {
       deadline: null,
     });
     const createdBooking = { id: 'booking1', status: 'ACEITO', priceQuoted: 300 };
-    prisma.$transaction.mockResolvedValue([createdBooking, {}, {}, {}]);
+    tx.booking.create.mockResolvedValue(createdBooking);
     prisma.providerProfile.findUnique.mockResolvedValue(null);
 
     const result = await service.acceptProposal('client1', 'req1', 'prop1');
 
     expect(result).toEqual(createdBooking);
     expect(notificationsService.create).not.toHaveBeenCalled();
+  });
+
+  it('rejeita se a solicitação for fechada por outra aceitação concorrente antes da transação confirmar', async () => {
+    const { service, prisma, tx } = buildService();
+    prisma.serviceRequest.findUnique.mockResolvedValue({
+      id: 'req1',
+      clientId: 'client1',
+      status: RequestStatus.ABERTA,
+      title: 'Consertar vazamento',
+      category: 'Encanador',
+    });
+    prisma.proposal.findUnique.mockResolvedValue({
+      id: 'prop1',
+      requestId: 'req1',
+      providerId: 'provider1',
+      price: 200,
+      status: 'ENVIADA',
+      availableAt: null,
+      deadline: null,
+    });
+    // outra requisição venceu a corrida e já fechou a solicitação
+    tx.serviceRequest.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.acceptProposal('client1', 'req1', 'prop1')).rejects.toThrow(BadRequestException);
+    expect(tx.booking.create).not.toHaveBeenCalled();
+  });
+
+  it('rejeita se a proposta for confirmada por outra chamada concorrente antes da transação confirmar', async () => {
+    const { service, prisma, tx } = buildService();
+    prisma.serviceRequest.findUnique.mockResolvedValue({
+      id: 'req1',
+      clientId: 'client1',
+      status: RequestStatus.ABERTA,
+      title: 'Consertar vazamento',
+      category: 'Encanador',
+    });
+    prisma.proposal.findUnique.mockResolvedValue({
+      id: 'prop1',
+      requestId: 'req1',
+      providerId: 'provider1',
+      price: 200,
+      status: 'ENVIADA',
+      availableAt: null,
+      deadline: null,
+    });
+    tx.serviceRequest.updateMany.mockResolvedValue({ count: 1 });
+    // outra chamada já tinha confirmado/recusado essa proposta
+    tx.proposal.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(service.acceptProposal('client1', 'req1', 'prop1')).rejects.toThrow(BadRequestException);
+    expect(tx.booking.create).not.toHaveBeenCalled();
   });
 });

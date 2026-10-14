@@ -128,8 +128,37 @@ export class RequestsService {
     if (proposal.availableAt) notesParts.push(`Disponibilidade combinada: ${proposal.availableAt}`);
     if (proposal.deadline) notesParts.push(`Prazo combinado: ${proposal.deadline}`);
 
-    const [booking] = await this.prisma.$transaction([
-      this.prisma.booking.create({
+    /**
+     * As checagens acima (status ABERTA / ENVIADA) não são atômicas com a
+     * escrita — duas aceitações concorrentes para a mesma solicitação
+     * poderiam passar ambas e criar duas reservas. Por isso o fechamento da
+     * solicitação e a confirmação da proposta usam `updateMany` condicionado
+     * ao status ainda válido: só quem "ganha a corrida" segue adiante: o
+     * outro recebe count 0 e a transação é revertida.
+     */
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const closedRequest = await tx.serviceRequest.updateMany({
+        where: { id: requestId, status: RequestStatus.ABERTA },
+        data: { status: RequestStatus.FECHADA },
+      });
+      if (closedRequest.count === 0) {
+        throw new BadRequestException('Esta solicitação já foi fechada');
+      }
+
+      const confirmedProposal = await tx.proposal.updateMany({
+        where: { id: proposalId, status: 'ENVIADA' },
+        data: { status: 'ACEITA' },
+      });
+      if (confirmedProposal.count === 0) {
+        throw new BadRequestException('Esta proposta não está mais disponível');
+      }
+
+      await tx.proposal.updateMany({
+        where: { requestId, id: { not: proposalId } },
+        data: { status: 'RECUSADA' },
+      });
+
+      return tx.booking.create({
         data: {
           clientId,
           providerId: proposal.providerId,
@@ -138,14 +167,8 @@ export class RequestsService {
           notes: notesParts.join(' — '),
           category: request.category,
         },
-      }),
-      this.prisma.proposal.update({ where: { id: proposalId }, data: { status: 'ACEITA' } }),
-      this.prisma.proposal.updateMany({
-        where: { requestId, id: { not: proposalId } },
-        data: { status: 'RECUSADA' },
-      }),
-      this.prisma.serviceRequest.update({ where: { id: requestId }, data: { status: RequestStatus.FECHADA } }),
-    ]);
+      });
+    });
 
     const provider = await this.prisma.providerProfile.findUnique({ where: { id: proposal.providerId } });
     if (provider) {

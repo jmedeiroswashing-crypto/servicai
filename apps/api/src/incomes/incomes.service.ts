@@ -1,6 +1,7 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
+import { IncomeSource } from '../generated/prisma/enums.js';
 import { CreateIncomeDto } from './dto/create-income.dto.js';
 
 @Injectable()
@@ -35,6 +36,9 @@ export class IncomesService {
     const income = await this.prisma.income.findUnique({ where: { id } });
     if (!income) throw new NotFoundException('Receita não encontrada');
     if (income.providerId !== provider.id) throw new ForbiddenException('Você não é o dono desta receita');
+    if (income.source === IncomeSource.RESERVA) {
+      throw new BadRequestException('Receita registrada automaticamente por uma reserva concluída não pode ser removida manualmente');
+    }
     return this.prisma.income.delete({ where: { id } });
   }
 }

@@ -3,12 +3,31 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, TrendingUp, TrendingDown, Receipt, Info, Plus, Trash2, Scale, Repeat, HandCoins } from 'lucide-react';
+import {
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  Receipt,
+  Info,
+  Plus,
+  Trash2,
+  Scale,
+  Repeat,
+  HandCoins,
+  Target,
+  Sparkles,
+  CalendarCheck,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { EXPENSE_CATEGORIES, suggestExpenseCategory } from '@/lib/expense-categories';
 import { ReceiptScanButton } from '@/components/ReceiptScanButton';
-import type { Earnings, Expense, Income } from '@/lib/types';
+import type { Earnings, Expense, FinancialGoal, Income } from '@/lib/types';
+
+function monthLabel(monthKey: string) {
+  const [year, month] = monthKey.split('-').map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+}
 
 function formatMoney(v: number) {
   const sign = v < 0 ? '-' : '';
@@ -98,6 +117,120 @@ function AddIncomeForm({ onAdded }: { onAdded: () => void }) {
   );
 }
 
+function GoalsSection({ currentMonthNetProfit }: { currentMonthNetProfit: number }) {
+  const queryClient = useQueryClient();
+  const nowMonth = new Date().toISOString().slice(0, 7);
+  const [month, setMonth] = useState(nowMonth);
+  const [targetAmount, setTargetAmount] = useState('');
+
+  const { data: goals } = useQuery({
+    queryKey: ['goals', 'mine'],
+    queryFn: async () => (await api.get<FinancialGoal[]>('/goals/mine')).data,
+  });
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ['goals', 'mine'] });
+  }
+
+  const mutation = useMutation({
+    mutationFn: async () => (await api.post('/goals', { month, targetAmount: Number(targetAmount) })).data,
+    onSuccess: () => {
+      setTargetAmount('');
+      refresh();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (m: string) => api.delete(`/goals/${m}`),
+    onSuccess: refresh,
+  });
+
+  const currentGoal = goals?.find((g) => g.month === nowMonth);
+  const progressPct = currentGoal ? Math.min((Math.max(currentMonthNetProfit, 0) / currentGoal.targetAmount) * 100, 100) : 0;
+
+  const inputClass =
+    'w-full border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
+
+  return (
+    <div className="mt-10">
+      <h2 className="mb-3 flex items-center gap-1.5 font-display text-xl text-ink">
+        <Target size={18} className="text-foreground-muted" /> Metas financeiras
+      </h2>
+
+      {currentGoal && (
+        <div className="mb-3 border border-border p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-foreground-muted">Meta deste mês (lucro líquido)</p>
+            {currentGoal.reachedAt && (
+              <span className="flex items-center gap-1 text-xs font-medium text-success">
+                <Sparkles size={13} /> Alcançada
+              </span>
+            )}
+          </div>
+          <p className="mt-1 font-display text-xl text-ink">
+            {formatMoney(currentMonthNetProfit)} <span className="text-sm text-foreground-muted">de {formatMoney(currentGoal.targetAmount)}</span>
+          </p>
+          <div className="mt-2 h-2 w-full bg-surface-muted">
+            <div className={`h-2 transition-all ${currentGoal.reachedAt ? 'bg-success' : 'bg-ink'}`} style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+      )}
+
+      <div className="border border-border p-4">
+        <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-ink">
+          <Plus size={14} /> Definir meta de um mês
+        </p>
+        <div className="grid gap-2.5 sm:grid-cols-[1fr_1fr_auto]">
+          <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className={inputClass} />
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={targetAmount}
+            onChange={(e) => setTargetAmount(e.target.value)}
+            className={inputClass}
+            placeholder="Meta de lucro líquido (R$)"
+          />
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!targetAmount || Number(targetAmount) <= 0 || mutation.isPending}
+            className="bg-ink px-4 py-2 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
+          >
+            {mutation.isPending ? '...' : 'Salvar'}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-foreground-muted/70">
+          Comparada com o lucro líquido do mês (receita menos despesas) — só o mês atual mostra progresso em tempo real.
+        </p>
+      </div>
+
+      {goals && goals.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {goals.map((g) => (
+            <div key={g.id} className="flex items-center justify-between border border-border px-4 py-2.5 text-sm">
+              <span className="flex items-center gap-1.5 capitalize text-ink">
+                <CalendarCheck size={13} className="text-foreground-muted" /> {monthLabel(g.month)}
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-foreground-muted">{formatMoney(g.targetAmount)}</span>
+                {g.reachedAt && <Sparkles size={13} className="text-success" />}
+                <button
+                  onClick={() => deleteMutation.mutate(g.month)}
+                  disabled={deleteMutation.isPending}
+                  className="text-foreground-muted hover:text-danger disabled:opacity-40"
+                  aria-label="Remover meta"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function IncomesList() {
   const queryClient = useQueryClient();
   const { data: incomes, isLoading } = useQuery({
@@ -129,19 +262,32 @@ function IncomesList() {
         {incomes?.map((inc) => (
           <div key={inc.id} className="flex items-center justify-between border border-border px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-ink">{inc.description}</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                {inc.description}
+                {inc.source === 'RESERVA' && (
+                  <span className="border border-accent/30 bg-accent/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent">
+                    Da reserva
+                  </span>
+                )}
+              </p>
               <p className="text-xs text-foreground-muted">{new Date(inc.date).toLocaleDateString('pt-BR')}</p>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium text-success">+{formatMoney(inc.amount)}</span>
-              <button
-                onClick={() => deleteMutation.mutate(inc.id)}
-                disabled={deleteMutation.isPending}
-                className="text-foreground-muted hover:text-danger disabled:opacity-40"
-                aria-label="Remover receita"
-              >
-                <Trash2 size={14} />
-              </button>
+              {inc.source === 'RESERVA' ? (
+                <span title="Registrada automaticamente ao concluir a reserva — não pode ser removida aqui">
+                  <Sparkles size={14} className="text-foreground-muted/50" />
+                </span>
+              ) : (
+                <button
+                  onClick={() => deleteMutation.mutate(inc.id)}
+                  disabled={deleteMutation.isPending}
+                  className="text-foreground-muted hover:text-danger disabled:opacity-40"
+                  aria-label="Remover receita"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -376,6 +522,8 @@ export default function FaturamentoPage() {
           <span className="mr-1 ml-4 inline-block h-2 w-2 bg-danger/60 align-middle" /> Despesas
         </p>
       </div>
+
+      <GoalsSection currentMonthNetProfit={earnings.netProfitCurrentMonth} />
 
       <IncomesList />
 
