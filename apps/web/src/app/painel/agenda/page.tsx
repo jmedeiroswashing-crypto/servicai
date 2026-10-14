@@ -345,11 +345,25 @@ export default function AgendaPage() {
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 
-  const { data: bookings, isLoading } = useQuery({
+  const { data: bookings, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['bookings', 'provider'],
     enabled: !!token,
     queryFn: async () => (await api.get<Booking[]>('/bookings/provider')).data,
   });
+
+  if (isError) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <p className="text-foreground-muted">
+          Não foi possível carregar a agenda{status ? ` (erro ${status})` : ''}. Verifique sua conexão e tente de novo.
+        </p>
+        <button onClick={() => refetch()} className="mt-4 border border-ink px-4 py-2 text-sm font-medium text-ink hover:bg-ink hover:text-background">
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !bookings) {
     return <div className="mx-auto max-w-3xl px-4 py-20 text-foreground-muted">Carregando agenda...</div>;
