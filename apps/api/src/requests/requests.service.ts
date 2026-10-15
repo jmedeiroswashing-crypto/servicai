@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { RequestStatus, NotificationType } from '../generated/prisma/enums.js';
+import { RequestStatus, NotificationType, BusinessMode } from '../generated/prisma/enums.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 import { getPlanConfig } from '../subscriptions/plans.config.js';
@@ -80,7 +80,13 @@ export class RequestsService {
   }) {
     const now = new Date();
     const availableProviders = await this.prisma.providerProfile.findMany({
-      where: { availableNow: true, availableUntil: { gt: now } },
+      where: {
+        availableNow: true,
+        availableUntil: { gt: now },
+        // `not: GESTAO` também excluiria null (quem ainda não escolheu) —
+        // ver mesmo comentário em ProvidersService.findAll.
+        OR: [{ businessMode: null }, { businessMode: BusinessMode.COMPLETO }],
+      },
       select: { userId: true, specialty: true, categories: true },
     });
 

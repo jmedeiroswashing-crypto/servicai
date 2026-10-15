@@ -6,6 +6,7 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { ProvidersService } from './providers.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
+import { SetBusinessModeDto } from './dto/set-business-mode.dto.js';
 import { ProviderAiIntakeDto } from './dto/provider-ai-intake.dto.js';
 import { Throttle } from '../common/throttle/throttle.decorator.js';
 import { AiService } from '../ai/ai.service.js';
@@ -70,6 +71,17 @@ export class ProvidersController {
   @Roles(Role.PRESTADOR)
   setAvailability(@CurrentUser() user: AuthUser, @Body('available') available: boolean) {
     return this.providersService.setAvailability(user.userId, !!available);
+  }
+
+  /**
+   * Resposta única à pergunta de intenção (gestão apenas vs. gestão +
+   * contratação), mostrada no primeiro acesso de quem ainda não escolheu.
+   */
+  @Patch('me/business-mode')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  setBusinessMode(@CurrentUser() user: AuthUser, @Body() dto: SetBusinessModeDto) {
+    return this.providersService.setBusinessMode(user.userId, dto.businessMode);
   }
 
   /**

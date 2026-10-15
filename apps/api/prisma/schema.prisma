@@ -20,6 +20,11 @@ enum Selo {
   PREMIUM
 }
 
+enum BusinessMode {
+  GESTAO
+  COMPLETO
+}
+
 enum BookingStatus {
   SOLICITADO
   ACEITO
@@ -210,6 +215,11 @@ model ProviderProfile {
   searchAppearances Int  @default(0)
   availableNow  Boolean  @default(false)
   availableUntil DateTime?
+
+  // null = ainda não escolheu (conta antiga de antes dessa opção existir, ou
+  // cadastro feito direto pela API sem passar pela tela de intenção) — nesse
+  // caso a pessoa é perguntada uma vez no primeiro acesso.
+  businessMode  BusinessMode?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

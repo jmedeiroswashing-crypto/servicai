@@ -10,7 +10,12 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
-import type { Role } from '@/lib/types';
+import type { BusinessMode, Role } from '@/lib/types';
+
+function destinationFor(role: Role, businessMode?: BusinessMode | null) {
+  if (role !== 'PRESTADOR') return '/';
+  return businessMode === 'GESTAO' ? '/painel/agenda' : '/painel';
+}
 
 interface IbgeMunicipio {
   id: number;
@@ -59,10 +64,12 @@ export function AuthForm({
   role,
   onBack,
   initialMode = 'cadastro',
+  initialBusinessMode,
 }: {
   role: Role;
   onBack: () => void;
   initialMode?: Mode;
+  initialBusinessMode?: BusinessMode;
 }) {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -93,7 +100,7 @@ export function AuthForm({
       if (mode === 'login') {
         const res = await api.post('/auth/login', { email: data.email, password: data.password });
         setAuth(res.data.accessToken, res.data.user);
-        router.push(res.data.user.role === 'PRESTADOR' ? '/painel' : '/');
+        router.push(destinationFor(res.data.user.role, res.data.user.businessMode));
         return;
       }
 
@@ -110,6 +117,7 @@ export function AuthForm({
       if (isVendedor) {
         payload.personType = personType;
         payload.cpf = data.cpf;
+        if (initialBusinessMode) payload.businessMode = initialBusinessMode;
         if (personType === 'PJ') {
           payload.cnpj = data.cnpj;
           payload.razaoSocial = data.razaoSocial;
@@ -122,7 +130,7 @@ export function AuthForm({
 
       const res = await api.post('/auth/register', payload);
       setAuth(res.data.accessToken, res.data.user);
-      router.push(isVendedor ? '/painel' : '/');
+      router.push(destinationFor(res.data.user.role, res.data.user.businessMode));
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??

@@ -1,4 +1,5 @@
 export type Role = 'CLIENTE' | 'PRESTADOR' | 'ADMIN';
+export type BusinessMode = 'GESTAO' | 'COMPLETO';
 export type Selo = 'NENHUM' | 'PRATA' | 'OURO' | 'PREMIUM';
 export type BookingStatus = 'SOLICITADO' | 'ACEITO' | 'RECUSADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 export type Plan = 'GRATIS' | 'PRO' | 'BUSINESS' | 'PREMIUM';
@@ -79,6 +80,7 @@ export interface AuthUser {
   email: string;
   role: Role;
   name: string;
+  businessMode?: BusinessMode | null;
 }
 
 export type PersonType = 'PF' | 'PJ';

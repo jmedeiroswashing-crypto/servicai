@@ -51,7 +51,9 @@ describe('RequestsService.create', () => {
     await service.create('client1', { category: 'Encanador', title: 'x', description: 'y', city: 'SP' });
 
     expect(prisma.providerProfile.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { availableNow: true, availableUntil: { gt: expect.any(Date) } } }),
+      expect.objectContaining({
+        where: expect.objectContaining({ availableNow: true, availableUntil: { gt: expect.any(Date) } }),
+      }),
     );
   });
 

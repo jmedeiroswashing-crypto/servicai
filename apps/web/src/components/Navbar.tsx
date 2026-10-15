@@ -33,7 +33,18 @@ interface NavLink {
   icon: typeof Search;
 }
 
-function getNavLinks(role?: string): NavLink[] {
+function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
+  if (role === 'PRESTADOR' && businessMode === 'GESTAO') {
+    // Quem escolheu "só gestão" não quer aparecer pra clientes nem se
+    // preocupar com isso — a navegação reflete só o que a pessoa pediu.
+    return [
+      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
+      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
+      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
+      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
   if (role === 'PRESTADOR') {
     return [
       { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
@@ -70,7 +81,7 @@ function getNavLinks(role?: string): NavLink[] {
   return [
     { href: '/buscar', label: 'Buscar serviços', icon: Search },
     { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-    { href: '/cadastro?tipo=PRESTADOR', label: 'Anuncie seu serviço', icon: Megaphone },
+    { href: '/comecar', label: 'Anuncie seu serviço', icon: Megaphone },
     { href: '/precos', label: 'Planos', icon: CreditCard },
   ];
 }
@@ -81,7 +92,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const links = getNavLinks(user?.role);
+  const links = getNavLinks(user?.role, user?.businessMode);
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">
@@ -140,7 +151,7 @@ export function Navbar() {
                 Entrar
               </Link>
               <Link
-                href="/cadastro"
+                href="/comecar"
                 className="border border-accent bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
               >
                 Criar conta

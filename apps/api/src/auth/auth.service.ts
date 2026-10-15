@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
-import { Role } from '../generated/prisma/enums.js';
+import { Role, BusinessMode } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { EmailService } from '../email/email.service.js';
 import { RegisterDto } from './dto/register.dto.js';
@@ -71,6 +71,7 @@ export class AuthService {
           specialty: 'A definir',
           city: dto.city ?? 'Não informado',
           categories: [],
+          businessMode: dto.businessMode,
         },
       });
       await this.prisma.subscription.create({ data: { providerId: provider.id } });
@@ -78,7 +79,7 @@ export class AuthService {
 
     await this.issueEmailVerification(user.id, user.email, user.name);
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name);
+    return await this.buildAuthResponse(user.id, user.email, user.role, user.name);
   }
 
   private async issueEmailVerification(userId: string, email: string, name: string) {
@@ -162,7 +163,7 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Credenciais inválidas');
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name);
+    return await this.buildAuthResponse(user.id, user.email, user.role, user.name);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -175,11 +176,18 @@ export class AuthService {
     return { success: true };
   }
 
-  private buildAuthResponse(sub: string, email: string, role: Role, name: string) {
+  private async buildAuthResponse(sub: string, email: string, role: Role, name: string) {
     const accessToken = this.jwt.sign({ sub, email, role });
+
+    let businessMode: BusinessMode | null = null;
+    if (role === Role.PRESTADOR) {
+      const provider = await this.prisma.providerProfile.findUnique({ where: { userId: sub }, select: { businessMode: true } });
+      businessMode = provider?.businessMode ?? null;
+    }
+
     return {
       accessToken,
-      user: { id: sub, email, role, name },
+      user: { id: sub, email, role, name, businessMode },
     };
   }
 }
