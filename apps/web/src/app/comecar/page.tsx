@@ -1,8 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { MinimalLogo } from '@/components/MinimalLogo';
+
+const SPLASH_VISIBLE_MS = 1800;
+const SPLASH_TRANSITION_MS = 400;
 
 const OPTIONS = [
   {
@@ -28,8 +32,58 @@ const OPTIONS = [
   },
 ];
 
+/**
+ * Transição básica: entra com fade+leve zoom, fica parada um instante, sai
+ * com fade — só pra marcar a passagem de uma área (abertura) pra outra
+ * (perguntas). Clicável pra quem não quiser esperar.
+ */
+function Splash({ onDone }: { onDone: () => void }) {
+  const [entered, setEntered] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    const enterFrame = requestAnimationFrame(() => setEntered(true));
+    const leaveTimer = setTimeout(() => setLeaving(true), SPLASH_VISIBLE_MS);
+    const doneTimer = setTimeout(onDone, SPLASH_VISIBLE_MS + SPLASH_TRANSITION_MS);
+    return () => {
+      cancelAnimationFrame(enterFrame);
+      clearTimeout(leaveTimer);
+      clearTimeout(doneTimer);
+    };
+  }, [onDone]);
+
+  function skip() {
+    setLeaving(true);
+    setTimeout(onDone, SPLASH_TRANSITION_MS);
+  }
+
+  return (
+    <button
+      onClick={skip}
+      aria-label="Pular introdução"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-ink transition-opacity duration-[400ms] ${
+        leaving ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/comecar/splash.png"
+        alt="ServiçAi — Conectando pessoas a soluções"
+        className={`w-full max-w-xs px-10 transition-all duration-500 ease-out sm:max-w-sm ${
+          entered && !leaving ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function ComecarPage() {
   const router = useRouter();
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return <Splash onDone={() => setShowSplash(false)} />;
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24">
