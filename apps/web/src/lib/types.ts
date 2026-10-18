@@ -46,6 +46,9 @@ export interface Subscription {
   aiUsagePeriod: string;
   proposalsUsedCount: number;
   proposalsUsedPeriod: string;
+  trialUsedAt?: string | null;
+  trialAvailable: boolean;
+  trialDays: number;
   config: PlanConfig;
 }
 
@@ -147,6 +150,7 @@ export interface ProviderProfile {
   reviewCount?: number;
   respondsWithinHour?: boolean | null;
   availableNow?: boolean;
+  businessHours?: import('./business-hours').BusinessHours | null;
 }
 
 export interface PriceEstimate {
@@ -195,6 +199,13 @@ export interface Review {
   client?: { name: string; avatarUrl?: string | null };
 }
 
+// GET /bookings/mine só inclui {name, avatarUrl} do prestador, não o perfil
+// rico inteiro — usar ProviderProfile aqui faria o TS achar que phone/verified/
+// identityStatus/endereço sempre existem quando na prática vêm undefined.
+export interface BookingProvider extends Omit<ProviderProfile, 'user'> {
+  user: { name: string; avatarUrl?: string | null };
+}
+
 export interface Booking {
   id: string;
   status: BookingStatus;
@@ -203,7 +214,7 @@ export interface Booking {
   notes?: string | null;
   priceQuoted?: number | null;
   createdAt: string;
-  provider?: ProviderProfile;
+  provider?: BookingProvider;
   service?: ServiceListing | null;
   client?: { name: string; avatarUrl?: string | null; phone?: string | null };
   review?: Review | null;

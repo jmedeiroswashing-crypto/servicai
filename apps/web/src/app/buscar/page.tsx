@@ -3,10 +3,11 @@
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Radio } from 'lucide-react';
+import { Radio, AlertTriangle, RotateCw } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
 import { api } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/error-message';
 import type { ProviderProfile, SearchIntent } from '@/lib/types';
 
 function SearchResults() {
@@ -14,7 +15,13 @@ function SearchResults() {
   const q = params.get('q') ?? '';
   const [availableNow, setAvailableNow] = useState(false);
 
-  const { data, isFetching } = useQuery({
+  const {
+    data,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['search', q, availableNow],
     enabled: q.length > 0,
     queryFn: async () => {
@@ -53,7 +60,21 @@ function SearchResults() {
       <div className="mt-12">
         {isFetching && <p className="text-foreground-muted">Buscando os melhores profissionais...</p>}
 
-        {!isFetching && data && data.providers.length === 0 && (
+        {!isFetching && isError && (
+          <div className="flex flex-col items-start gap-3 border border-danger/30 bg-danger/5 p-5">
+            <p className="flex items-center gap-2 text-danger">
+              <AlertTriangle size={16} /> {extractErrorMessage(error, 'Não foi possível buscar agora.')}
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-1.5 border border-danger px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger hover:text-white"
+            >
+              <RotateCw size={12} /> Tentar de novo
+            </button>
+          </div>
+        )}
+
+        {!isFetching && !isError && data && data.providers.length === 0 && (
           <p className="text-foreground-muted">
             {availableNow
               ? 'Ninguém disponível agora para essa busca. Desative o filtro pra ver todos os profissionais.'

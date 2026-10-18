@@ -193,11 +193,11 @@ export default function AnunciarProdutoPage() {
           </button>
           {uploadError && <p className="mt-1 text-xs text-danger">{uploadError}</p>}
           {photoUrls.length > 0 && (
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
               {photoUrls.map((url, i) => (
                 <div key={i} className="group relative aspect-square overflow-hidden bg-surface-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img src={url} alt={`${title || 'Foto do produto'} ${i + 1}`} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   <button
                     type="button"
                     onClick={() => setPhotoUrls((prev) => prev.filter((_, idx) => idx !== i))}

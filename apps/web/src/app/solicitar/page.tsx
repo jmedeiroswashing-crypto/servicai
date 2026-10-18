@@ -9,25 +9,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
+import { useCidadesPorEstado } from '@/lib/use-cidades';
 import type { IntakeResult, PriceEstimate, RequestDraft } from '@/lib/types';
-
-interface IbgeMunicipio {
-  id: number;
-  nome: string;
-}
-
-function useCidadesPorEstado(uf: string) {
-  return useQuery({
-    queryKey: ['ibge', 'municipios', uf],
-    enabled: !!uf,
-    staleTime: 1000 * 60 * 60 * 24,
-    queryFn: async () => {
-      const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
-      const data: IbgeMunicipio[] = await res.json();
-      return data.map((m) => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    },
-  });
-}
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';

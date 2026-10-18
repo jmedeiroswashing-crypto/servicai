@@ -31,10 +31,13 @@ import {
   MapPin,
   Rocket,
   TrendingUp,
+  AlertTriangle,
+  RotateCw,
 } from 'lucide-react';
 import { SearchBar } from '@/components/SearchBar';
 import { ProviderCard } from '@/components/ProviderCard';
 import { api } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/error-message';
 import { useAuthStore } from '@/store/auth-store';
 import type { ProviderProfile } from '@/lib/types';
 
@@ -62,7 +65,12 @@ const POPULAR_SERVICES = [
 ];
 
 function ClientHome() {
-  const { data } = useQuery({
+  const {
+    data,
+    isError: isTopRatedError,
+    error: topRatedError,
+    refetch: refetchTopRated,
+  } = useQuery({
     queryKey: ['providers', 'top-rated'],
     queryFn: async () => (await api.get<ProviderProfile[]>('/providers', { params: { take: 8 } })).data,
   });
@@ -79,12 +87,10 @@ function ClientHome() {
   return (
     <div>
       <section className="border-b border-border">
-        {/* TESTE VISUAL: imagem completa com card de avaliacao fabricado (Carlos Mendes) -
-            NAO e uma avaliacao real, e so pra ver o layout tipo GetNinjas. Trocar depois. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/hero-worker-transparent.png"
-          alt="Teste de layout"
+          alt=""
           className="mx-auto w-full max-w-2xl"
         />
         <div className="mx-auto max-w-xl px-4 py-10 text-center sm:px-6">
@@ -136,7 +142,7 @@ function ClientHome() {
         </div>
       </section>
 
-      {data && data.length > 0 && (
+      {(isTopRatedError || (data && data.length > 0)) && (
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
           <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
             <h2 className="font-display text-2xl text-ink">Melhor avaliados</h2>
@@ -144,11 +150,25 @@ function ClientHome() {
               Ver todas <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {data.map((provider) => (
-              <ProviderCard key={provider.id} provider={provider} />
-            ))}
-          </div>
+          {isTopRatedError ? (
+            <div className="flex flex-col items-start gap-3 border border-danger/30 bg-danger/5 p-5">
+              <p className="flex items-center gap-2 text-danger">
+                <AlertTriangle size={16} /> {extractErrorMessage(topRatedError, 'Não foi possível carregar agora.')}
+              </p>
+              <button
+                onClick={() => refetchTopRated()}
+                className="flex items-center gap-1.5 border border-danger px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger hover:text-white"
+              >
+                <RotateCw size={12} /> Tentar de novo
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+              {data!.map((provider) => (
+                <ProviderCard key={provider.id} provider={provider} />
+              ))}
+            </div>
+          )}
         </section>
       )}
 

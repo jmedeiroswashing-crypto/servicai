@@ -188,17 +188,23 @@ describe('AuthService', () => {
       await expect(service.resetPassword({ token: 'x', newPassword: 'novaSenha123' })).rejects.toThrow(BadRequestException);
     });
 
-    it('atualiza a senha e limpa o token quando válido', async () => {
+    it('atualiza a senha, limpa o token e emite um novo access token quando válido', async () => {
       const { service, prisma } = buildService();
       prisma.user.findUnique.mockResolvedValue({ id: '1', passwordResetExpiresAt: new Date(Date.now() + 60_000) });
-      prisma.user.update.mockResolvedValue({});
+      prisma.user.update.mockResolvedValue({ id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A', tokenVersion: 1 });
 
       const result = await service.resetPassword({ token: 'valido', newPassword: 'novaSenha123' });
 
-      expect(result).toEqual({ success: true });
+      // Redefinir senha invalida qualquer token antigo (tokenVersion) — por
+      // isso a resposta agora inclui um accessToken novo, não só {success:true}.
+      expect(result).toEqual({
+        accessToken: 'signed-token',
+        user: { id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A' },
+      });
       const updateCall = prisma.user.update.mock.calls[0][0];
       expect(updateCall.data.passwordResetToken).toBeNull();
       expect(updateCall.data.passwordHash).not.toBe('novaSenha123');
+      expect(updateCall.data.tokenVersion).toEqual({ increment: 1 });
     });
   });
 });

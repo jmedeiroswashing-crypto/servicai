@@ -78,7 +78,7 @@ export class AuthService {
 
     await this.issueEmailVerification(user.id, user.email, user.name);
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name);
+    return this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
   }
 
   private async issueEmailVerification(userId: string, email: string, name: string) {
@@ -146,12 +146,17 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash, passwordResetToken: null, passwordResetExpiresAt: null },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+        tokenVersion: { increment: 1 },
+      },
     });
 
-    return { success: true };
+    return this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
   }
 
   async login(dto: LoginDto) {
@@ -162,7 +167,7 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Credenciais inválidas');
 
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name);
+    return this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -171,12 +176,15 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Senha atual incorreta');
 
     const passwordHash = await bcrypt.hash(dto.newPassword, 10);
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
-    return { success: true };
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash, tokenVersion: { increment: 1 } },
+    });
+    return this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
   }
 
-  private buildAuthResponse(sub: string, email: string, role: Role, name: string) {
-    const accessToken = this.jwt.sign({ sub, email, role });
+  private buildAuthResponse(sub: string, email: string, role: Role, name: string, tokenVersion: number) {
+    const accessToken = this.jwt.sign({ sub, email, role, tokenVersion });
     return {
       accessToken,
       user: { id: sub, email, role, name },

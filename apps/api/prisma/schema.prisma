@@ -147,6 +147,9 @@ model User {
   bio           String?
   verified      Boolean  @default(false)
   deletedAt     DateTime?
+  // Incrementado a cada troca/redefinição de senha — invalida na hora qualquer
+  // JWT emitido antes disso, mesmo que ainda não tenha expirado (ver JwtStrategy).
+  tokenVersion  Int      @default(0)
 
   emailVerificationToken     String?   @unique
   emailVerificationExpiresAt DateTime?
@@ -237,6 +240,8 @@ model ProviderProfile {
   expenses      Expense[]
   incomes       Income[]
   appointments  Appointment[]
+
+  @@index([city])
 }
 
 model Expense {
@@ -304,6 +309,10 @@ model Subscription {
   proposalsUsedCount  Int              @default(0)
   proposalsUsedPeriod String           @default("")
 
+  // Marca que esse prestador já usou o período de teste gratuito — só dá pra
+  // usar uma vez, nunca mais reseta mesmo depois de voltar pro Grátis.
+  trialUsedAt       DateTime?
+
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -326,6 +335,8 @@ model Service {
 
   bookings      Booking[]
   media         Media[]
+
+  @@index([providerId])
 }
 
 model Media {
@@ -367,6 +378,8 @@ model Review {
   audioUrl      String?
 
   createdAt     DateTime @default(now())
+
+  @@index([providerId])
 }
 
 model Booking {
@@ -392,6 +405,9 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   review        Review?
+
+  @@index([clientId])
+  @@index([providerId, status])
 }
 
 model Conversation {
@@ -406,6 +422,7 @@ model Conversation {
   messages      Message[]
 
   @@unique([clientId, providerId])
+  @@index([providerId])
 }
 
 model Message {
@@ -419,6 +436,8 @@ model Message {
   type          String   @default("text")
   content       String
   createdAt     DateTime @default(now())
+
+  @@index([conversationId])
 }
 
 model Favorite {
@@ -432,6 +451,7 @@ model Favorite {
   createdAt     DateTime @default(now())
 
   @@unique([clientId, providerId])
+  @@index([providerId])
 }
 
 model ServiceRequest {
@@ -454,6 +474,9 @@ model ServiceRequest {
   updatedAt     DateTime @updatedAt
 
   proposals     Proposal[]
+
+  @@index([clientId])
+  @@index([status, category])
 }
 
 model Proposal {
@@ -473,6 +496,7 @@ model Proposal {
   createdAt     DateTime @default(now())
 
   @@unique([requestId, providerId])
+  @@index([providerId])
 }
 
 model Notification {
@@ -551,6 +575,7 @@ model ProductFavorite {
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
+  @@index([userId])
 }
 
 model MarketplaceConversation {
@@ -569,6 +594,7 @@ model MarketplaceConversation {
   messages  MarketplaceMessage[]
 
   @@unique([productId, buyerId])
+  @@index([sellerId])
 }
 
 model MarketplaceMessage {
@@ -581,6 +607,8 @@ model MarketplaceMessage {
 
   content        String
   createdAt      DateTime @default(now())
+
+  @@index([conversationId])
 }
 
 model Report {

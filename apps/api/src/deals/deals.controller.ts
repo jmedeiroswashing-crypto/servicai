@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -6,6 +6,7 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { DealsService } from './deals.service.js';
 import { CreateDealDto } from './dto/create-deal.dto.js';
+import { UpdateDealDto } from './dto/update-deal.dto.js';
 import { DealFiltersDto } from './dto/deal-filters.dto.js';
 
 @Controller('deals')
@@ -29,6 +30,13 @@ export class DealsController {
   @Roles(Role.PRESTADOR)
   listMine(@CurrentUser() user: AuthUser) {
     return this.dealsService.listMine(user.userId);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateDealDto) {
+    return this.dealsService.update(user.userId, id, dto);
   }
 
   @Delete(':id')

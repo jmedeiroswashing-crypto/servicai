@@ -68,7 +68,7 @@ export function ReportButton({
               <h2 className="flex items-center gap-2 font-display text-lg text-ink">
                 <Flag size={16} /> {title}
               </h2>
-              <button onClick={() => setOpen(false)} className="text-foreground-muted hover:text-ink">
+              <button onClick={() => setOpen(false)} aria-label="Fechar" className="text-foreground-muted hover:text-ink">
                 <X size={18} />
               </button>
             </div>

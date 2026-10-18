@@ -33,7 +33,7 @@ function ProductRow({ product }: { product: Product }) {
       <div className="h-16 w-16 shrink-0 overflow-hidden bg-surface-muted">
         {product.photoUrls?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.photoUrls[0]} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <img src={product.photoUrls[0]} alt={product.title} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Tag size={18} className="text-foreground-muted/40" />

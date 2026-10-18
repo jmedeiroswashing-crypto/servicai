@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -6,6 +6,7 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { ExpensesService } from './expenses.service.js';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
+import { UpdateExpenseDto } from './dto/update-expense.dto.js';
 
 @Controller('expenses')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,6 +23,12 @@ export class ExpensesController {
   @Roles(Role.PRESTADOR)
   findMine(@CurrentUser() user: AuthUser) {
     return this.expensesService.findMine(user.userId);
+  }
+
+  @Patch(':id')
+  @Roles(Role.PRESTADOR)
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateExpenseDto) {
+    return this.expensesService.update(user.userId, id, dto);
   }
 
   @Delete(':id')

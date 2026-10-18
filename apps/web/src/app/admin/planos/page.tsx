@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, RotateCw } from 'lucide-react';
 import { api } from '@/lib/api';
+import { extractErrorMessage } from '@/lib/error-message';
 import { useAuthStore } from '@/store/auth-store';
 import type { AdminOverview } from '@/lib/types';
 
@@ -18,13 +20,35 @@ export default function AdminPlanosPage() {
     else if (user && user.role !== 'ADMIN') router.push('/');
   }, [token, user, router]);
 
-  const { data } = useQuery({
+  const { data, isError, error, refetch } = useQuery({
     queryKey: ['subscriptions', 'admin-overview'],
     enabled: !!token && user?.role === 'ADMIN',
     queryFn: async () => (await api.get<AdminOverview>('/subscriptions/admin/overview')).data,
   });
 
-  if (user?.role !== 'ADMIN' || !data) {
+  if (user?.role !== 'ADMIN') {
+    return <div className="mx-auto max-w-5xl px-4 py-20 text-foreground-muted">Carregando...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-20">
+        <div className="flex flex-col items-start gap-3 border border-danger/30 bg-danger/5 p-5">
+          <p className="flex items-center gap-2 text-danger">
+            <AlertTriangle size={16} /> {extractErrorMessage(error, 'Não foi possível carregar os dados.')}
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-1.5 border border-danger px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger hover:text-white"
+          >
+            <RotateCw size={12} /> Tentar de novo
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
     return <div className="mx-auto max-w-5xl px-4 py-20 text-foreground-muted">Carregando...</div>;
   }
 

@@ -105,7 +105,7 @@ function Thread({ conversationId, onBack }: { conversationId: string; onBack: ()
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-        <button onClick={onBack} className="text-foreground-muted hover:text-ink sm:hidden">
+        <button onClick={onBack} aria-label="Voltar" className="text-foreground-muted hover:text-ink sm:hidden">
           <ArrowLeft size={18} />
         </button>
         <span className="font-medium text-ink">{peerName}</span>

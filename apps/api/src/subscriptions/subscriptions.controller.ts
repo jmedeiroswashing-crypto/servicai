@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -6,6 +6,7 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { SubscriptionsService } from './subscriptions.service.js';
 import { ChangePlanDto } from './dto/change-plan.dto.js';
+import { StartTrialDto } from './dto/start-trial.dto.js';
 
 @Controller('subscriptions')
 export class SubscriptionsController {
@@ -56,6 +57,13 @@ export class SubscriptionsController {
     return this.subscriptionsService.changePlan(user.userId, dto.plan);
   }
 
+  @Post('me/trial')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PRESTADOR)
+  startTrial(@CurrentUser() user: AuthUser, @Body() dto: StartTrialDto) {
+    return this.subscriptionsService.startTrial(user.userId, dto.plan);
+  }
+
   /** Cancelamento "soft": mantém benefícios até o fim do período já pago. */
   @Post('me/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -69,5 +77,13 @@ export class SubscriptionsController {
   @Roles(Role.ADMIN)
   getAdminOverview() {
     return this.subscriptionsService.getAdminOverview();
+  }
+
+  /** Cancelamento forçado por admin — derruba pro Grátis na hora, sem esperar o período pago. */
+  @Post('admin/:userId/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  adminCancel(@Param('userId') userId: string) {
+    return this.subscriptionsService.cancel(userId);
   }
 }

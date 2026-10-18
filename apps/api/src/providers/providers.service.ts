@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
 import { computeRankingScore, type RankingContext, type RankingInput } from './ranking.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
+import { validateBusinessHours } from './business-hours.js';
 
 const ACCEPTED_STATUSES: BookingStatus[] = [
   BookingStatus.ACEITO,
@@ -252,9 +253,10 @@ export class ProvidersService {
 
   async update(userId: string, dto: UpdateProviderDto) {
     const provider = await this.findByUserId(userId);
+    const data = dto.businessHours !== undefined ? { ...dto, businessHours: validateBusinessHours(dto.businessHours) } : dto;
     return this.prisma.providerProfile.update({
       where: { id: provider.id },
-      data: dto as never,
+      data: data as never,
     });
   }
 

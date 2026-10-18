@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '../common/throttle/throttle.decorator.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -8,6 +8,7 @@ import { Role } from '../generated/prisma/enums.js';
 import { RequestsService } from './requests.service.js';
 import { AiService } from '../ai/ai.service.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
+import { UpdateRequestDto } from './dto/update-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
 import { AiIntakeDto } from './dto/ai-intake.dto.js';
@@ -88,5 +89,27 @@ export class RequestsController {
     @Param('proposalId') proposalId: string,
   ) {
     return this.requestsService.acceptProposal(user.userId, id, proposalId);
+  }
+
+  @Post(':id/proposals/:proposalId/reject')
+  @Roles(Role.CLIENTE)
+  rejectProposal(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Param('proposalId') proposalId: string,
+  ) {
+    return this.requestsService.rejectProposal(user.userId, id, proposalId);
+  }
+
+  @Patch(':id')
+  @Roles(Role.CLIENTE)
+  update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: UpdateRequestDto) {
+    return this.requestsService.update(user.userId, id, dto);
+  }
+
+  @Patch(':id/cancel')
+  @Roles(Role.CLIENTE)
+  cancel(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.requestsService.cancel(user.userId, id);
   }
 }

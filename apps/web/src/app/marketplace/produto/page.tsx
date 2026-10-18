@@ -80,11 +80,11 @@ function ProductDetailContent() {
             )}
           </div>
           {product.photoUrls && product.photoUrls.length > 1 && (
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
               {product.photoUrls.slice(1).map((url, i) => (
                 <div key={i} className="aspect-square overflow-hidden bg-surface-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <img src={url} alt={`${product.title} - foto ${i + 2}`} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 </div>
               ))}
             </div>
