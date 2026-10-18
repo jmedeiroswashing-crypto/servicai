@@ -2,28 +2,28 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Search, Wallet, Briefcase } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 const OPTIONS = [
   {
     id: 'cliente',
     title: 'Contratar serviços',
     description: 'Quero encontrar e contratar um profissional pra resolver algo.',
-    icon: Search,
+    image: '/comecar/contratar.png',
     href: '/cadastro?tipo=CLIENTE',
   },
   {
     id: 'gestao',
     title: 'Gestão inteligente do meu negócio',
     description: 'Já tenho clientes — quero organizar agenda, receita e despesas num só lugar.',
-    icon: Wallet,
+    image: '/comecar/gestao.png',
     href: '/cadastro?tipo=PRESTADOR&modo=GESTAO',
   },
   {
     id: 'completo',
     title: 'Gestão inteligente e contratação dos meus serviços',
     description: 'Quero organizar meu negócio e também receber novos clientes pelo ServiçAi.',
-    icon: Briefcase,
+    image: '/comecar/completo.png',
     href: '/cadastro?tipo=PRESTADOR&modo=COMPLETO',
   },
 ];
@@ -50,12 +50,15 @@ export default function ComecarPage() {
           <button
             key={opt.id}
             onClick={() => router.push(opt.href)}
-            className="group flex w-full items-center justify-between gap-4 border border-border p-5 text-left transition-colors hover:border-ink"
+            className="group flex w-full items-center justify-between gap-4 border border-border p-4 text-left transition-colors hover:border-ink sm:p-5"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-border bg-surface-muted text-foreground-muted group-hover:border-ink group-hover:text-ink">
-                <opt.icon size={18} />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={opt.image}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-lg object-cover transition-transform group-hover:scale-[1.03] sm:h-20 sm:w-20"
+              />
               <div>
                 <p className="font-medium text-ink">{opt.title}</p>
                 <p className="mt-0.5 text-sm text-foreground-muted">{opt.description}</p>
