@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthForm } from '@/components/AuthForm';
+import { MinimalLogo } from '@/components/MinimalLogo';
 import type { BusinessMode, Role } from '@/lib/types';
 
 function CadastroContent() {
@@ -15,6 +16,9 @@ function CadastroContent() {
 
   return (
     <div className="px-4 py-16">
+      <div className="mx-auto w-full max-w-md">
+        <MinimalLogo />
+      </div>
       <AuthForm role={role} initialMode="cadastro" initialBusinessMode={businessMode} onBack={() => router.push('/comecar')} />
     </div>
   );

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CATEGORIES } from '@/lib/categories';
 
-const HIDDEN_PATHS = ['/comecar'];
+const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
 
 export function Footer() {
   const pathname = usePathname();

@@ -86,7 +86,7 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
   ];
 }
 
-const HIDDEN_PATHS = ['/comecar'];
+const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
