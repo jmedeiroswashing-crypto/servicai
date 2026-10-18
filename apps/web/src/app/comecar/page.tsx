@@ -69,8 +69,8 @@ function Splash({ onDone }: { onDone: () => void }) {
       <img
         src="/comecar/splash.png"
         alt="ServiçAi — Conectando pessoas a soluções"
-        className={`w-full max-w-xs px-10 transition-all duration-500 ease-out sm:max-w-sm ${
-          entered && !leaving ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out ${
+          entered && !leaving ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
         }`}
       />
     </button>
