@@ -86,6 +86,8 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
   ];
 }
 
+const HIDDEN_PATHS = ['/comecar'];
+
 export function Navbar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
@@ -93,6 +95,8 @@ export function Navbar() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const links = getNavLinks(user?.role, user?.businessMode);
+
+  if (HIDDEN_PATHS.includes(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">

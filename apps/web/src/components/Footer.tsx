@@ -1,7 +1,15 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { CATEGORIES } from '@/lib/categories';
 
+const HIDDEN_PATHS = ['/comecar'];
+
 export function Footer() {
+  const pathname = usePathname();
+  if (HIDDEN_PATHS.includes(pathname)) return null;
+
   return (
     <footer className="mt-auto border-t border-border py-12 text-sm text-foreground-muted">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:px-6">

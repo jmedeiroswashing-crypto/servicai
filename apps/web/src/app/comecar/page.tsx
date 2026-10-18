@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Search, Wallet, Briefcase } from 'lucide-react';
 
@@ -32,6 +33,15 @@ export default function ComecarPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24">
+      <Link href="/" className="mb-10 flex w-fit items-center gap-2.5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-icon.png" alt="" className="h-8 w-auto" />
+        <span className="font-display text-xl font-medium tracking-tight">
+          <span className="text-ink">Servic</span>
+          <span className="text-accent">AI</span>
+        </span>
+      </Link>
+
       <h1 className="font-display text-3xl text-ink">Qual seu objetivo com o ServiçAi?</h1>
       <p className="mt-2 text-foreground-muted">Isso ajuda a montar a experiência certa pra você.</p>
 
