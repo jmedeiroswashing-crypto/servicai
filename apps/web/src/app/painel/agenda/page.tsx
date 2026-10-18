@@ -18,6 +18,8 @@ import {
   BellRing,
   BellOff,
   Clock3,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
@@ -224,9 +226,22 @@ function dayLabel(dateStr: string) {
 
 function BookingCard({ booking }: { booking: Booking }) {
   const queryClient = useQueryClient();
+  const [recognition, setRecognition] = useState<{ title: string; body: string } | null>(null);
   const mutation = useMutation({
-    mutationFn: async (status: BookingStatus) => (await api.patch(`/bookings/${booking.id}/status`, { status })).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bookings', 'provider'] }),
+    mutationFn: async (status: BookingStatus) =>
+      (await api.patch<Booking & { recognition?: { title: string; body: string } | null }>(`/bookings/${booking.id}/status`, { status })).data,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bookings', 'provider'] });
+      if (data.recognition) {
+        setRecognition(data.recognition);
+        // a venda já está salva (resposta só chega depois da transação confirmar) —
+        // esses dados é que precisam refletir a reserva concluída imediatamente
+        queryClient.invalidateQueries({ queryKey: ['bookings', 'clients'] });
+        queryClient.invalidateQueries({ queryKey: ['bookings', 'earnings'] });
+        queryClient.invalidateQueries({ queryKey: ['incomes', 'mine'] });
+        queryClient.invalidateQueries({ queryKey: ['goals', 'mine'] });
+      }
+    },
   });
 
   const actions = NEXT_ACTIONS[booking.status] ?? [];
@@ -297,6 +312,24 @@ function BookingCard({ booking }: { booking: Booking }) {
         </div>
       )}
 
+      {recognition && (
+        <div className="mt-3 flex items-start justify-between gap-3 border border-success/40 bg-success/5 p-3">
+          <div className="flex items-start gap-2">
+            <Sparkles size={15} className="mt-0.5 shrink-0 text-success" />
+            <div>
+              <p className="text-sm font-medium text-ink">{recognition.title}</p>
+              <p className="mt-1 text-xs text-foreground-muted">{recognition.body}</p>
+              <Link href="/painel/faturamento" className="mt-2 inline-block text-xs font-medium text-accent hover:underline">
+                Ver minha Gestão
+              </Link>
+            </div>
+          </div>
+          <button onClick={() => setRecognition(null)} className="shrink-0 text-foreground-muted/60 hover:text-foreground-muted">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <BookingDisputeSection bookingId={booking.id} bookingStatus={booking.status} />
     </div>
   );
@@ -312,11 +345,25 @@ export default function AgendaPage() {
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 
-  const { data: bookings, isLoading } = useQuery({
+  const { data: bookings, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['bookings', 'provider'],
     enabled: !!token,
     queryFn: async () => (await api.get<Booking[]>('/bookings/provider')).data,
   });
+
+  if (isError) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <p className="text-foreground-muted">
+          Não foi possível carregar a agenda{status ? ` (erro ${status})` : ''}. Verifique sua conexão e tente de novo.
+        </p>
+        <button onClick={() => refetch()} className="mt-4 border border-ink px-4 py-2 text-sm font-medium text-ink hover:bg-ink hover:text-background">
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !bookings) {
     return <div className="mx-auto max-w-3xl px-4 py-20 text-foreground-muted">Carregando agenda...</div>;

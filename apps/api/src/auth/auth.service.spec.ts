@@ -12,7 +12,7 @@ function buildService() {
       create: vi.fn(),
       update: vi.fn(),
     },
-    providerProfile: { create: vi.fn() },
+    providerProfile: { create: vi.fn(), findUnique: vi.fn() },
     subscription: { create: vi.fn() },
   };
   const jwt = { sign: vi.fn().mockReturnValue('signed-token') };
@@ -59,7 +59,7 @@ describe('AuthService', () => {
       const result = await service.login({ email: 'a@a.com', password: 'correta' });
 
       expect(result.accessToken).toBe('signed-token');
-      expect(result.user).toEqual({ id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A' });
+      expect(result.user).toEqual({ id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A', businessMode: null });
     });
   });
 

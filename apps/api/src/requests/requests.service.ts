@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { RequestStatus, NotificationType } from '../generated/prisma/enums.js';
+import { RequestStatus, NotificationType, BusinessMode } from '../generated/prisma/enums.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 import { getPlanConfig } from '../subscriptions/plans.config.js';
@@ -34,6 +34,8 @@ function timeAgo(date: Date): string {
 
 @Injectable()
 export class RequestsService {
+  private readonly logger = new Logger(RequestsService.name);
+
   constructor(
     private prisma: PrismaService,
     private subscriptionsService: SubscriptionsService,
@@ -41,7 +43,7 @@ export class RequestsService {
   ) {}
 
   async create(clientId: string, dto: CreateRequestDto) {
-    return this.prisma.serviceRequest.create({
+    const request = await this.prisma.serviceRequest.create({
       data: {
         clientId,
         category: dto.category,
@@ -55,6 +57,56 @@ export class RequestsService {
         desiredTime: dto.desiredTime,
       },
     });
+
+    await this.notifyAvailableProvidersOfNewRequest(request).catch((err) =>
+      this.logger.error('Falha ao notificar prestadores disponíveis sobre nova oportunidade', err as Error),
+    );
+
+    return request;
+  }
+
+  /**
+   * Favoritar não era sinal suficiente de interesse real — prestador com
+   * "disponível agora" ligado quer saber na hora de um pedido compatível
+   * pra puxar papo, não só quando alguém favorita o perfil dele. Igual ao
+   * feed de Oportunidades, nunca inclui nome/telefone do cliente aqui — só
+   * depois que o prestador entra na conversa é que o nome aparece (e o
+   * telefone continua só liberado em Favoritados).
+   */
+  private async notifyAvailableProvidersOfNewRequest(request: {
+    id: string;
+    clientId: string;
+    category: string;
+    title: string;
+  }) {
+    const now = new Date();
+    const availableProviders = await this.prisma.providerProfile.findMany({
+      where: {
+        availableNow: true,
+        availableUntil: { gt: now },
+        // `not: GESTAO` também excluiria null (quem ainda não escolheu) —
+        // ver mesmo comentário em ProvidersService.findAll.
+        OR: [{ businessMode: null }, { businessMode: BusinessMode.COMPLETO }],
+      },
+      select: { userId: true, specialty: true, categories: true },
+    });
+
+    const matching = availableProviders.filter((p) => {
+      const categories = p.categories.length > 0 ? p.categories : [p.specialty];
+      return categories.some((c) => c.toLowerCase() === request.category.toLowerCase());
+    });
+
+    await Promise.all(
+      matching.map((provider) =>
+        this.notificationsService.create({
+          userId: provider.userId,
+          type: NotificationType.NOVA_OPORTUNIDADE,
+          title: `Novo pedido de ${request.category.toLowerCase()} perto de você`,
+          body: request.title,
+          link: `/mensagens?novoCliente=${request.clientId}`,
+        }),
+      ),
+    );
   }
 
   async findMineAsClient(clientId: string) {
@@ -129,8 +181,37 @@ export class RequestsService {
     if (proposal.availableAt) notesParts.push(`Disponibilidade combinada: ${proposal.availableAt}`);
     if (proposal.deadline) notesParts.push(`Prazo combinado: ${proposal.deadline}`);
 
-    const [booking] = await this.prisma.$transaction([
-      this.prisma.booking.create({
+    /**
+     * As checagens acima (status ABERTA / ENVIADA) não são atômicas com a
+     * escrita — duas aceitações concorrentes para a mesma solicitação
+     * poderiam passar ambas e criar duas reservas. Por isso o fechamento da
+     * solicitação e a confirmação da proposta usam `updateMany` condicionado
+     * ao status ainda válido: só quem "ganha a corrida" segue adiante: o
+     * outro recebe count 0 e a transação é revertida.
+     */
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const closedRequest = await tx.serviceRequest.updateMany({
+        where: { id: requestId, status: RequestStatus.ABERTA },
+        data: { status: RequestStatus.FECHADA },
+      });
+      if (closedRequest.count === 0) {
+        throw new BadRequestException('Esta solicitação já foi fechada');
+      }
+
+      const confirmedProposal = await tx.proposal.updateMany({
+        where: { id: proposalId, status: 'ENVIADA' },
+        data: { status: 'ACEITA' },
+      });
+      if (confirmedProposal.count === 0) {
+        throw new BadRequestException('Esta proposta não está mais disponível');
+      }
+
+      await tx.proposal.updateMany({
+        where: { requestId, id: { not: proposalId } },
+        data: { status: 'RECUSADA' },
+      });
+
+      return tx.booking.create({
         data: {
           clientId,
           providerId: proposal.providerId,
@@ -139,14 +220,8 @@ export class RequestsService {
           notes: notesParts.join(' — '),
           category: request.category,
         },
-      }),
-      this.prisma.proposal.update({ where: { id: proposalId }, data: { status: 'ACEITA' } }),
-      this.prisma.proposal.updateMany({
-        where: { requestId, id: { not: proposalId } },
-        data: { status: 'RECUSADA' },
-      }),
-      this.prisma.serviceRequest.update({ where: { id: requestId }, data: { status: RequestStatus.FECHADA } }),
-    ]);
+      });
+    });
 
     const provider = await this.prisma.providerProfile.findUnique({ where: { id: proposal.providerId } });
     if (provider) {

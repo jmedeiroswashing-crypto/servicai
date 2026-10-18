@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsIn, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
-import { Role, PersonType } from '../../generated/prisma/enums.js';
+import { Role, PersonType, BusinessMode } from '../../generated/prisma/enums.js';
 import { IsCPF } from '../../common/validators/is-cpf.decorator.js';
 import { IsCNPJ } from '../../common/validators/is-cnpj.decorator.js';
 
@@ -41,6 +41,12 @@ export class RegisterDto {
   @ValidateIf((o) => o.role === Role.PRESTADOR)
   @IsEnum(PersonType)
   personType?: PersonType;
+
+  // Vem da tela de intenção (/comecar) — se não vier, o prestador escolhe no
+  // primeiro acesso ao painel.
+  @ValidateIf((o) => o.role === Role.PRESTADOR && o.businessMode !== undefined)
+  @IsEnum(BusinessMode)
+  businessMode?: BusinessMode;
 
   @ValidateIf((o) => o.personType === PersonType.PF || o.personType === PersonType.PJ)
   @IsCPF({ message: 'CPF inválido' })

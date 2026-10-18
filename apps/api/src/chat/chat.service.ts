@@ -22,6 +22,22 @@ export class ChatService {
     });
   }
 
+  /**
+   * Caminho inverso de startConversation: o prestador puxa o papo primeiro
+   * (ex: ao receber o alerta de nova oportunidade compatível com "disponível
+   * agora"). Nunca expõe telefone do cliente aqui — só nome/avatar, igual já
+   * acontece numa conversa iniciada pelo próprio cliente.
+   */
+  async startConversationAsProvider(userId: string, clientId: string) {
+    const provider = await this.providersService.findByUserId(userId);
+    return this.prisma.conversation.upsert({
+      where: { clientId_providerId: { clientId, providerId: provider.id } },
+      create: { clientId, providerId: provider.id },
+      update: {},
+      include: { client: { select: { name: true, avatarUrl: true } } },
+    });
+  }
+
   async listMineAsClient(clientId: string) {
     return this.prisma.conversation.findMany({
       where: { clientId },

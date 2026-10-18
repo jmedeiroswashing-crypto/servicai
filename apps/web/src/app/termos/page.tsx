@@ -39,10 +39,9 @@ export default function TermosPage() {
           <h2 className="mb-2 font-medium text-ink">2. O que é o ServiçAi</h2>
           <p>
             O ServiçAi, operado por <strong>[PREENCHER: razão social]</strong>, é um marketplace que conecta
-            clientes a profissionais autônomos e empresas prestadoras de serviço, e também permite a venda de
-            produtos entre usuários (Marketplace). A plataforma é apenas uma <strong>intermediária</strong>: não
-            presta os serviços anunciados, não fabrica nem vende os produtos anunciados, e não é parte no contrato
-            firmado diretamente entre cliente e prestador, ou entre comprador e vendedor.
+            clientes a profissionais autônomos e empresas prestadoras de serviço. A plataforma é apenas uma{' '}
+            <strong>intermediária</strong>: não presta os serviços anunciados e não é parte no contrato firmado
+            diretamente entre cliente e prestador.
           </p>
         </section>
 
@@ -61,13 +60,12 @@ export default function TermosPage() {
             Cada prestador é o único responsável pela qualidade, prazo, segurança e execução do serviço que
             oferece, incluindo o cumprimento de obrigações fiscais e regulatórias da sua atividade. Cada
             cliente é responsável pelas informações que publica e pelos combinados feitos diretamente com o
-            prestador (incluindo preço, forma e prazo de pagamento, que a plataforma não processa nem garante). O
-            mesmo vale para vendedores e compradores no Marketplace de produtos.
+            prestador (incluindo preço, forma e prazo de pagamento, que a plataforma não processa nem garante).
           </p>
           <p className="mt-2">
             <strong className="text-ink">O ServiçAi não garante, não arbitra e não se responsabiliza</strong> pela
-            qualidade dos serviços prestados, pela entrega ou qualidade de produtos vendidos, por prejuízos
-            financeiros, materiais ou de qualquer natureza decorrentes de negociações realizadas entre usuários. O
+            qualidade dos serviços prestados, por prejuízos financeiros, materiais ou de qualquer natureza
+            decorrentes de negociações realizadas entre usuários. O
             selo de &ldquo;identidade verificada&rdquo; confirma apenas que um documento foi analisado pela nossa
             equipe — não é garantia de idoneidade, qualidade do serviço ou ausência de risco.
           </p>

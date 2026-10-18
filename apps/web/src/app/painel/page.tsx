@@ -137,7 +137,7 @@ export default function PainelPage() {
         <div className="flex items-center gap-3">
           <Wallet size={18} className="text-accent" />
           <div>
-            <p className="font-medium text-ink">Faturamento</p>
+            <p className="font-medium text-ink">Gestão</p>
             <p className="text-sm text-foreground-muted">
               {earnings ? `R$ ${earnings.currentMonthTotal.toFixed(2).replace('.', ',')} este mês` : 'Acompanhe seus ganhos'}
             </p>

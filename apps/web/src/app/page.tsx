@@ -253,7 +253,7 @@ function ClientHome() {
               Preste serviços e apareça pra quem já está procurando por você.
             </h2>
             <Link
-              href="/cadastro?tipo=PRESTADOR"
+              href="/comecar"
               className="mt-8 inline-flex items-center gap-2 bg-accent px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85"
             >
               Criar perfil de prestador <ArrowRight size={15} />

@@ -15,7 +15,7 @@ const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 @UseGuards(JwtAuthGuard)
 export class UploadsController {
   /**
-   * Upload real de imagem (avatar, portfólio, fotos de produto do marketplace) —
+   * Upload real de imagem (avatar, portfólio) —
    * substitui o padrão anterior de "cole uma URL", que exigia a pessoa já ter a
    * foto hospedada em outro lugar. Arquivo fica em disco local: só funciona de
    * verdade com o backend rodando num host com filesystem persistente.

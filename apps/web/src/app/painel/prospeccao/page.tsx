@@ -24,7 +24,7 @@ function timeAgo(iso: string) {
   return `há ${months} ${months === 1 ? 'mês' : 'meses'}`;
 }
 
-export default function ProspeccaoPage() {
+export default function ProspeccaoPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, token } = useAuthStore();
   const router = useRouter();
 
@@ -43,14 +43,18 @@ export default function ProspeccaoPage() {
   const locked = (error as { response?: { status?: number } })?.response?.status === 403;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
-      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
-        <Crown size={13} /> Recurso Premium
-      </p>
-      <h1 className="font-display text-3xl text-ink">Prospecção de possíveis clientes</h1>
-      <p className="mt-2 text-foreground-muted">
-        Clientes que favoritaram seu perfil — um sinal real de interesse. Nome e telefone para você entrar em contato.
-      </p>
+    <div className={`mx-auto max-w-2xl px-4 sm:px-6 ${embedded ? 'py-6' : 'py-12 sm:py-16'}`}>
+      {!embedded && (
+        <>
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
+            <Crown size={13} /> Recurso Premium
+          </p>
+          <h1 className="font-display text-3xl text-ink">Prospecção de possíveis clientes</h1>
+          <p className="mt-2 text-foreground-muted">
+            Clientes que favoritaram seu perfil — um sinal real de interesse. Nome e telefone para você entrar em contato.
+          </p>
+        </>
+      )}
 
       {isLoading && <p className="mt-10 text-foreground-muted">Carregando...</p>}
 

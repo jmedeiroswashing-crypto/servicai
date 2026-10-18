@@ -46,9 +46,6 @@ export class ReportsService {
       case ReportTargetType.USUARIO:
         exists = !!(await this.prisma.user.findUnique({ where: { id: targetId }, select: { id: true } }));
         break;
-      case ReportTargetType.PRODUTO:
-        exists = !!(await this.prisma.product.findUnique({ where: { id: targetId }, select: { id: true } }));
-        break;
       case ReportTargetType.AVALIACAO:
         exists = !!(await this.prisma.review.findUnique({ where: { id: targetId }, select: { id: true } }));
         break;

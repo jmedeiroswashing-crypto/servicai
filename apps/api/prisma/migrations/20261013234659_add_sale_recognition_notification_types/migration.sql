@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'VENDA_REGISTRADA';
+ALTER TYPE "NotificationType" ADD VALUE 'META_ATINGIDA';

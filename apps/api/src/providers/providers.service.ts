@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Selo, BookingStatus } from '../generated/prisma/enums.js';
+import { Selo, BookingStatus, BusinessMode } from '../generated/prisma/enums.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateProviderDto } from './dto/update-provider.dto.js';
 import { computeRankingScore, type RankingContext, type RankingInput } from './ranking.js';
@@ -109,6 +109,10 @@ export class ProvidersService {
     const candidates = await this.prisma.providerProfile.findMany({
       where: {
         user: { deletedAt: null },
+        // `not: GESTAO` excluiria também quem ainda não escolheu (null) —
+        // aqui precisa ser explícito pra manter compatibilidade com contas
+        // antigas enquanto elas não passam pela pergunta de intenção.
+        OR: [{ businessMode: null }, { businessMode: BusinessMode.COMPLETO }],
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
         ...(availableNow ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),
@@ -257,6 +261,20 @@ export class ProvidersService {
     return this.prisma.providerProfile.update({
       where: { id: provider.id },
       data: data as never,
+    });
+  }
+
+  /**
+   * Resposta única pra pergunta de intenção no primeiro acesso: "gestão
+   * apenas" ou "gestão + contratação". Quem escolhe gestão apenas some da
+   * busca pública (ver findAll) e para de receber alerta de nova
+   * oportunidade — a pessoa não quer ser encontrada por cliente.
+   */
+  async setBusinessMode(userId: string, businessMode: BusinessMode) {
+    const provider = await this.findByUserId(userId);
+    return this.prisma.providerProfile.update({
+      where: { id: provider.id },
+      data: { businessMode },
     });
   }
 

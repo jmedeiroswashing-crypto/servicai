@@ -7,20 +7,19 @@ import {
   LayoutDashboard,
   CreditCard,
   MessageCircle,
-  Sparkles,
   FileText,
   UserCog,
   Zap,
   Menu,
   X,
   User,
+  Users,
+  Briefcase,
   CalendarDays,
   Wallet,
   CalendarClock,
-  ShoppingBag,
   Search,
   Megaphone,
-  Tag,
   Flag,
   ShieldCheck,
 } from 'lucide-react';
@@ -34,18 +33,27 @@ interface NavLink {
   icon: typeof Search;
 }
 
-function getNavLinks(role?: string): NavLink[] {
-  if (role === 'PRESTADOR') {
+function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
+  if (role === 'PRESTADOR' && businessMode === 'GESTAO') {
+    // Quem escolheu "só gestão" não quer aparecer pra clientes nem se
+    // preocupar com isso — a navegação reflete só o que a pessoa pediu.
     return [
-      { href: '/painel', label: 'Painel', icon: LayoutDashboard },
       { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/faturamento', label: 'Faturamento', icon: Wallet },
-      { href: '/painel/oportunidades', label: 'Oportunidades', icon: Sparkles },
-      { href: '/painel/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
+      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
       { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
-      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
-      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
+  if (role === 'PRESTADOR') {
+    return [
+      { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
+      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
+      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
+      { href: '/painel/clientes', label: 'Clientes', icon: Users },
+      { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
+      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
+      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
       { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
       { href: '/perfil', label: 'Meu perfil', icon: User },
     ];
@@ -54,11 +62,9 @@ function getNavLinks(role?: string): NavLink[] {
     return [
       { href: '/buscar', label: 'Buscar serviços', icon: Search },
       { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-      { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
       { href: '/solicitar', label: 'Publicar solicitação', icon: FileText },
       { href: '/minhas-solicitacoes', label: 'Minhas solicitações', icon: LayoutDashboard },
       { href: '/minhas-reservas', label: 'Minhas reservas', icon: CalendarClock },
-      { href: '/marketplace/meus-anuncios', label: 'Meus anúncios', icon: Tag },
       { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
       { href: '/perfil', label: 'Meu perfil', icon: User },
     ];
@@ -75,11 +81,12 @@ function getNavLinks(role?: string): NavLink[] {
   return [
     { href: '/buscar', label: 'Buscar serviços', icon: Search },
     { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-    { href: '/marketplace', label: 'Marketplace', icon: ShoppingBag },
-    { href: '/cadastro?tipo=PRESTADOR', label: 'Anuncie seu serviço', icon: Megaphone },
+    { href: '/comecar', label: 'Anuncie seu serviço', icon: Megaphone },
     { href: '/precos', label: 'Planos', icon: CreditCard },
   ];
 }
+
+const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
 
 export function Navbar() {
   const { user, logout } = useAuthStore();
@@ -87,7 +94,9 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const links = getNavLinks(user?.role);
+  const links = getNavLinks(user?.role, user?.businessMode);
+
+  if (HIDDEN_PATHS.includes(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">
@@ -146,7 +155,7 @@ export function Navbar() {
                 Entrar
               </Link>
               <Link
-                href="/cadastro"
+                href="/comecar"
                 className="border border-accent bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
               >
                 Criar conta

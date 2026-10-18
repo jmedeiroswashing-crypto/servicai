@@ -20,6 +20,11 @@ enum Selo {
   PREMIUM
 }
 
+enum BusinessMode {
+  GESTAO
+  COMPLETO
+}
+
 enum BookingStatus {
   SOLICITADO
   ACEITO
@@ -70,6 +75,13 @@ enum NotificationType {
   LEMBRETE_AVALIACAO
   RESUMO_SEMANAL
   LEMBRETE_COMPROMISSO
+  VENDA_REGISTRADA
+  META_ATINGIDA
+}
+
+enum IncomeSource {
+  MANUAL
+  RESERVA
 }
 
 enum DealStatus {
@@ -84,20 +96,8 @@ enum ProposalStatus {
   RECUSADA
 }
 
-enum ProductStatus {
-  DISPONIVEL
-  RESERVADO
-  VENDIDO
-}
-
-enum ProductCondition {
-  NOVO
-  USADO
-}
-
 enum ReportTargetType {
   USUARIO
-  PRODUTO
   AVALIACAO
   SERVICO
   RESERVA
@@ -179,12 +179,6 @@ model User {
   dealsClaimed    LastMinuteDeal[] @relation("DealsClaimedByClient")
   pushSubscriptions PushSubscription[]
 
-  productsListed          Product[]                @relation("ProductsBySeller")
-  productFavorites        ProductFavorite[]
-  marketplaceConvsAsBuyer  MarketplaceConversation[] @relation("MarketplaceConversationsAsBuyer")
-  marketplaceConvsAsSeller MarketplaceConversation[] @relation("MarketplaceConversationsAsSeller")
-  marketplaceMessagesSent  MarketplaceMessage[]      @relation("MarketplaceMessagesBySender")
-
   reportsFiled      Report[] @relation("ReportsByReporter")
   reportsResolved   Report[] @relation("ReportsByResolver")
   reportsResponded  Report[] @relation("ReportsByRespondent")
@@ -225,6 +219,11 @@ model ProviderProfile {
   availableNow  Boolean  @default(false)
   availableUntil DateTime?
 
+  // null = ainda não escolheu (conta antiga de antes dessa opção existir, ou
+  // cadastro feito direto pela API sem passar pela tela de intenção) — nesse
+  // caso a pessoa é perguntada uma vez no primeiro acesso.
+  businessMode  BusinessMode?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -240,8 +239,12 @@ model ProviderProfile {
   expenses      Expense[]
   incomes       Income[]
   appointments  Appointment[]
+<<<<<<< HEAD
 
   @@index([city])
+=======
+  financialGoals FinancialGoal[]
+>>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 }
 
 model Expense {
@@ -273,9 +276,28 @@ model Income {
   amount      Float
   date        DateTime @default(now())
 
+  source      IncomeSource @default(MANUAL)
+  bookingId   String?  @unique
+  booking     Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime @default(now())
 
   @@index([providerId, date])
+}
+
+model FinancialGoal {
+  id           String   @id @default(cuid())
+  providerId   String
+  provider     ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  month        String   // "YYYY-MM"
+  targetAmount Float
+  reachedAt    DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([providerId, month])
 }
 
 model Appointment {
@@ -405,9 +427,13 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   review        Review?
+<<<<<<< HEAD
 
   @@index([clientId])
   @@index([providerId, status])
+=======
+  income        Income?
+>>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 }
 
 model Conversation {
@@ -540,6 +566,7 @@ model LastMinuteDeal {
   @@index([status, scheduledAt])
 }
 
+<<<<<<< HEAD
 model Product {
   id            String   @id @default(cuid())
   sellerId      String
@@ -611,6 +638,8 @@ model MarketplaceMessage {
   @@index([conversationId])
 }
 
+=======
+>>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 model Report {
   id         String           @id @default(cuid())
 
