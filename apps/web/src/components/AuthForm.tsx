@@ -149,7 +149,7 @@ export function AuthForm({
       </button>
 
       <h1 className="font-display mb-6 text-2xl text-ink">
-        {isVendedor ? 'Área do vendedor' : 'Área do cliente'}
+        {isVendedor ? (initialBusinessMode === 'GESTAO' ? 'Área do gestor' : 'Área do vendedor') : 'Área do cliente'}
       </h1>
 
       <div className="mb-7 flex gap-6 border-b border-border text-sm">
