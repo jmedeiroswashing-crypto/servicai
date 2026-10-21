@@ -239,12 +239,9 @@ model ProviderProfile {
   expenses      Expense[]
   incomes       Income[]
   appointments  Appointment[]
-<<<<<<< HEAD
+  financialGoals FinancialGoal[]
 
   @@index([city])
-=======
-  financialGoals FinancialGoal[]
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 }
 
 model Expense {
@@ -427,13 +424,10 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   review        Review?
-<<<<<<< HEAD
+  income        Income?
 
   @@index([clientId])
   @@index([providerId, status])
-=======
-  income        Income?
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 }
 
 model Conversation {
@@ -566,80 +560,6 @@ model LastMinuteDeal {
   @@index([status, scheduledAt])
 }
 
-<<<<<<< HEAD
-model Product {
-  id            String   @id @default(cuid())
-  sellerId      String
-  seller        User     @relation("ProductsBySeller", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  title         String
-  description   String
-  price         Float
-  category      String
-  condition     ProductCondition @default(USADO)
-  city          String
-  state         String?
-  status        ProductStatus    @default(DISPONIVEL)
-  photoUrls     String[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  favoritedBy   ProductFavorite[]
-  conversations MarketplaceConversation[]
-
-  @@index([status, category])
-}
-
-model ProductFavorite {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@index([userId])
-}
-
-model MarketplaceConversation {
-  id        String   @id @default(cuid())
-
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  buyerId   String
-  buyer     User     @relation("MarketplaceConversationsAsBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-
-  sellerId  String
-  seller    User     @relation("MarketplaceConversationsAsSeller", fields: [sellerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  messages  MarketplaceMessage[]
-
-  @@unique([productId, buyerId])
-  @@index([sellerId])
-}
-
-model MarketplaceMessage {
-  id             String   @id @default(cuid())
-  conversationId String
-  conversation   MarketplaceConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId       String
-  sender         User     @relation("MarketplaceMessagesBySender", fields: [senderId], references: [id])
-
-  content        String
-  createdAt      DateTime @default(now())
-
-  @@index([conversationId])
-}
-
-=======
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 model Report {
   id         String           @id @default(cuid())
 

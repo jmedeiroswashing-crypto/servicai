@@ -9,17 +9,13 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
-<<<<<<< HEAD
 import { useCidadesPorEstado } from '@/lib/use-cidades';
-import type { Role } from '@/lib/types';
-=======
 import type { BusinessMode, Role } from '@/lib/types';
 
 function destinationFor(role: Role, businessMode?: BusinessMode | null) {
   if (role !== 'PRESTADOR') return '/';
   return businessMode === 'GESTAO' ? '/painel/agenda' : '/painel';
 }
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 
 type Mode = 'login' | 'cadastro';
 type PersonType = 'PF' | 'PJ';

@@ -79,11 +79,7 @@ export class AuthService {
 
     await this.issueEmailVerification(user.id, user.email, user.name);
 
-<<<<<<< HEAD
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
-=======
-    return await this.buildAuthResponse(user.id, user.email, user.role, user.name);
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
+    return await this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
   }
 
   private async issueEmailVerification(userId: string, email: string, name: string) {
@@ -161,7 +157,7 @@ export class AuthService {
       },
     });
 
-    return this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
+    return await this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
   }
 
   async login(dto: LoginDto) {
@@ -172,11 +168,7 @@ export class AuthService {
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Credenciais inválidas');
 
-<<<<<<< HEAD
-    return this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
-=======
-    return await this.buildAuthResponse(user.id, user.email, user.role, user.name);
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
+    return await this.buildAuthResponse(user.id, user.email, user.role, user.name, user.tokenVersion);
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
@@ -189,15 +181,11 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash, tokenVersion: { increment: 1 } },
     });
-    return this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
+    return await this.buildAuthResponse(updated.id, updated.email, updated.role, updated.name, updated.tokenVersion);
   }
 
-<<<<<<< HEAD
-  private buildAuthResponse(sub: string, email: string, role: Role, name: string, tokenVersion: number) {
+  private async buildAuthResponse(sub: string, email: string, role: Role, name: string, tokenVersion: number) {
     const accessToken = this.jwt.sign({ sub, email, role, tokenVersion });
-=======
-  private async buildAuthResponse(sub: string, email: string, role: Role, name: string) {
-    const accessToken = this.jwt.sign({ sub, email, role });
 
     let businessMode: BusinessMode | null = null;
     if (role === Role.PRESTADOR) {
@@ -205,7 +193,6 @@ export class AuthService {
       businessMode = provider?.businessMode ?? null;
     }
 
->>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
     return {
       accessToken,
       user: { id: sub, email, role, name, businessMode },

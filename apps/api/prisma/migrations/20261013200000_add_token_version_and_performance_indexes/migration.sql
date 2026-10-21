@@ -34,11 +34,7 @@ CREATE INDEX "ServiceRequest_status_category_idx" ON "ServiceRequest"("status", 
 -- CreateIndex
 CREATE INDEX "Proposal_providerId_idx" ON "Proposal"("providerId");
 
--- CreateIndex
-CREATE INDEX "ProductFavorite_userId_idx" ON "ProductFavorite"("userId");
-
--- CreateIndex
-CREATE INDEX "MarketplaceConversation_sellerId_idx" ON "MarketplaceConversation"("sellerId");
-
--- CreateIndex
-CREATE INDEX "MarketplaceMessage_conversationId_idx" ON "MarketplaceMessage"("conversationId");
+-- Os três índices abaixo (ProductFavorite, MarketplaceConversation,
+-- MarketplaceMessage) foram removidos desta migration: essas tabelas não
+-- existem mais — a migration 20261014222146_remove_marketplace já tinha
+-- apagado o Marketplace de produtos do banco antes desta rodar.
