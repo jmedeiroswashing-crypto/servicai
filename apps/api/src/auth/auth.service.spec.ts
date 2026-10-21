@@ -199,7 +199,7 @@ describe('AuthService', () => {
       // isso a resposta agora inclui um accessToken novo, não só {success:true}.
       expect(result).toEqual({
         accessToken: 'signed-token',
-        user: { id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A' },
+        user: { id: '1', email: 'a@a.com', role: Role.CLIENTE, name: 'A', businessMode: null },
       });
       const updateCall = prisma.user.update.mock.calls[0][0];
       expect(updateCall.data.passwordResetToken).toBeNull();
