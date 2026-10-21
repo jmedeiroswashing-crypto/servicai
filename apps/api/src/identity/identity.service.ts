@@ -18,12 +18,12 @@ const SELECT_FIELDS = {
 export class IdentityService {
   constructor(private prisma: PrismaService) {}
 
-  async submit(userId: string, documentFilename: string) {
+  async submit(userId: string, documentUrl: string) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         identityStatus: IdentityStatus.PENDENTE,
-        identityDocumentUrl: documentFilename,
+        identityDocumentUrl: documentUrl,
         identitySubmittedAt: new Date(),
         identityRejectionReason: null,
         identityReviewedAt: null,
@@ -37,7 +37,7 @@ export class IdentityService {
     return this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: SELECT_FIELDS });
   }
 
-  async getDocumentFilename(userId: string): Promise<string | null> {
+  async getDocumentUrl(userId: string): Promise<string | null> {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { identityDocumentUrl: true } });
     return user?.identityDocumentUrl ?? null;
   }

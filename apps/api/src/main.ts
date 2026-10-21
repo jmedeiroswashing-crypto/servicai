@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { join } from 'node:path';
 import { AppModule } from './app.module.js';
 import { resolveCorsOrigins } from './common/cors-origins.js';
 
@@ -21,11 +20,6 @@ async function bootstrap() {
   // reflita o IP real do cliente via X-Forwarded-For — sem isso, todo mundo
   // aparece com o mesmo IP (o do proxy) e o rate limiting por IP não funciona.
   app.set('trust proxy', 1);
-
-  // Uploads ficam em disco local — só funciona com processo persistente (Railway,
-  // Render, Fly.io, VPS). Em serverless (Vercel) o filesystem é efêmero e os
-  // arquivos somem entre requisições.
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
   app.useGlobalPipes(
     new ValidationPipe({

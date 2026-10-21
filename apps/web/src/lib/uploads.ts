@@ -10,5 +10,7 @@ export async function uploadImage(file: File): Promise<string> {
   // Não define Content-Type manualmente: o axios/navegador precisa gerar o
   // boundary do multipart sozinho a partir do FormData.
   const res = await api.post<{ url: string }>('/uploads', formData);
-  return `${API_ORIGIN}${res.data.url}`;
+  // A API hoje devolve a URL pronta do Vercel Blob (absoluta) — o prefixo
+  // com API_ORIGIN só entra se algum dia vier um caminho relativo de novo.
+  return res.data.url.startsWith('http') ? res.data.url : `${API_ORIGIN}${res.data.url}`;
 }

@@ -16,10 +16,9 @@ import {
 import type { Response } from 'express';
 import { Throttle } from '../common/throttle/throttle.decorator.js';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { randomUUID } from 'node:crypto';
-import { extname, join } from 'node:path';
-import { existsSync } from 'node:fs';
+import { extname } from 'node:path';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
 import { Roles } from '../auth/decorators/roles.decorator.js';
@@ -27,17 +26,18 @@ import { CurrentUser, type AuthUser } from '../auth/decorators/current-user.deco
 import { Role } from '../generated/prisma/enums.js';
 import { IdentityService } from './identity.service.js';
 import { ReviewIdentityDto } from './dto/review-identity.dto.js';
-import { safeDiskDestination } from '../common/safe-disk-destination.js';
+import { uploadBuffer } from '../common/blob-storage.js';
 
-const IDENTITY_UPLOAD_DIR = 'uploads-private/identity';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 
 /**
- * Documento de identidade NUNCA passa pelo /uploads genérico (servido publicamente
- * via static assets): fica numa pasta própria, fora do static serving, e só é
- * acessível pelo dono do documento ou por um ADMIN, através de /identity/document/:userId.
- * Dado sensível (LGPD) não pode depender só de um nome de arquivo difícil de adivinhar.
+ * Documento de identidade NUNCA passa pelo /uploads genérico nem é devolvido
+ * como URL direta pro cliente: fica no Blob (que não tem bucket privado de
+ * verdade), mas o app só devolve o conteúdo através de /identity/document/:userId,
+ * que faz a checagem de dono-ou-ADMIN e busca o arquivo no servidor antes de
+ * mandar pro cliente — a URL real do blob nunca é exposta. Dado sensível
+ * (LGPD) não pode depender só de uma URL difícil de adivinhar.
  */
 @Controller('identity')
 @UseGuards(JwtAuthGuard)
@@ -50,10 +50,7 @@ export class IdentityController {
   @Roles(Role.PRESTADOR)
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: safeDiskDestination(IDENTITY_UPLOAD_DIR),
-        filename: (_req, file, cb) => cb(null, `${randomUUID()}${extname(file.originalname).toLowerCase()}`),
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: MAX_SIZE_BYTES },
       fileFilter: (_req, file, cb) => {
         if (!ALLOWED_MIME.includes(file.mimetype)) {
@@ -64,9 +61,11 @@ export class IdentityController {
       },
     }),
   )
-  submit(@CurrentUser() user: AuthUser, @UploadedFile() file?: Express.Multer.File) {
+  async submit(@CurrentUser() user: AuthUser, @UploadedFile() file?: Express.Multer.File) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
-    return this.identityService.submit(user.userId, file.filename);
+    const pathname = `identity/${randomUUID()}${extname(file.originalname).toLowerCase()}`;
+    const blob = await uploadBuffer(pathname, file.buffer, file.mimetype);
+    return this.identityService.submit(user.userId, blob.url);
   }
 
   @Get('mine')
@@ -93,11 +92,13 @@ export class IdentityController {
     if (requester.userId !== userId && requester.role !== Role.ADMIN) {
       throw new ForbiddenException('Você não tem acesso a este documento');
     }
-    const filename = await this.identityService.getDocumentFilename(userId);
-    if (!filename) throw new NotFoundException('Nenhum documento enviado por este usuário');
+    const documentUrl = await this.identityService.getDocumentUrl(userId);
+    if (!documentUrl) throw new NotFoundException('Nenhum documento enviado por este usuário');
 
-    const filePath = join(process.cwd(), IDENTITY_UPLOAD_DIR, filename);
-    if (!existsSync(filePath)) throw new NotFoundException('Arquivo não encontrado');
-    res.sendFile(filePath);
+    const blobRes = await fetch(documentUrl);
+    if (!blobRes.ok || !blobRes.body) throw new NotFoundException('Arquivo não encontrado');
+    res.setHeader('Content-Type', blobRes.headers.get('content-type') ?? 'application/octet-stream');
+    const buffer = Buffer.from(await blobRes.arrayBuffer());
+    res.send(buffer);
   }
 }
