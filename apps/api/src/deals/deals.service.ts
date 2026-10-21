@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { BookingStatus, DealStatus, NotificationType } from '../generated/prisma/enums.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CreateDealDto } from './dto/create-deal.dto.js';
+import { UpdateDealDto } from './dto/update-deal.dto.js';
 import { DealFiltersDto } from './dto/deal-filters.dto.js';
 
 @Injectable()
@@ -98,6 +99,47 @@ export class DealsService {
       where: { providerId: provider.id },
       include: { claimedBy: { select: { name: true, phone: true } } },
       orderBy: { scheduledAt: 'desc' },
+    });
+  }
+
+  /** Só dá pra editar enquanto ninguém reservou — depois disso o cliente já está contando com os dados combinados. */
+  async update(userId: string, id: string, dto: UpdateDealDto) {
+    const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
+    if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');
+
+    const deal = await this.prisma.lastMinuteDeal.findUnique({ where: { id } });
+    if (!deal) throw new NotFoundException('Vaga não encontrada');
+    if (deal.providerId !== provider.id) throw new ForbiddenException('Esta vaga não é sua');
+    if (deal.status !== DealStatus.ATIVA) {
+      throw new BadRequestException('Esta vaga não pode mais ser editada');
+    }
+
+    let scheduledAt: Date | undefined;
+    if (dto.scheduledAt) {
+      scheduledAt = new Date(dto.scheduledAt);
+      if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) {
+        throw new BadRequestException('Escolha uma data e horário futuros para a vaga');
+      }
+    }
+
+    const originalPrice = dto.originalPrice ?? deal.originalPrice;
+    const dealPrice = dto.dealPrice ?? deal.dealPrice;
+    if (dealPrice > originalPrice) {
+      throw new BadRequestException('O preço da vaga não pode ser maior que o preço original');
+    }
+
+    return this.prisma.lastMinuteDeal.update({
+      where: { id },
+      data: {
+        category: dto.category,
+        title: dto.title,
+        description: dto.description,
+        originalPrice: dto.originalPrice,
+        dealPrice: dto.dealPrice,
+        scheduledAt,
+        city: dto.city,
+        state: dto.state,
+      },
     });
   }
 

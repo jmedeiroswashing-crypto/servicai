@@ -5,6 +5,7 @@ import { ProvidersService } from '../providers/providers.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { NotificationType } from '../generated/prisma/enums.js';
 import { CreateAppointmentDto } from './dto/create-appointment.dto.js';
+import { UpdateAppointmentDto } from './dto/update-appointment.dto.js';
 
 const REMINDER_WINDOW_MINUTES = 5;
 
@@ -38,6 +39,31 @@ export class AppointmentsService {
     return this.prisma.appointment.findMany({
       where: { providerId: provider.id },
       orderBy: { scheduledAt: 'asc' },
+    });
+  }
+
+  async update(userId: string, id: string, dto: UpdateAppointmentDto) {
+    const provider = await this.providersService.findByUserId(userId);
+    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    if (!appointment) throw new NotFoundException('Compromisso não encontrado');
+    if (appointment.providerId !== provider.id) throw new ForbiddenException('Você não é o dono deste compromisso');
+
+    let scheduledAt: Date | undefined;
+    if (dto.scheduledAt) {
+      scheduledAt = new Date(dto.scheduledAt);
+      if (Number.isNaN(scheduledAt.getTime())) throw new BadRequestException('Data inválida');
+    }
+
+    return this.prisma.appointment.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        notes: dto.notes,
+        scheduledAt,
+        // Reagendar precisa reabrir a janela de lembrete, senão o lembrete do
+        // horário antigo (já disparado) nunca mais avisa sobre o novo horário.
+        notifiedAt: scheduledAt ? null : undefined,
+      },
     });
   }
 

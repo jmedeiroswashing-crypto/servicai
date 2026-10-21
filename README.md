@@ -20,10 +20,17 @@ servicai/
 ## Stack
 
 - **Backend**: NestJS 12, Prisma 7 (driver adapters, `@prisma/adapter-pg`), PostgreSQL,
-  JWT (passport-jwt), Socket.IO (chat em tempo real), OpenAI SDK.
-- **Frontend**: Next.js 16 (App Router), Tailwind CSS v4, Framer Motion, TanStack Query,
-  Zustand, React Hook Form + Zod.
+  JWT (passport-jwt), Socket.IO (chat e notificações em tempo real), OpenAI SDK,
+  `web-push` (push notification real), `nodemailer` (e-mail transacional), `bcryptjs`
+  (troca feita a partir de `bcrypt` nativo — era a causa de queda em produção na
+  Vercel, que não compila binários nativos), rate limiting próprio (sem
+  `@nestjs/throttler`, que também quebrava o build serverless).
+- **Frontend**: Next.js 16 (App Router, export estático), Tailwind CSS v4, Framer
+  Motion, TanStack Query, Zustand, React Hook Form + Zod, `sonner` (toasts de erro).
+- **Mobile**: projeto Android gerado via **Capacitor** (empacota o site como app
+  nativo) — não é um app Flutter/React Native separado, é o mesmo frontend web.
 - **Banco**: PostgreSQL (neste setup, hospedado no Supabase; veja `apps/api/.env`).
+- **Deploy**: Vercel (projetos `servicai` e `servicai-api`, ver seção de Deploy).
 
 ## Como rodar
 
@@ -153,31 +160,98 @@ npm run dev              # http://localhost:3000
   distância em km, e não há verificação de disponibilidade de agenda (não existe um
   calendário de disponibilidade do prestador ainda).
 
+### Funcionalidades adicionadas depois do MVP inicial
+
+- **Marketplace** (`/marketplace`): venda de produtos usados entre usuários (CLIENTE
+  ou PRESTADOR), separado do fluxo de serviços — anúncio com fotos, favoritos, chat
+  próprio (`marketplace-chat`, WebSocket dedicado) entre comprador e vendedor.
+- **Agenda** (`/painel/agenda`): compromissos do prestador com lembrete — notificação
+  push + in-app quando o horário está chegando (`AppointmentsService.sendDueReminders`,
+  cron a cada 5 min), mesmo com o app fechado. Tem PATCH pra reagendar.
+- **Faturamento** (`/painel/faturamento`): lançamento manual de receitas e despesas,
+  despesas recorrentes (geradas automaticamente todo mês), leitura de recibo por foto
+  via IA pra preencher o lançamento. **Receita aqui é o valor combinado, não pagamento
+  confirmado** — o app ainda não processa pagamento de verdade (ver Roadmap).
+- **Verificação de identidade**: prestador envia foto de documento oficial
+  (`identity.controller.ts`), admin aprova/rejeita (`/admin/identidade`) e o selo de
+  identidade verificada aparece no perfil. Selfie/biometria facial continuam fora do
+  escopo.
+- **Disputas formais de reserva**: cliente ou prestador pode abrir uma disputa sobre
+  um agendamento problemático (`BookingDisputeSection`), com resposta da outra parte
+  e checagem automática do que já foi combinado.
+- **Sistema de denúncias** (`/admin/denuncias`): denunciar usuário, produto, avaliação,
+  serviço ou reserva (`ReportTargetType`), com fila de análise e resolução pelo admin.
+- **Verificação de e-mail e redefinição de senha**: e-mail transacional via
+  `nodemailer`, tokens com expiração. Trocar ou redefinir a senha agora também invalida
+  qualquer token JWT emitido antes (`User.tokenVersion`) — sessões antigas (inclusive de
+  uma conta excluída) param de funcionar na hora, não só quando expiram sozinhas.
+- **Push notification de verdade** (`web-push` + VAPID, service worker em
+  `apps/web/public/sw.js`): funciona com o app/navegador fechado, diferente do
+  WebSocket. Precisa de `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`
+  configuradas — sem isso, a API loga um aviso e segue só com WebSocket.
+- **Central de ajuda** (`/ajuda`) e **Termos de Uso/Política de Privacidade**
+  (estrutura LGPD) com aviso na primeira visita.
+- **App Android** via Capacitor — empacota o mesmo frontend web como app nativo,
+  sem lógica duplicada.
+
 ## Roadmap (fora do escopo desta primeira entrega)
 
-- App mobile em **Flutter** (cliente + prestador).
+- App mobile de verdade em **Flutter/React Native** — hoje o "app" Android é o
+  frontend web empacotado via Capacitor, não um app nativo separado.
 - **Pagamentos reais**: PIX, cartão, parcelamento, carteira digital, escrow
-  (liberação do pagamento só após confirmação do serviço).
-- **Verificação de identidade**: CPF/CNPJ, selfie, biometria facial, selo verificado.
-- **Sistema antigolpe** com IA (detecção de avaliações falsas, contas falsas, fraudes).
+  (liberação do pagamento só após confirmação do serviço). Planos, impulso avulso e
+  "receita" no Faturamento continuam sendo valor combinado/aplicado direto, sem
+  gateway (Stripe/Pagar.me) integrado.
+- **Selfie/biometria facial** na verificação de identidade (hoje só documento com
+  foto + revisão manual de admin).
+- **Sistema antigolpe** com IA (detecção de avaliações falsas, contas falsas, fraudes)
+  — hoje a defesa é denúncia manual (`/admin/denuncias`), não detecção automática.
 - **Feed estilo TikTok** com recomendação de conteúdo por IA.
 - **Painel de empresa**: funcionários, filiais, CRM, leads, contratos, campanhas.
 - **Gamificação**: ranking por cidade/bairro/nacional, medalhas, missões.
 - **Cobrança recorrente real** dos planos de assinatura (a estrutura de planos já existe;
-  falta integrar um gateway de pagamento — Stripe, Pagar.me — via webhook).
-- **Período de teste (trial)** de planos pagos: o status `TESTE` já existe no modelo de
-  dados, falta o fluxo de ativação (duração, elegibilidade, um teste por prestador).
+  falta integrar um gateway de pagamento via webhook).
 - **Administração de planos completa**: CRUD de planos/preços pela UI, lista/busca de
   assinantes, gráfico de evolução (grátis→pago→cancelamento) ao longo do tempo — precisa
-  de uma tabela de auditoria de mudanças de plano que ainda não existe.
+  de uma tabela de auditoria de mudanças de plano que ainda não existe. Hoje só existe
+  `POST /subscriptions/admin/:userId/cancel` pra admin forçar um cancelamento duro, sem
+  tela própria.
 - **Distância real por coordenadas** no ranking e no mural de oportunidades (hoje é
-  aproximação por cidade/estado, sem geocodificação).
-- **Push notification de verdade** (celular/navegador fechado): as notificações hoje só
-  chegam com o app aberto (WebSocket) — push real precisa de service worker + FCM/APNs.
+  aproximação por cidade/estado, sem geocodificação — não há `lat`/`lng` no banco).
 - **Chat por voz/imagem no intake de IA**: hoje o `/solicitar` com IA é só texto.
 - Infraestrutura de produção: Docker/Kubernetes, CI/CD, ElasticSearch (busca full-text
   em escala) e Pinecone (busca semântica/recomendação via embeddings).
-- Upload de mídia real via **AWS S3** (hoje a API aceita apenas URLs já hospedadas).
+- **Upload de mídia real via object storage (S3 ou similar)**: hoje é `multer` salvando
+  em disco local, o que não persiste entre invocações da função serverless da Vercel —
+  arquivo enviado em produção pode sumir. Prioridade alta pra quem for usar upload de
+  mídia/documento de identidade em produção.
+
+### Fechado nesta rodada de auditoria (estava no roadmap, agora funciona)
+
+- **Período de teste (trial) de planos pagos**: `POST /subscriptions/me/trial` ativa
+  14 dias de PRO ou PREMIUM a partir do Grátis, uma vez por prestador
+  (`Subscription.trialUsedAt`). Expira sozinho como qualquer assinatura paga — vira
+  Grátis automaticamente quando o prazo vence, reaproveitando a mesma checagem de
+  expiração que já existia. Botão "Testar grátis" em `/precos`, status "Em período de
+  teste" em `/painel/plano`.
+- **Horário de atendimento do prestador**: `ProviderProfile.businessHours` agora é
+  validado e editável em `/painel/perfil`, aparece no perfil público, e
+  `POST /bookings` recusa horário fora do expediente ou já ocupado por outra reserva
+  — antes disso, "Contratar agora" nem perguntava data/hora.
+- **Editar uma solicitação aberta** no mural de oportunidades
+  (`PATCH /requests/:id`) e **recusar uma proposta específica**
+  (`POST /requests/:id/proposals/:proposalId/reject`) sem precisar aceitar outra.
+- **Editar/reagendar um impulso avulso (deal)** ativo (`PATCH /deals/:id`) — antes só
+  dava pra cancelar e recriar. Mesmo padrão aplicado a Despesas, Receitas e
+  Compromissos.
+- **Correção de segurança**: `PATCH /subscriptions/me` aceitava o plano legado
+  `BUSINESS` (benefícios do Premium de graça) — agora só aceita os planos
+  realmente vendidos.
+- **Sessão invalidada na hora** ao trocar/redefinir senha ou excluir a conta
+  (`User.tokenVersion`) — antes um token já emitido continuava funcionando até expirar
+  sozinho (até 7 dias), mesmo com a conta excluída.
+- **15 índices novos no banco** em consultas que rodavam sem índice (lista de
+  agendamentos, mensagens, avaliações, favoritos, solicitações, etc.).
 
 ## Notas técnicas importantes
 
@@ -189,3 +263,20 @@ npm run dev              # http://localhost:3000
   (porta 5432) para rodar migrations — a do **Transaction pooler** (porta 6543) não
   suporta os locks de sessão que o `prisma migrate` precisa, mas pode ser usada em
   produção para as queries normais da aplicação.
+- **Migrations `20261013200000_add_token_version_and_performance_indexes`** e
+  `20261013210000_add_subscription_trial` foram escritas manualmente (SQL direto),
+  não geradas por `prisma migrate dev` — este ambiente não tinha acesso a um Postgres
+  real pra rodar o diff automático. Rode `npx prisma migrate deploy` (ou `migrate dev`
+  localmente) contra o banco de verdade pra aplicá-las antes de testar as mudanças de
+  segurança/índices/trial que vieram junto.
+
+## Deploy
+
+- **Frontend** (`apps/web`) e **backend** (`apps/api`) são dois projetos Vercel
+  separados (`servicai` e `servicai-api`), cada um com seu próprio deploy a partir
+  deste monorepo. A API roda como função serverless (`apps/api/api/index.mjs`) — por
+  isso dependências nativas (ex: `bcrypt`) e filesystem persistente (ex: upload em
+  disco) não funcionam direito nesse ambiente; ver notas na seção Stack/Roadmap.
+- Variáveis de ambiente de produção (`DATABASE_URL`, `JWT_SECRET`, `OPENAI_API_KEY`,
+  `VAPID_*`, SMTP para `nodemailer`, etc.) são configuradas direto no painel da Vercel
+  de cada projeto, não neste repositório.

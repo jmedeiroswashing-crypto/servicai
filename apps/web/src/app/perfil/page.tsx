@@ -29,7 +29,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { isPushSupported, getCurrentPushSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
-import type { ProviderProfile, UserProfile } from '@/lib/types';
+import type { AuthUser, ProviderProfile, UserProfile } from '@/lib/types';
 
 function roleLabel(user: UserProfile) {
   if (user.role === 'ADMIN') return 'Administrador';
@@ -92,10 +92,18 @@ function ChangePasswordForm() {
   const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const { setAuth } = useAuthStore();
 
   const mutation = useMutation({
-    mutationFn: async () => (await api.post('/auth/change-password', { currentPassword, newPassword })).data,
-    onSuccess: () => {
+    mutationFn: async () =>
+      (await api.post('/auth/change-password', { currentPassword, newPassword })).data as {
+        accessToken: string;
+        user: AuthUser;
+      },
+    onSuccess: (data) => {
+      // Trocar a senha invalida tokens antigos no backend (tokenVersion) — sem
+      // atualizar o token guardado aqui, as próximas chamadas dariam 401.
+      setAuth(data.accessToken, data.user);
       setCurrentPassword('');
       setNewPassword('');
       setTimeout(() => setOpen(false), 1500);

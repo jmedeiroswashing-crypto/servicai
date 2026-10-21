@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -10,31 +9,17 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
+<<<<<<< HEAD
+import { useCidadesPorEstado } from '@/lib/use-cidades';
+import type { Role } from '@/lib/types';
+=======
 import type { BusinessMode, Role } from '@/lib/types';
 
 function destinationFor(role: Role, businessMode?: BusinessMode | null) {
   if (role !== 'PRESTADOR') return '/';
   return businessMode === 'GESTAO' ? '/painel/agenda' : '/painel';
 }
-
-interface IbgeMunicipio {
-  id: number;
-  nome: string;
-}
-
-function useCidadesPorEstado(uf: string) {
-  return useQuery({
-    queryKey: ['ibge', 'municipios', uf],
-    enabled: !!uf,
-    staleTime: 1000 * 60 * 60 * 24,
-    queryFn: async () => {
-      const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
-      if (!res.ok) throw new Error('Falha ao buscar cidades');
-      const data: IbgeMunicipio[] = await res.json();
-      return data.map((m) => m.nome).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    },
-  });
-}
+>>>>>>> 76b67993cd1828924dae7f5175151983f1b1269a
 
 type Mode = 'login' | 'cadastro';
 type PersonType = 'PF' | 'PJ';
@@ -199,8 +184,8 @@ export function AuthForm({
 
         {mode === 'cadastro' && (
           <div>
-            <label className={labelClass}>{isPJ ? 'Nome do responsável' : 'Nome completo'}</label>
-            <input {...register('name', { required: true })} className={inputClass} placeholder="Ex: Maria da Silva" />
+            <label htmlFor="name" className={labelClass}>{isPJ ? 'Nome do responsável' : 'Nome completo'}</label>
+            <input id="name" {...register('name', { required: true })} className={inputClass} placeholder="Ex: Maria da Silva" />
             {errors.name && <p className={errorClass}>Campo obrigatório</p>}
           </div>
         )}
@@ -208,8 +193,9 @@ export function AuthForm({
         {mode === 'cadastro' && isPJ && (
           <>
             <div>
-              <label className={labelClass}>Razão social</label>
+              <label htmlFor="razaoSocial" className={labelClass}>Razão social</label>
               <input
+                id="razaoSocial"
                 {...register('razaoSocial', { required: true })}
                 className={inputClass}
                 placeholder="Ex: Silva Serviços Elétricos LTDA"
@@ -217,12 +203,13 @@ export function AuthForm({
               {errors.razaoSocial && <p className={errorClass}>Campo obrigatório</p>}
             </div>
             <div>
-              <label className={labelClass}>Nome fantasia</label>
-              <input {...register('nomeFantasia')} className={inputClass} placeholder="Ex: Elétrica Silva (opcional)" />
+              <label htmlFor="nomeFantasia" className={labelClass}>Nome fantasia</label>
+              <input id="nomeFantasia" {...register('nomeFantasia')} className={inputClass} placeholder="Ex: Elétrica Silva (opcional)" />
             </div>
             <div>
-              <label className={labelClass}>CNPJ</label>
+              <label htmlFor="cnpj" className={labelClass}>CNPJ</label>
               <input
+                id="cnpj"
                 {...register('cnpj', { required: true, validate: (v) => isValidCNPJ(v) || 'CNPJ inválido' })}
                 className={inputClass}
                 placeholder="00.000.000/0000-00"
@@ -235,8 +222,9 @@ export function AuthForm({
 
         {mode === 'cadastro' && isVendedor && (
           <div>
-            <label className={labelClass}>CPF {isPJ ? 'do responsável' : ''}</label>
+            <label htmlFor="cpf" className={labelClass}>CPF {isPJ ? 'do responsável' : ''}</label>
             <input
+              id="cpf"
               {...register('cpf', { required: true, validate: (v) => isValidCPF(v) || 'CPF inválido' })}
               className={inputClass}
               placeholder="000.000.000-00"
@@ -247,15 +235,15 @@ export function AuthForm({
         )}
 
         <div>
-          <label className={labelClass}>E-mail</label>
-          <input {...register('email', { required: true })} type="email" className={inputClass} placeholder="Ex: voce@email.com" />
+          <label htmlFor="email" className={labelClass}>E-mail</label>
+          <input id="email" {...register('email', { required: true })} type="email" className={inputClass} placeholder="Ex: voce@email.com" />
           {errors.email && <p className={errorClass}>Campo obrigatório</p>}
         </div>
 
         {mode === 'cadastro' && (
           <div>
-            <label className={labelClass}>Telefone{isPJ ? '/WhatsApp comercial' : ''}</label>
-            <input {...register('phone', { required: true })} className={inputClass} placeholder="Ex: (11) 98765-4321" />
+            <label htmlFor="phone" className={labelClass}>Telefone{isPJ ? '/WhatsApp comercial' : ''}</label>
+            <input id="phone" {...register('phone', { required: true })} className={inputClass} placeholder="Ex: (11) 98765-4321" />
             {errors.phone && <p className={errorClass}>Campo obrigatório</p>}
           </div>
         )}
@@ -263,8 +251,8 @@ export function AuthForm({
         {mode === 'cadastro' && !isPJ && (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>Estado</label>
-              <select {...register('addressState', { required: true })} defaultValue="" className={inputClass}>
+              <label htmlFor="addressState" className={labelClass}>Estado</label>
+              <select id="addressState" {...register('addressState', { required: true })} defaultValue="" className={inputClass}>
                 <option value="" disabled>
                   UF
                 </option>
@@ -277,8 +265,9 @@ export function AuthForm({
               {errors.addressState && <p className={errorClass}>Obrigatório</p>}
             </div>
             <div>
-              <label className={labelClass}>Cidade</label>
+              <label htmlFor="city" className={labelClass}>Cidade</label>
               <select
+                id="city"
                 {...register('city', { required: true })}
                 defaultValue=""
                 disabled={!selectedState || isFetchingCidades}
@@ -303,8 +292,8 @@ export function AuthForm({
             <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted">Endereço da empresa</p>
 
             <div>
-              <label className={labelClass}>Estado</label>
-              <select {...register('addressState', { required: true })} defaultValue="" className={inputClass}>
+              <label htmlFor="addressStatePJ" className={labelClass}>Estado</label>
+              <select id="addressStatePJ" {...register('addressState', { required: true })} defaultValue="" className={inputClass}>
                 <option value="" disabled>
                   Selecione o estado
                 </option>
@@ -317,8 +306,9 @@ export function AuthForm({
             </div>
 
             <div>
-              <label className={labelClass}>Cidade</label>
+              <label htmlFor="cityPJ" className={labelClass}>Cidade</label>
               <select
+                id="cityPJ"
                 {...register('city', { required: true })}
                 defaultValue=""
                 disabled={!selectedState || isFetchingCidades}
@@ -341,18 +331,18 @@ export function AuthForm({
 
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-1">
-                <label className={labelClass}>CEP</label>
-                <input {...register('addressCep', { required: true })} className={inputClass} placeholder="00000-000" maxLength={9} />
+                <label htmlFor="addressCep" className={labelClass}>CEP</label>
+                <input id="addressCep" {...register('addressCep', { required: true })} className={inputClass} placeholder="00000-000" maxLength={9} />
               </div>
               <div className="col-span-2">
-                <label className={labelClass}>Rua/Avenida</label>
-                <input {...register('addressStreet', { required: true })} className={inputClass} placeholder="Ex: Av. Paulista" />
+                <label htmlFor="addressStreet" className={labelClass}>Rua/Avenida</label>
+                <input id="addressStreet" {...register('addressStreet', { required: true })} className={inputClass} placeholder="Ex: Av. Paulista" />
               </div>
             </div>
 
             <div>
-              <label className={labelClass}>Número</label>
-              <input {...register('addressNumber', { required: true })} className={inputClass} placeholder="Ex: 1000" />
+              <label htmlFor="addressNumber" className={labelClass}>Número</label>
+              <input id="addressNumber" {...register('addressNumber', { required: true })} className={inputClass} placeholder="Ex: 1000" />
             </div>
 
             {(errors.addressCep || errors.addressStreet || errors.addressNumber || errors.city || errors.addressState) && (
@@ -362,8 +352,9 @@ export function AuthForm({
         )}
 
         <div>
-          <label className={labelClass}>Senha</label>
+          <label htmlFor="password" className={labelClass}>Senha</label>
           <input
+            id="password"
             {...register('password', { required: true, minLength: 6 })}
             type="password"
             className={inputClass}

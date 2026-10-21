@@ -1,4 +1,5 @@
-import { IsArray, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class ProviderDraftDto {
   @IsOptional()
@@ -28,5 +29,7 @@ export class ProviderAiIntakeDto {
   message!: string;
 
   @IsOptional()
+  @ValidateNested()
+  @Type(() => ProviderDraftDto)
   draft?: ProviderDraftDto;
 }

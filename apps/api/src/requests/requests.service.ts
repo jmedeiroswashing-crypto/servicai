@@ -6,6 +6,7 @@ import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 import { getPlanConfig } from '../subscriptions/plans.config.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { CreateRequestDto } from './dto/create-request.dto.js';
+import { UpdateRequestDto } from './dto/update-request.dto.js';
 import { CreateProposalDto } from './dto/create-proposal.dto.js';
 import { MatchFiltersDto } from './dto/match-filters.dto.js';
 
@@ -365,6 +366,64 @@ export class RequestsService {
     });
 
     return proposal;
+  }
+
+  /** Só dá pra editar enquanto a solicitação está aberta — fechada já virou reserva ou foi cancelada. */
+  async update(clientId: string, requestId: string, dto: UpdateRequestDto) {
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
+    if (request.status !== RequestStatus.ABERTA) {
+      throw new BadRequestException('Só é possível editar uma solicitação em aberto');
+    }
+
+    return this.prisma.serviceRequest.update({
+      where: { id: requestId },
+      data: {
+        category: dto.category,
+        title: dto.title,
+        description: dto.description,
+        city: dto.city,
+        state: dto.state,
+        budgetMin: dto.budgetMin,
+        budgetMax: dto.budgetMax,
+        desiredDate: dto.desiredDate ? new Date(dto.desiredDate) : undefined,
+        desiredTime: dto.desiredTime,
+      },
+    });
+  }
+
+  /** O cliente desiste da solicitação — fecha e recusa qualquer proposta pendente. */
+  async cancel(clientId: string, requestId: string) {
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
+    if (request.status !== RequestStatus.ABERTA) {
+      throw new BadRequestException('Só é possível cancelar uma solicitação em aberto');
+    }
+
+    const [, updated] = await this.prisma.$transaction([
+      this.prisma.proposal.updateMany({
+        where: { requestId, status: 'ENVIADA' },
+        data: { status: 'RECUSADA' },
+      }),
+      this.prisma.serviceRequest.update({ where: { id: requestId }, data: { status: RequestStatus.CANCELADA } }),
+    ]);
+
+    return updated;
+  }
+
+  /** Recusar uma proposta específica sem precisar aceitar outra. */
+  async rejectProposal(clientId: string, requestId: string, proposalId: string) {
+    const request = await this.prisma.serviceRequest.findUnique({ where: { id: requestId } });
+    if (!request) throw new NotFoundException('Solicitação não encontrada');
+    if (request.clientId !== clientId) throw new ForbiddenException('Esta solicitação não é sua');
+
+    const proposal = await this.prisma.proposal.findUnique({ where: { id: proposalId } });
+    if (!proposal || proposal.requestId !== requestId) throw new NotFoundException('Proposta não encontrada');
+    if (proposal.status !== 'ENVIADA') throw new BadRequestException('Esta proposta não está mais disponível');
+
+    return this.prisma.proposal.update({ where: { id: proposalId }, data: { status: 'RECUSADA' } });
   }
 
   async listMyProposals(userId: string) {

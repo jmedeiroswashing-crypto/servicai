@@ -9,6 +9,8 @@ import { ReportButton } from '@/components/ReportButton';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { openRouteToProvider } from '@/lib/maps';
+import { formatBusinessHours } from '@/lib/business-hours';
+import { extractErrorMessage } from '@/lib/error-message';
 import type { ProviderProfile } from '@/lib/types';
 
 function formatPhone(raw: string) {
@@ -16,6 +18,62 @@ function formatPhone(raw: string) {
   if (digits.length === 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   if (digits.length === 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
   return raw;
+}
+
+function BookingModal({
+  onConfirm,
+  onSkip,
+  onClose,
+  error,
+  pending,
+}: {
+  onConfirm: (scheduledAt: string) => void;
+  onSkip: () => void;
+  onClose: () => void;
+  error?: string | null;
+  pending: boolean;
+}) {
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm border border-border bg-surface p-6">
+        <h3 className="font-display text-lg text-ink">Escolha um horário</h3>
+        <p className="mt-2 text-sm text-foreground-muted">
+          Opcional: sugira uma data e hora. O prestador pode confirmar ou ajustar.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="flex-1 border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink"
+          />
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="flex-1 border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink"
+          />
+        </div>
+        {error && <p className="mt-2 text-xs text-danger">{error}</p>}
+        <button
+          disabled={!date || !time || pending}
+          onClick={() => onConfirm(new Date(`${date}T${time}`).toISOString())}
+          className="mt-4 w-full bg-ink py-2.5 text-sm font-medium text-background disabled:opacity-40"
+        >
+          {pending ? 'Enviando...' : 'Solicitar neste horário'}
+        </button>
+        <button onClick={onSkip} disabled={pending} className="mt-2 w-full py-2 text-xs text-foreground-muted hover:underline">
+          Solicitar sem hora marcada
+        </button>
+        <button onClick={onClose} className="mt-1 w-full py-1 text-xs text-foreground-muted/60 hover:underline">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ProviderProfileContent() {
@@ -26,6 +84,7 @@ function ProviderProfileContent() {
   const queryClient = useQueryClient();
   const [requesting, setRequesting] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
   const { data: provider, isLoading } = useQuery({
     queryKey: ['provider', id],
@@ -50,13 +109,18 @@ function ProviderProfileContent() {
   });
 
   const bookingMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/bookings', { providerId: id });
+    mutationFn: async (scheduledAt?: string) => {
+      const res = await api.post('/bookings', { providerId: id, scheduledAt });
       return res.data;
     },
-    onSuccess: () => setRequesting(false),
+    onSuccess: () => {
+      setRequesting(false);
+      setShowBookingModal(false);
+    },
     onError: () => setRequesting(false),
   });
+
+  const bookingError = bookingMutation.isError ? extractErrorMessage(bookingMutation.error) : null;
 
   const chatMutation = useMutation({
     mutationFn: async () => (await api.post('/chat/conversations', { providerId: id })).data,
@@ -133,10 +197,7 @@ function ProviderProfileContent() {
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           disabled={!user || requesting}
-          onClick={() => {
-            setRequesting(true);
-            bookingMutation.mutate();
-          }}
+          onClick={() => setShowBookingModal(true)}
           className="flex items-center gap-2 bg-ink px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
         >
           <CalendarCheck size={16} />
@@ -178,6 +239,17 @@ function ProviderProfileContent() {
         <div className="mt-10">
           <h2 className="font-display mb-2 text-xl text-ink">Sobre</h2>
           <p className="text-foreground-muted">{provider.bio}</p>
+        </div>
+      )}
+
+      {formatBusinessHours(provider.businessHours).length > 0 && (
+        <div className="mt-10">
+          <h2 className="font-display mb-2 text-xl text-ink">Horário de atendimento</h2>
+          <ul className="space-y-1 text-sm text-foreground-muted">
+            {formatBusinessHours(provider.businessHours).map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -245,6 +317,22 @@ function ProviderProfileContent() {
             ))}
           </div>
         </div>
+      )}
+
+      {showBookingModal && (
+        <BookingModal
+          pending={requesting}
+          error={bookingError}
+          onClose={() => setShowBookingModal(false)}
+          onSkip={() => {
+            setRequesting(true);
+            bookingMutation.mutate(undefined);
+          }}
+          onConfirm={(scheduledAt) => {
+            setRequesting(true);
+            bookingMutation.mutate(scheduledAt);
+          }}
+        />
       )}
     </div>
   );

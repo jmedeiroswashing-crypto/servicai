@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Zap, MapPin, Calendar, Clock3, X } from 'lucide-react';
+import { Zap, MapPin, Calendar, Clock3, X, Pencil } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
@@ -118,8 +118,91 @@ function CreateDealForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
+function EditDealForm({ deal, onDone }: { deal: MyDeal; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const scheduled = new Date(deal.scheduledAt);
+  const [category, setCategory] = useState(deal.category);
+  const [title, setTitle] = useState(deal.title);
+  const [description, setDescription] = useState(deal.description ?? '');
+  const [originalPrice, setOriginalPrice] = useState(deal.originalPrice.toString());
+  const [dealPrice, setDealPrice] = useState(deal.dealPrice.toString());
+  const [date, setDate] = useState(scheduled.toISOString().slice(0, 10));
+  const [time, setTime] = useState(scheduled.toTimeString().slice(0, 5));
+
+  const mutation = useMutation({
+    mutationFn: async () =>
+      (
+        await api.patch(`/deals/${deal.id}`, {
+          category,
+          title,
+          description: description || undefined,
+          originalPrice: Number(originalPrice),
+          dealPrice: Number(dealPrice),
+          scheduledAt: new Date(`${date}T${time || '09:00'}`).toISOString(),
+        })
+      ).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deals', 'mine'] });
+      onDone();
+    },
+  });
+
+  const canSubmit =
+    category && title.length >= 3 && Number(originalPrice) > 0 && Number(dealPrice) > 0 && Number(dealPrice) <= Number(originalPrice) && date;
+
+  return (
+    <div className="mt-3 space-y-3 border-t border-border pt-3">
+      <div>
+        <label className={labelClass}>Categoria</label>
+        <CategorySelect categories={CATEGORIES} value={category} onChange={setCategory} emptyLabel="Selecione" />
+      </div>
+      <div>
+        <label className={labelClass}>Título</label>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} />
+      </div>
+      <div>
+        <label className={labelClass}>Descrição</label>
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputClass} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Preço original (R$)</label>
+          <input type="number" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Preço da vaga (R$)</label>
+          <input type="number" value={dealPrice} onChange={(e) => setDealPrice(e.target.value)} className={inputClass} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelClass}>Data</label>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Horário</label>
+          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={inputClass} />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={!canSubmit || mutation.isPending}
+          className="bg-ink px-4 py-2 text-sm font-medium text-background hover:opacity-85 disabled:opacity-40"
+        >
+          {mutation.isPending ? 'Salvando...' : 'Salvar alterações'}
+        </button>
+        <button onClick={onDone} className="px-4 py-2 text-sm text-foreground-muted hover:text-ink">
+          Cancelar edição
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DealRow({ deal, onCancel, cancelling }: { deal: MyDeal; onCancel: (id: string) => void; cancelling: boolean }) {
   const scheduled = new Date(deal.scheduledAt);
+  const [editing, setEditing] = useState(false);
 
   return (
     <div className="border border-border p-4">
@@ -157,15 +240,25 @@ function DealRow({ deal, onCancel, cancelling }: { deal: MyDeal; onCancel: (id: 
         </p>
       )}
 
-      {deal.status === 'ATIVA' && (
-        <button
-          onClick={() => onCancel(deal.id)}
-          disabled={cancelling}
-          className="mt-3 flex items-center gap-1 text-xs text-foreground-muted hover:text-danger disabled:opacity-40"
-        >
-          <X size={12} /> Cancelar vaga
-        </button>
+      {deal.status === 'ATIVA' && !editing && (
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-1 text-xs text-foreground-muted hover:text-ink"
+          >
+            <Pencil size={12} /> Editar
+          </button>
+          <button
+            onClick={() => onCancel(deal.id)}
+            disabled={cancelling}
+            className="flex items-center gap-1 text-xs text-foreground-muted hover:text-danger disabled:opacity-40"
+          >
+            <X size={12} /> Cancelar vaga
+          </button>
+        </div>
       )}
+
+      {deal.status === 'ATIVA' && editing && <EditDealForm deal={deal} onDone={() => setEditing(false)} />}
     </div>
   );
 }

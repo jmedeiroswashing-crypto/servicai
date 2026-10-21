@@ -222,6 +222,12 @@ export default function PainelPage() {
             <div>
               <p className="font-medium text-ink">{b.client?.name ?? 'Cliente'}</p>
               {b.service && <p className="text-sm text-foreground-muted">{b.service.title}</p>}
+              {b.scheduledAt && (
+                <p className="mt-0.5 text-xs text-foreground-muted">
+                  {new Date(b.scheduledAt).toLocaleDateString('pt-BR')} às{' '}
+                  {new Date(b.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              )}
             </div>
             <span className="w-fit border border-border px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-foreground-muted">
               {STATUS_LABEL[b.status] ?? b.status}

@@ -106,6 +106,10 @@ export class NotificationsService {
     return this.prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } });
   }
 
+  async remove(userId: string, id: string) {
+    return this.prisma.notification.deleteMany({ where: { id, userId } });
+  }
+
   /**
    * Evita alertar repetidamente sobre o mesmo evento (ex.: plano expirando) —
    * só cria se não houver uma notificação do mesmo tipo ainda não lida nas

@@ -66,6 +66,16 @@ export default function PrecosPage() {
     onSettled: () => setPendingPlan(null),
   });
 
+  const startTrial = useMutation({
+    mutationFn: async (plan: string) => (await api.post('/subscriptions/me/trial', { plan })).data,
+    onMutate: (plan) => setPendingPlan(`trial-${plan}`),
+    onSuccess: (_data, plan) => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions', 'me'] });
+      router.push(`/painel/plano?ativado=${plan}`);
+    },
+    onSettled: () => setPendingPlan(null),
+  });
+
   function handleSelect(plan: PlanConfig) {
     if (!user) {
       router.push('/cadastro?tipo=PRESTADOR');
@@ -132,6 +142,18 @@ export default function PrecosPage() {
                       ? 'Selecionar plano'
                       : 'Criar conta de vendedor'}
               </button>
+
+              {!isCurrent && plan.plan !== 'GRATIS' && user?.role === 'PRESTADOR' && mySubscription?.trialAvailable && (
+                <button
+                  onClick={() => startTrial.mutate(plan.plan)}
+                  disabled={startTrial.isPending}
+                  className="mt-2 py-2 text-xs font-medium text-accent hover:underline disabled:opacity-50"
+                >
+                  {pendingPlan === `trial-${plan.plan}` && startTrial.isPending
+                    ? 'Ativando teste...'
+                    : `Testar grátis por ${mySubscription.trialDays} dias`}
+                </button>
+              )}
             </div>
           );
         })}

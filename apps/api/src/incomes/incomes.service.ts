@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
 import { IncomeSource } from '../generated/prisma/enums.js';
 import { CreateIncomeDto } from './dto/create-income.dto.js';
+import { UpdateIncomeDto } from './dto/update-income.dto.js';
 
 @Injectable()
 export class IncomesService {
@@ -28,6 +29,22 @@ export class IncomesService {
     return this.prisma.income.findMany({
       where: { providerId: provider.id },
       orderBy: { date: 'desc' },
+    });
+  }
+
+  async update(userId: string, id: string, dto: UpdateIncomeDto) {
+    const provider = await this.providersService.findByUserId(userId);
+    const income = await this.prisma.income.findUnique({ where: { id } });
+    if (!income) throw new NotFoundException('Receita não encontrada');
+    if (income.providerId !== provider.id) throw new ForbiddenException('Você não é o dono desta receita');
+
+    return this.prisma.income.update({
+      where: { id },
+      data: {
+        description: dto.description,
+        amount: dto.amount,
+        date: dto.date ? new Date(dto.date) : undefined,
+      },
     });
   }
 

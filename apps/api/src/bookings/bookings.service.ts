@@ -4,6 +4,13 @@ import { ProvidersService } from '../providers/providers.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { BookingStatus, IncomeSource, NotificationType } from '../generated/prisma/enums.js';
 import { CreateBookingDto } from './dto/create-booking.dto.js';
+import { isWithinBusinessHours } from '../providers/business-hours.js';
+
+const ACTIVE_BOOKING_STATUSES: BookingStatus[] = [
+  BookingStatus.SOLICITADO,
+  BookingStatus.ACEITO,
+  BookingStatus.EM_ANDAMENTO,
+];
 
 const PROVIDER_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   SOLICITADO: ['ACEITO', 'RECUSADO'],
@@ -41,12 +48,35 @@ export class BookingsService {
 
   async create(clientId: string, dto: CreateBookingDto) {
     const category = await this.resolveCategory(dto.providerId, dto.serviceId);
+
+    let scheduledAt: Date | undefined;
+    if (dto.scheduledAt) {
+      scheduledAt = new Date(dto.scheduledAt);
+
+      const provider = await this.prisma.providerProfile.findUnique({
+        where: { id: dto.providerId },
+        select: { businessHours: true },
+      });
+      if (!provider) throw new NotFoundException('Prestador não encontrado');
+
+      if (!isWithinBusinessHours(provider.businessHours, scheduledAt)) {
+        throw new BadRequestException('Este horário está fora do atendimento do prestador');
+      }
+
+      const conflict = await this.prisma.booking.findFirst({
+        where: { providerId: dto.providerId, scheduledAt, status: { in: ACTIVE_BOOKING_STATUSES } },
+      });
+      if (conflict) {
+        throw new BadRequestException('Este horário já está reservado, escolha outro');
+      }
+    }
+
     return this.prisma.booking.create({
       data: {
         clientId,
         providerId: dto.providerId,
         serviceId: dto.serviceId,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        scheduledAt,
         address: dto.address,
         notes: dto.notes,
         category,

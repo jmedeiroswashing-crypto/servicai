@@ -8,7 +8,50 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { ImageUploadField } from '@/components/ImageUploadField';
+import { WEEKDAYS, type BusinessHours, type DayHours } from '@/lib/business-hours';
 import type { IdentityVerification, MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
+
+const DEFAULT_DAY_HOURS: DayHours = { start: '08:00', end: '18:00' };
+
+function BusinessHoursEditor({ value, onChange }: { value: BusinessHours; onChange: (v: BusinessHours) => void }) {
+  return (
+    <div className="space-y-2">
+      {WEEKDAYS.map((d) => {
+        const day = value[d.key];
+        const isOpen = day !== null && day !== undefined;
+        return (
+          <div key={d.key} className="flex flex-wrap items-center gap-3">
+            <label className="flex w-32 shrink-0 items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={isOpen}
+                onChange={(e) => onChange({ ...value, [d.key]: e.target.checked ? DEFAULT_DAY_HOURS : null })}
+              />
+              {d.label}
+            </label>
+            {isOpen && (
+              <div className="flex items-center gap-2 text-sm text-foreground-muted">
+                <input
+                  type="time"
+                  value={day.start}
+                  onChange={(e) => onChange({ ...value, [d.key]: { ...day, start: e.target.value } })}
+                  className="border border-border bg-transparent px-2 py-1 outline-none focus:border-ink"
+                />
+                até
+                <input
+                  type="time"
+                  value={day.end}
+                  onChange={(e) => onChange({ ...value, [d.key]: { ...day, end: e.target.value } })}
+                  className="border border-border bg-transparent px-2 py-1 outline-none focus:border-ink"
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function DraftField({ label, value }: { label: string; value?: string }) {
   return (
@@ -162,6 +205,7 @@ function ManualProfileForm({ provider }: { provider: ProviderProfile }) {
   const [categories, setCategories] = useState<string[]>([]);
   const [bio, setBio] = useState('');
   const [yearsExperience, setYearsExperience] = useState(0);
+  const [businessHours, setBusinessHours] = useState<BusinessHours>({});
   const [saved, setSaved] = useState(false);
   const [categoryQuery, setCategoryQuery] = useState('');
 
@@ -170,11 +214,12 @@ function ManualProfileForm({ provider }: { provider: ProviderProfile }) {
     setCategories(provider.categories ?? []);
     setBio(provider.bio ?? '');
     setYearsExperience(provider.yearsExperience ?? 0);
+    setBusinessHours(provider.businessHours ?? {});
   }, [provider]);
 
   const mutation = useMutation({
     mutationFn: async () =>
-      (await api.patch('/providers/me', { specialty, categories, bio, yearsExperience })).data,
+      (await api.patch('/providers/me', { specialty, categories, bio, yearsExperience, businessHours })).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['providers', 'me'] });
       setSaved(true);
@@ -239,6 +284,14 @@ function ManualProfileForm({ provider }: { provider: ProviderProfile }) {
           onChange={(e) => setYearsExperience(Number(e.target.value))}
           className="w-32 border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none focus:border-ink"
         />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-foreground-muted">Horário de atendimento</label>
+        <p className="mb-2 text-xs text-foreground-muted/70">
+          Marque os dias em que você atende. Clientes não conseguem agendar fora desses horários.
+        </p>
+        <BusinessHoursEditor value={businessHours} onChange={setBusinessHours} />
       </div>
 
       <div>
@@ -559,7 +612,7 @@ function IdentityVerificationManager() {
             {previewUrl && (
               <div className="h-24 w-36 shrink-0 overflow-hidden border border-border bg-surface-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+                <img src={previewUrl} alt="Prévia do documento enviado" className="h-full w-full object-cover" />
               </div>
             )}
             <div>

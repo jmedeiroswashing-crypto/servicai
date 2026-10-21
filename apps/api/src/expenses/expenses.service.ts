@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
+import { UpdateExpenseDto } from './dto/update-expense.dto.js';
 
 @Injectable()
 export class ExpensesService {
@@ -32,6 +33,24 @@ export class ExpensesService {
     return this.prisma.expense.findMany({
       where: { providerId: provider.id },
       orderBy: { date: 'desc' },
+    });
+  }
+
+  async update(userId: string, id: string, dto: UpdateExpenseDto) {
+    const provider = await this.providersService.findByUserId(userId);
+    const expense = await this.prisma.expense.findUnique({ where: { id } });
+    if (!expense) throw new NotFoundException('Despesa não encontrada');
+    if (expense.providerId !== provider.id) throw new ForbiddenException('Você não é o dono desta despesa');
+
+    return this.prisma.expense.update({
+      where: { id },
+      data: {
+        description: dto.description,
+        category: dto.category,
+        amount: dto.amount,
+        date: dto.date ? new Date(dto.date) : undefined,
+        isRecurring: dto.isRecurring,
+      },
     });
   }
 

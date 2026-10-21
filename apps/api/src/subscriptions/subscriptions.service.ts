@@ -2,11 +2,13 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProvidersService } from '../providers/providers.service.js';
 import { Plan, SubscriptionStatus, NotificationType } from '../generated/prisma/enums.js';
-import { BOOST_CONFIG, getPlanCatalogForSale, getPlanConfig, currentPeriod } from './plans.config.js';
+import { BOOST_CONFIG, SELLABLE_PLANS, getPlanCatalogForSale, getPlanConfig, currentPeriod } from './plans.config.js';
 import { getEffectivePlan, isExpired } from './subscription-state.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const TRIAL_DAYS = 14;
+const TRIAL_DURATION_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
 const BOOST_DURATION_MS = BOOST_CONFIG.durationDays * 24 * 60 * 60 * 1000;
 const EXPIRY_WARNING_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
 
@@ -54,6 +56,7 @@ export class SubscriptionsService {
     const subscription = existing ?? (await this.prisma.subscription.create({ data: { providerId } }));
 
     if (subscription.plan !== Plan.GRATIS && isExpired(subscription) && subscription.status !== SubscriptionStatus.EXPIRADA) {
+      const wasTrial = subscription.status === SubscriptionStatus.TESTE;
       const expired = await this.prisma.subscription.update({
         where: { id: subscription.id },
         data: { status: SubscriptionStatus.EXPIRADA, cancelAtPeriodEnd: false },
@@ -68,8 +71,8 @@ export class SubscriptionsService {
       await this.notificationsService.create({
         userId: providerRecord.userId,
         type: NotificationType.PLANO_EXPIRADO,
-        title: `Seu plano ${oldConfig.label} expirou`,
-        body: 'Você voltou para o plano Grátis. Assine novamente para recuperar sua exposição e limites.',
+        title: wasTrial ? `Seu teste grátis do ${oldConfig.label} acabou` : `Seu plano ${oldConfig.label} expirou`,
+        body: 'Você voltou para o plano Grátis. Assine para recuperar sua exposição e limites.',
         link: '/precos',
       });
       return expired;
@@ -83,7 +86,60 @@ export class SubscriptionsService {
     const subscription = await this.getOrCreateForProvider(provider.id);
     await this.warnIfExpiringSoon(userId, subscription);
     const effectivePlan = getEffectivePlan(subscription);
-    return { ...subscription, effectivePlan, config: getPlanConfig(effectivePlan) };
+    return {
+      ...subscription,
+      effectivePlan,
+      config: getPlanConfig(effectivePlan),
+      trialAvailable: this.isTrialAvailable(subscription),
+      trialDays: TRIAL_DAYS,
+    };
+  }
+
+  private isTrialAvailable(subscription: { plan: Plan; trialUsedAt: Date | null }): boolean {
+    return subscription.plan === Plan.GRATIS && !subscription.trialUsedAt;
+  }
+
+  /**
+   * Período de teste gratuito de um plano pago — só uma vez por prestador, só
+   * a partir do Grátis. Expira sozinho como qualquer outra assinatura paga
+   * (ver `getOrCreateForProvider`): quando `currentPeriodEnd` vence, o status
+   * vira EXPIRADA e o prestador volta pro Grátis, sem precisar de lógica
+   * nova — o `TESTE` já está em `BENEFITS_ACTIVE_STATUSES`.
+   */
+  async startTrial(userId: string, plan: Plan) {
+    if (!SELLABLE_PLANS.includes(plan) || plan === Plan.GRATIS) {
+      throw new ForbiddenException('Plano inválido para teste gratuito');
+    }
+
+    const provider = await this.providersService.findByUserId(userId);
+    const subscription = await this.getOrCreateForProvider(provider.id);
+
+    if (!this.isTrialAvailable(subscription)) {
+      throw new ForbiddenException(
+        subscription.trialUsedAt
+          ? 'Você já usou seu período de teste gratuito'
+          : 'O teste gratuito só está disponível para quem está no plano Grátis',
+      );
+    }
+
+    const config = getPlanConfig(plan);
+    const updated = await this.prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        plan,
+        status: SubscriptionStatus.TESTE,
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: new Date(Date.now() + TRIAL_DURATION_MS),
+        trialUsedAt: new Date(),
+      },
+    });
+
+    await this.prisma.providerProfile.update({
+      where: { id: provider.id },
+      data: { selo: config.selo, planPriority: config.planPriority },
+    });
+
+    return { ...updated, config };
   }
 
   private async warnIfExpiringSoon(
@@ -91,19 +147,28 @@ export class SubscriptionsService {
     subscription: { plan: Plan; status: SubscriptionStatus; currentPeriodEnd: Date | null },
   ) {
     if (subscription.plan === Plan.GRATIS || !subscription.currentPeriodEnd) return;
-    if (subscription.status !== SubscriptionStatus.ATIVA && subscription.status !== SubscriptionStatus.CANCELAMENTO_SOLICITADO) return;
+    if (
+      subscription.status !== SubscriptionStatus.ATIVA &&
+      subscription.status !== SubscriptionStatus.CANCELAMENTO_SOLICITADO &&
+      subscription.status !== SubscriptionStatus.TESTE
+    )
+      return;
 
     const msUntilExpiry = subscription.currentPeriodEnd.getTime() - Date.now();
     if (msUntilExpiry <= 0 || msUntilExpiry > EXPIRY_WARNING_WINDOW_MS) return;
 
     const config = getPlanConfig(subscription.plan);
     const daysLeft = Math.max(1, Math.ceil(msUntilExpiry / (24 * 60 * 60 * 1000)));
+    const isTrial = subscription.status === SubscriptionStatus.TESTE;
     await this.notificationsService.createIfNotRecentlyNotified({
       userId,
       type: NotificationType.PLANO_EXPIRANDO,
-      title: `Seu plano ${config.label} expira em ${daysLeft} dia${daysLeft > 1 ? 's' : ''}`,
-      body:
-        subscription.status === SubscriptionStatus.CANCELAMENTO_SOLICITADO
+      title: isTrial
+        ? `Seu teste grátis do ${config.label} acaba em ${daysLeft} dia${daysLeft > 1 ? 's' : ''}`
+        : `Seu plano ${config.label} expira em ${daysLeft} dia${daysLeft > 1 ? 's' : ''}`,
+      body: isTrial
+        ? 'Assine para continuar com a exposição e os limites do plano depois do teste.'
+        : subscription.status === SubscriptionStatus.CANCELAMENTO_SOLICITADO
           ? 'O cancelamento já foi solicitado — você mantém os benefícios até essa data.'
           : 'Renove para não perder sua exposição e seus limites de propostas.',
       link: '/painel/plano',
@@ -158,6 +223,12 @@ export class SubscriptionsService {
     });
   }
 
+  /**
+   * Cancelamento "duro": derruba o prestador pro Grátis imediatamente, sem
+   * esperar o fim do período já pago. Diferente de `requestCancellation`
+   * (self-service, soft), este é só pra admin forçar numa situação de abuso/
+   * fraude (ver `SubscriptionsController.adminCancel`).
+   */
   async cancel(userId: string) {
     return this.changePlan(userId, Plan.GRATIS);
   }

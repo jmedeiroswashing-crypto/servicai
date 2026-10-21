@@ -113,6 +113,13 @@ function BookingRow({ booking }: { booking: Booking }) {
         <div>
           <p className="font-medium text-ink">{booking.provider?.user.name ?? 'Prestador'}</p>
           {booking.service && <p className="text-sm text-foreground-muted">{booking.service.title}</p>}
+          {booking.scheduledAt && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-foreground-muted">
+              <CalendarClock size={12} />
+              {new Date(booking.scheduledAt).toLocaleDateString('pt-BR')} às{' '}
+              {new Date(booking.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
           {booking.notes && <p className="mt-1 text-xs text-foreground-muted">{booking.notes}</p>}
         </div>
         <span

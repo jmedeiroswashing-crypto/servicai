@@ -173,7 +173,7 @@ function MeuPlanoContent() {
             </dd>
           </div>
           <div>
-            <dt className="text-foreground-muted">Próxima cobrança</dt>
+            <dt className="text-foreground-muted">{subscription.status === 'TESTE' ? 'Teste grátis acaba em' : 'Próxima cobrança'}</dt>
             <dd className="mt-0.5 text-ink">
               {subscription.currentPeriodEnd
                 ? new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')
@@ -183,7 +183,11 @@ function MeuPlanoContent() {
           <div>
             <dt className="text-foreground-muted">Forma de pagamento</dt>
             <dd className="mt-0.5 text-ink">
-              {subscription.config.priceMonthly === 0 ? '—' : 'Simulado (sem gateway integrado)'}
+              {subscription.status === 'TESTE'
+                ? `Teste grátis de ${subscription.trialDays} dias`
+                : subscription.config.priceMonthly === 0
+                  ? '—'
+                  : 'Simulado (sem gateway integrado)'}
             </dd>
           </div>
           <div>
@@ -199,13 +203,17 @@ function MeuPlanoContent() {
           >
             Fazer upgrade <ArrowRight size={14} />
           </Link>
-          {subscription.plan !== 'GRATIS' && subscription.status === 'ATIVA' && (
+          {subscription.plan !== 'GRATIS' && (subscription.status === 'ATIVA' || subscription.status === 'TESTE') && (
             <button
               onClick={() => cancelMutation.mutate()}
               disabled={cancelMutation.isPending}
               className="border border-border px-5 py-2.5 text-sm font-medium text-foreground-muted hover:border-ink hover:text-ink disabled:opacity-50"
             >
-              {cancelMutation.isPending ? 'Cancelando...' : 'Cancelar assinatura'}
+              {cancelMutation.isPending
+                ? 'Cancelando...'
+                : subscription.status === 'TESTE'
+                  ? 'Encerrar teste grátis'
+                  : 'Cancelar assinatura'}
             </button>
           )}
           {subscription.status === 'CANCELAMENTO_SOLICITADO' && (

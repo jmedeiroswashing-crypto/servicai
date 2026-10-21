@@ -1,4 +1,5 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RequestDraftDto {
   @IsOptional()
@@ -43,5 +44,7 @@ export class AiIntakeDto {
   message!: string;
 
   @IsOptional()
+  @ValidateNested()
+  @Type(() => RequestDraftDto)
   draft?: RequestDraftDto;
 }
