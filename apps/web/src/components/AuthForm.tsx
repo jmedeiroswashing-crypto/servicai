@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
+import { PasswordInput } from './PasswordInput';
 import { useAuthStore } from '@/store/auth-store';
 import { isValidCPF, isValidCNPJ } from '@/lib/br-documents';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
@@ -355,10 +356,9 @@ export function AuthForm({
 
         <div>
           <label htmlFor="password" className={labelClass}>Senha</label>
-          <input
+          <PasswordInput
             id="password"
             {...register('password', { required: true, minLength: 6 })}
-            type="password"
             className={inputClass}
             placeholder={mode === 'cadastro' ? 'Mínimo 6 caracteres' : '••••••••'}
           />

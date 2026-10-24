@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { PasswordInput } from '@/components/PasswordInput';
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
@@ -71,8 +72,7 @@ function RedefinirSenhaForm() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-foreground-muted">Nova senha</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className={inputClass}
@@ -81,8 +81,7 @@ function RedefinirSenhaForm() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-foreground-muted">Confirmar nova senha</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 className={inputClass}

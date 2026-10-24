@@ -28,6 +28,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { isPushSupported, getCurrentPushSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
+import { PasswordInput } from '@/components/PasswordInput';
 import type { AuthUser, ProviderProfile, UserProfile } from '@/lib/types';
 
 function roleLabel(user: UserProfile) {
@@ -127,15 +128,13 @@ function ChangePasswordForm() {
         <KeyRound size={15} /> Alterar senha
       </p>
       <div className="max-w-sm space-y-2.5">
-        <input
-          type="password"
+        <PasswordInput
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           placeholder="Senha atual"
           className="w-full border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink"
         />
-        <input
-          type="password"
+        <PasswordInput
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           placeholder="Nova senha (mínimo 6 caracteres)"
