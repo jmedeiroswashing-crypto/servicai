@@ -45,6 +45,18 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
       { href: '/perfil', label: 'Meu perfil', icon: User },
     ];
   }
+  if (role === 'PRESTADOR' && businessMode === 'CONTRATACAO') {
+    // Espelho do modo GESTAO: quem só quer ser encontrado e contratado não
+    // precisa das ferramentas de gestão do negócio na navegação.
+    return [
+      { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
+      { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
+      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
+      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
+      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
+      { href: '/perfil', label: 'Meu perfil', icon: User },
+    ];
+  }
   if (role === 'PRESTADOR') {
     return [
       { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },

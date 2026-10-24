@@ -12,7 +12,7 @@ function CadastroContent() {
   const role: Role = searchParams.get('tipo') === 'PRESTADOR' ? 'PRESTADOR' : 'CLIENTE';
   const modoParam = searchParams.get('modo');
   const businessMode: BusinessMode | undefined =
-    modoParam === 'GESTAO' || modoParam === 'COMPLETO' ? modoParam : undefined;
+    modoParam === 'GESTAO' || modoParam === 'COMPLETO' || modoParam === 'CONTRATACAO' ? modoParam : undefined;
 
   return (
     <div className="px-4 py-16">

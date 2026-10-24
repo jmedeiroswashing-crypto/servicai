@@ -86,7 +86,11 @@ export class RequestsService {
         availableUntil: { gt: now },
         // `not: GESTAO` também excluiria null (quem ainda não escolheu) —
         // ver mesmo comentário em ProvidersService.findAll.
-        OR: [{ businessMode: null }, { businessMode: BusinessMode.COMPLETO }],
+        OR: [
+          { businessMode: null },
+          { businessMode: BusinessMode.COMPLETO },
+          { businessMode: BusinessMode.CONTRATACAO },
+        ],
       },
       select: { userId: true, specialty: true, categories: true },
     });

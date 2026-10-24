@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Wallet, Briefcase } from 'lucide-react';
+import { Wallet, Briefcase, Handshake } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { BusinessMode } from '@/lib/types';
@@ -68,6 +68,19 @@ export function BusinessModeGate() {
             <div>
               <p className="text-sm font-medium text-ink">Gestão + conseguir novos clientes</p>
               <p className="mt-0.5 text-xs text-foreground-muted">Experiência completa, do jeito que já era.</p>
+            </div>
+          </button>
+          <button
+            onClick={() => choose('CONTRATACAO')}
+            disabled={submitting !== null}
+            className="flex w-full items-center gap-3 border border-border p-4 text-left transition-colors hover:border-ink disabled:opacity-50"
+          >
+            <Handshake size={18} className="shrink-0 text-foreground-muted" />
+            <div>
+              <p className="text-sm font-medium text-ink">Só contratação dos meus serviços</p>
+              <p className="mt-0.5 text-xs text-foreground-muted">
+                Quero aparecer pra novos clientes — não preciso das ferramentas de gestão.
+              </p>
             </div>
           </button>
         </div>

@@ -30,6 +30,13 @@ const OPTIONS = [
     image: '/comecar/completo.png',
     href: '/cadastro?tipo=PRESTADOR&modo=COMPLETO',
   },
+  {
+    id: 'contratacao',
+    title: 'Contratação dos meus serviços',
+    description: 'Já tenho minha rotina organizada — só quero aparecer e receber novos clientes pelo ServiçAi.',
+    image: '/comecar/contratacao.png',
+    href: '/cadastro?tipo=PRESTADOR&modo=CONTRATACAO',
+  },
 ];
 
 /**

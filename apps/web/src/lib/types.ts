@@ -1,5 +1,5 @@
 export type Role = 'CLIENTE' | 'PRESTADOR' | 'ADMIN';
-export type BusinessMode = 'GESTAO' | 'COMPLETO';
+export type BusinessMode = 'GESTAO' | 'COMPLETO' | 'CONTRATACAO';
 export type Selo = 'NENHUM' | 'PRATA' | 'OURO' | 'PREMIUM';
 export type BookingStatus = 'SOLICITADO' | 'ACEITO' | 'RECUSADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 export type Plan = 'GRATIS' | 'PRO' | 'BUSINESS' | 'PREMIUM';

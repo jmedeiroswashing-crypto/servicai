@@ -45,7 +45,9 @@ describe('ProvidersService', () => {
 
       expect(prisma.providerProfile.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ OR: [{ businessMode: null }, { businessMode: 'COMPLETO' }] }),
+          where: expect.objectContaining({
+            OR: [{ businessMode: null }, { businessMode: 'COMPLETO' }, { businessMode: 'CONTRATACAO' }],
+          }),
         }),
       );
     });

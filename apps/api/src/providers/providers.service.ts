@@ -112,7 +112,11 @@ export class ProvidersService {
         // `not: GESTAO` excluiria também quem ainda não escolheu (null) —
         // aqui precisa ser explícito pra manter compatibilidade com contas
         // antigas enquanto elas não passam pela pergunta de intenção.
-        OR: [{ businessMode: null }, { businessMode: BusinessMode.COMPLETO }],
+        OR: [
+          { businessMode: null },
+          { businessMode: BusinessMode.COMPLETO },
+          { businessMode: BusinessMode.CONTRATACAO },
+        ],
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
         ...(availableNow ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),

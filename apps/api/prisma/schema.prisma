@@ -23,6 +23,7 @@ enum Selo {
 enum BusinessMode {
   GESTAO
   COMPLETO
+  CONTRATACAO
 }
 
 enum BookingStatus {
