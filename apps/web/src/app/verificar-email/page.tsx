@@ -9,17 +9,15 @@ import { api } from '@/lib/api';
 function VerificarEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [apiStatus, setApiStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const status = token ? apiStatus : 'error';
 
   useEffect(() => {
-    if (!token) {
-      setStatus('error');
-      return;
-    }
+    if (!token) return;
     api
       .post('/auth/verify-email', { token })
-      .then(() => setStatus('success'))
-      .catch(() => setStatus('error'));
+      .then(() => setApiStatus('success'))
+      .catch(() => setApiStatus('error'));
   }, [token]);
 
   return (

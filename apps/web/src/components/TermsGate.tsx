@@ -10,12 +10,13 @@ const EXEMPT_PATHS = ['/termos', '/privacidade'];
 
 export function TermsGate() {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
   const [accepted, setAccepted] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    // localStorage só existe no cliente — lido aqui pra não divergir do HTML
+    // do servidor, que já assume `accepted = true` (gate oculto) por padrão.
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAccepted(localStorage.getItem(STORAGE_KEY) === 'true');
     } catch {
       setAccepted(true);
@@ -31,7 +32,7 @@ export function TermsGate() {
     }
   }
 
-  if (!mounted || accepted || EXEMPT_PATHS.includes(pathname)) return null;
+  if (accepted || EXEMPT_PATHS.includes(pathname)) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center">

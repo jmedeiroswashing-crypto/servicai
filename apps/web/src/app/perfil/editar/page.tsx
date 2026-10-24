@@ -59,7 +59,10 @@ export default function EditarPerfilPage() {
   const { data: cidades, isFetching: loadingCidades } = useCidadesPorEstado(addressState);
 
   useEffect(() => {
+    // Preenche o formulário quando os dados do usuário chegam da API (useQuery
+    // é assíncrono — na primeira renderização `user` ainda é undefined).
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(user.name);
       setPhone(user.phone ?? '');
       setAddressState(user.addressState ?? '');

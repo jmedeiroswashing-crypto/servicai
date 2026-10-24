@@ -167,7 +167,12 @@ function MensagensContent() {
   });
 
   useEffect(() => {
+    // Mantém activeId em dia quando o parâmetro `c` da URL muda sem a página
+    // remontar (ex: voltar/avançar no navegador entre duas conversas abertas
+    // por link direto) — o valor inicial já vem do searchParams acima, isso
+    // só cobre a troca em uma instância já montada.
     const fromQuery = searchParams.get('c');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (fromQuery) setActiveId(fromQuery);
   }, [searchParams]);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   BadgeCheck,
   MapPin,
@@ -11,7 +11,6 @@ import {
   Mail,
   Pencil,
   Star,
-  Users,
   Timer,
   Images,
   KeyRound,
@@ -44,6 +43,10 @@ function PushNotificationToggle() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // isPushSupported() lê `window`/`navigator` — só pode rodar depois da
+    // montagem no cliente, senão o HTML do servidor e a 1ª renderização do
+    // cliente ficariam diferentes (hydration mismatch).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSupported(isPushSupported());
     getCurrentPushSubscription().then((sub) => setSubscribed(!!sub));
   }, []);

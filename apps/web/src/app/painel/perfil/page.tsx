@@ -210,6 +210,10 @@ function ManualProfileForm({ provider }: { provider: ProviderProfile }) {
   const [categoryQuery, setCategoryQuery] = useState('');
 
   useEffect(() => {
+    // Ressincroniza o formulário com o `provider` do servidor (inclui o
+    // refetch pós-salvar) — precisa rodar de novo a cada nova referência de
+    // provider, não só na montagem.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSpecialty(provider.specialty === 'A definir' ? '' : provider.specialty);
     setCategories(provider.categories ?? []);
     setBio(provider.bio ?? '');
@@ -326,11 +330,9 @@ const MEDIA_TYPE_LABEL: Record<string, string> = {
 };
 
 function AddPortfolioItemForm({
-  providerId,
   services,
   onAdded,
 }: {
-  providerId: string;
   services: ProviderProfile['services'];
   onAdded: () => void;
 }) {
@@ -520,7 +522,7 @@ function PortfolioManager() {
 
   return (
     <div className="mt-10 grid gap-8 sm:grid-cols-[1fr_1.3fr]">
-      <AddPortfolioItemForm providerId={provider.id} services={provider.services} onAdded={refresh} />
+      <AddPortfolioItemForm services={provider.services} onAdded={refresh} />
 
       <div>
         <h3 className="mb-3 text-sm font-medium text-foreground-muted">Seu portfólio</h3>

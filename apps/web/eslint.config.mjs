@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Projeto nativo do Capacitor — contém o bundle já minificado copiado
+    // pra dentro do app Android, não é código-fonte.
+    "android/**",
   ]),
 ]);
 
