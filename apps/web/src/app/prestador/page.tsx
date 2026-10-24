@@ -134,8 +134,13 @@ function ProviderProfileContent() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-16">
       <div className="flex flex-col gap-6 border-b border-border pb-8 sm:flex-row sm:items-start">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center border border-border">
-          <span className="font-display text-3xl text-ink">{provider.user.name.charAt(0)}</span>
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden border border-border">
+          {provider.user.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={provider.user.avatarUrl} alt={provider.user.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="font-display text-3xl text-ink">{provider.user.name.charAt(0)}</span>
+          )}
         </div>
         <div className="flex-1 space-y-2">
           <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
