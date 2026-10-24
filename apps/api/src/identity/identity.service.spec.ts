@@ -7,8 +7,9 @@ function buildService() {
   const prisma = {
     user: { update: vi.fn(), findUniqueOrThrow: vi.fn(), findUnique: vi.fn(), findMany: vi.fn() },
   };
-  const service = new IdentityService(prisma as never);
-  return { service, prisma };
+  const aiService = { analyzeIdentityDocument: vi.fn() };
+  const service = new IdentityService(prisma as never, aiService as never);
+  return { service, prisma, aiService };
 }
 
 describe('IdentityService', () => {
@@ -17,9 +18,10 @@ describe('IdentityService', () => {
   });
 
   describe('submit', () => {
-    it('salva a URL do documento (não mais um nome de arquivo local) e marca como pendente', async () => {
-      const { service, prisma } = buildService();
-      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE });
+    it('salva a URL do documento e marca como pendente antes de checar com a IA', async () => {
+      const { service, prisma, aiService } = buildService();
+      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE, name: 'Fulano' });
+      aiService.analyzeIdentityDocument.mockResolvedValue({ verdict: 'INCONCLUSIVO', reason: 'x' });
 
       await service.submit('u1', 'https://blob.vercel-storage.com/identity/abc123.jpg');
 
@@ -32,6 +34,73 @@ describe('IdentityService', () => {
           }),
         }),
       );
+    });
+
+    it('aprova automaticamente quando a IA confirma o documento', async () => {
+      const { service, prisma, aiService } = buildService();
+      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE, name: 'Fulano' });
+      aiService.analyzeIdentityDocument.mockResolvedValue({ verdict: 'APROVADO', reason: 'Documento ok' });
+
+      await service.submit('u1', 'https://blob.vercel-storage.com/identity/abc123.jpg');
+
+      expect(prisma.user.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            identityStatus: IdentityStatus.APROVADO,
+            identityAutoDecision: true,
+            identityAutoReason: 'Documento ok',
+            identityRejectionReason: null,
+          }),
+        }),
+      );
+    });
+
+    it('rejeita automaticamente quando a IA reprova o documento', async () => {
+      const { service, prisma, aiService } = buildService();
+      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE, name: 'Fulano' });
+      aiService.analyzeIdentityDocument.mockResolvedValue({ verdict: 'REJEITADO', reason: 'Nome não confere' });
+
+      await service.submit('u1', 'https://blob.vercel-storage.com/identity/abc123.jpg');
+
+      expect(prisma.user.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            identityStatus: IdentityStatus.REJEITADO,
+            identityAutoDecision: true,
+            identityRejectionReason: 'Nome não confere',
+          }),
+        }),
+      );
+    });
+
+    it('mantém pendente (sem decidir) quando a IA é inconclusiva', async () => {
+      const { service, prisma, aiService } = buildService();
+      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE, name: 'Fulano' });
+      aiService.analyzeIdentityDocument.mockResolvedValue({ verdict: 'INCONCLUSIVO', reason: 'IA indisponível' });
+
+      await service.submit('u1', 'https://blob.vercel-storage.com/identity/abc123.jpg');
+
+      expect(prisma.user.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: { identityAutoReason: 'IA indisponível' },
+        }),
+      );
+    });
+
+    it('mantém pendente se a checagem por IA falhar inesperadamente', async () => {
+      const { service, prisma, aiService } = buildService();
+      prisma.user.update.mockResolvedValue({ id: 'u1', identityStatus: IdentityStatus.PENDENTE, name: 'Fulano' });
+      aiService.analyzeIdentityDocument.mockRejectedValue(new Error('timeout'));
+
+      await service.submit('u1', 'https://blob.vercel-storage.com/identity/abc123.jpg');
+
+      expect(prisma.user.update).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ identityAutoReason: expect.any(String) }),
+        }),
+      );
+      const lastCall = prisma.user.update.mock.calls.at(-1)?.[0];
+      expect(lastCall.data.identityStatus).toBeUndefined();
     });
   });
 
@@ -63,9 +132,9 @@ describe('IdentityService', () => {
       await expect(service.review('ghost', 'admin1', { approve: true })).rejects.toThrow(NotFoundException);
     });
 
-    it('rejeita revisar quando não há verificação pendente', async () => {
+    it('rejeita revisar quando nunca houve envio de documento', async () => {
       const { service, prisma } = buildService();
-      prisma.user.findUnique.mockResolvedValue({ identityStatus: IdentityStatus.APROVADO });
+      prisma.user.findUnique.mockResolvedValue({ identityStatus: IdentityStatus.NAO_ENVIADO });
 
       await expect(service.review('u1', 'admin1', { approve: true })).rejects.toThrow(BadRequestException);
     });
@@ -78,7 +147,27 @@ describe('IdentityService', () => {
       await service.review('u1', 'admin1', { approve: true });
 
       expect(prisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ identityStatus: IdentityStatus.APROVADO, identityRejectionReason: null }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({
+            identityStatus: IdentityStatus.APROVADO,
+            identityRejectionReason: null,
+            identityAutoDecision: false,
+          }),
+        }),
+      );
+    });
+
+    it('permite o admin reverter uma decisão automática da IA', async () => {
+      const { service, prisma } = buildService();
+      prisma.user.findUnique.mockResolvedValue({ identityStatus: IdentityStatus.APROVADO, identityAutoDecision: true });
+      prisma.user.update.mockResolvedValue({ identityStatus: IdentityStatus.REJEITADO });
+
+      await service.review('u1', 'admin1', { approve: false, rejectionReason: 'Documento suspeito' });
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ identityStatus: IdentityStatus.REJEITADO, identityAutoDecision: false }),
+        }),
       );
     });
   });

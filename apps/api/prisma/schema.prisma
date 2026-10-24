@@ -163,6 +163,10 @@ model User {
   identitySubmittedAt     DateTime?
   identityReviewedAt      DateTime?
   identityReviewedById    String?
+  // true = a decisão atual (aprovado/rejeitado) veio da checagem automática
+  // por IA, ainda sem confirmação humana — admin pode revisar e reverter.
+  identityAutoDecision    Boolean        @default(false)
+  identityAutoReason      String?
   identityReviewedBy      User?          @relation("IdentityReviewedBy", fields: [identityReviewedById], references: [id])
   identityReviewsDone     User[]         @relation("IdentityReviewedBy")
 

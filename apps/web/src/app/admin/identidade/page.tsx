@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Bot } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { AuthenticatedImage } from '@/components/AuthenticatedImage';
@@ -21,6 +21,9 @@ function PendingRow({ item }: { item: IdentityVerification }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['identity', 'pending'] }),
   });
 
+  const autoApproved = item.identityAutoDecision && item.identityStatus === 'APROVADO';
+  const autoRejected = item.identityAutoDecision && item.identityStatus === 'REJEITADO';
+
   return (
     <div className="border border-border p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -35,6 +38,26 @@ function PendingRow({ item }: { item: IdentityVerification }) {
         </div>
       </div>
 
+      {item.identityAutoDecision && (
+        <div
+          className={`mt-3 flex items-start gap-2 border p-3 text-xs ${
+            autoApproved ? 'border-success/30 bg-success/5 text-success' : 'border-danger/30 bg-danger/5 text-danger'
+          }`}
+        >
+          <Bot size={14} className="mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium">
+              IA {autoApproved ? 'aprovou' : autoRejected ? 'rejeitou' : 'analisou'} automaticamente — ainda sem
+              confirmação humana
+            </p>
+            {item.identityAutoReason && <p className="mt-0.5 text-foreground-muted">{item.identityAutoReason}</p>}
+          </div>
+        </div>
+      )}
+      {!item.identityAutoDecision && item.identityAutoReason && (
+        <p className="mt-3 text-xs text-foreground-muted">Nota da IA: {item.identityAutoReason}</p>
+      )}
+
       {item.identityDocumentUrl && (
         <AuthenticatedImage
           src={`/identity/document/${item.id}`}
@@ -47,20 +70,33 @@ function PendingRow({ item }: { item: IdentityVerification }) {
 
       {!rejecting ? (
         <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            onClick={() => mutation.mutate(true)}
-            disabled={mutation.isPending}
-            className="border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-50"
-          >
-            Aprovar
-          </button>
-          <button
-            onClick={() => setRejecting(true)}
-            disabled={mutation.isPending}
-            className="border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
-          >
-            Rejeitar
-          </button>
+          {!autoApproved && (
+            <button
+              onClick={() => mutation.mutate(true)}
+              disabled={mutation.isPending}
+              className="border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-50"
+            >
+              {autoRejected ? 'Reverter: aprovar' : 'Aprovar'}
+            </button>
+          )}
+          {!autoRejected && (
+            <button
+              onClick={() => setRejecting(true)}
+              disabled={mutation.isPending}
+              className="border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger/10 disabled:opacity-50"
+            >
+              {autoApproved ? 'Reverter: rejeitar' : 'Rejeitar'}
+            </button>
+          )}
+          {item.identityAutoDecision && (
+            <button
+              onClick={() => mutation.mutate(item.identityStatus === 'APROVADO')}
+              disabled={mutation.isPending}
+              className="border border-border px-3 py-1.5 text-xs font-medium text-foreground-muted hover:border-ink hover:text-ink disabled:opacity-50"
+            >
+              Confirmar decisão da IA
+            </button>
+          )}
         </div>
       ) : (
         <div className="mt-3 space-y-2">
@@ -112,7 +148,11 @@ export default function AdminIdentidadePage() {
       <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
         <ShieldCheck size={26} /> Verificação de identidade
       </h1>
-      <p className="mt-2 text-foreground-muted">Revise os documentos enviados por prestadores para liberar o selo de identidade verificada.</p>
+      <p className="mt-2 text-foreground-muted">
+        A IA analisa e decide a maioria dos documentos automaticamente assim que são enviados — aqui ficam só os
+        casos que ainda esperam revisão humana (a IA não conseguiu decidir) e as decisões automáticas que você ainda
+        pode reverter.
+      </p>
 
       <div className="mt-8 space-y-4">
         {isLoading && <p className="text-foreground-muted">Carregando pendências...</p>}

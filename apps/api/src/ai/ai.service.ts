@@ -41,6 +41,13 @@ export interface ProviderIntakeResult {
   readyToSave: boolean;
 }
 
+export type IdentityCheckVerdict = 'APROVADO' | 'REJEITADO' | 'INCONCLUSIVO';
+
+export interface IdentityDocumentAnalysis {
+  verdict: IdentityCheckVerdict;
+  reason: string;
+}
+
 const REQUIRED_INTAKE_FIELDS: (keyof RequestDraft)[] = ['category', 'title', 'description', 'city'];
 
 /** Categorias canônicas (mesmas de apps/web/src/lib/categories.ts) associadas a palavras-chave de detecção. */
@@ -446,6 +453,60 @@ export class AiService {
     } catch (err) {
       this.logger.error('Falha no intake de perfil por IA, usando fallback', err as Error);
       return this.fallbackProviderIntake(message, draftSoFar);
+    }
+  }
+
+  /**
+   * Checagem automática de documento de identidade (RG/CNH): não é
+   * verificação forense (não detecta falsificação sofisticada) — é uma
+   * triagem por IA que recusa o óbvio (não é um documento, está ilegível,
+   * nome não bate, sinais visuais de montagem) e aprova o resto. Sem
+   * OPENAI_API_KEY ou em caso de erro, retorna INCONCLUSIVO — quem chama
+   * deve manter a verificação pendente para revisão humana, nunca aprovar
+   * ou rejeitar automaticamente nesse caso.
+   */
+  async analyzeIdentityDocument(documentUrl: string, registeredName: string): Promise<IdentityDocumentAnalysis> {
+    if (!this.enabled) {
+      return { verdict: 'INCONCLUSIVO', reason: 'Verificação automática indisponível — aguardando revisão manual.' };
+    }
+
+    try {
+      const completion = await this.client!.chat.completions.create({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Você faz uma triagem de fotos de documentos de identidade brasileiros (RG ou CNH) enviados para ' +
+              'verificação de cadastro numa plataforma de serviços. Responda em JSON com: "isIdDocument" (boolean — ' +
+              'parece mesmo um RG ou CNH, não outra coisa), "legible" (boolean — dá para ler os dados principais), ' +
+              '"nameOnDocument" (string ou null — nome completo exatamente como está escrito no documento), ' +
+              '"nameMatches" (boolean — o nome do documento corresponde ao nome cadastrado informado, tolerando ' +
+              'pequenas diferenças de acentuação/abreviação/ordem), "suspiciousOfTampering" (boolean — sinais ' +
+              'visuais de edição, montagem, captura de tela ou foto de uma tela), "reason" (string curta em ' +
+              'português explicando a decisão, para mostrar a um administrador humano).',
+          },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: `Nome cadastrado pelo usuário: "${registeredName}". Analise este documento:` },
+              { type: 'image_url', image_url: { url: documentUrl } },
+            ],
+          },
+        ],
+      });
+
+      const raw = completion.choices[0]?.message?.content ?? '{}';
+      const parsed = JSON.parse(raw);
+      const reason = typeof parsed.reason === 'string' && parsed.reason ? parsed.reason : 'Sem detalhes da IA.';
+
+      const approved = parsed.isIdDocument === true && parsed.legible === true && parsed.nameMatches === true && parsed.suspiciousOfTampering !== true;
+
+      return { verdict: approved ? 'APROVADO' : 'REJEITADO', reason };
+    } catch (err) {
+      this.logger.error('Falha ao analisar documento de identidade com IA', err as Error);
+      return { verdict: 'INCONCLUSIVO', reason: 'Erro ao processar o documento — aguardando revisão manual.' };
     }
   }
 

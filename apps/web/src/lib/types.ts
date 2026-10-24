@@ -118,6 +118,8 @@ export interface IdentityVerification {
   identityRejectionReason?: string | null;
   identitySubmittedAt?: string | null;
   identityReviewedAt?: string | null;
+  identityAutoDecision?: boolean;
+  identityAutoReason?: string | null;
 }
 
 export interface ProviderProfile {
