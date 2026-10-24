@@ -130,21 +130,23 @@ export default function PainelPage() {
         <ArrowRight size={16} />
       </Link>
 
-      <Link
-        href="/painel/faturamento"
-        className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
-      >
-        <div className="flex items-center gap-3">
-          <Wallet size={18} className="text-accent" />
-          <div>
-            <p className="font-medium text-ink">Gestão</p>
-            <p className="text-sm text-foreground-muted">
-              {earnings ? `R$ ${earnings.currentMonthTotal.toFixed(2).replace('.', ',')} este mês` : 'Acompanhe seus ganhos'}
-            </p>
+      {user?.businessMode !== 'CONTRATACAO' && (
+        <Link
+          href="/painel/faturamento"
+          className="mt-4 flex items-center justify-between border border-border p-5 transition-colors hover:border-ink"
+        >
+          <div className="flex items-center gap-3">
+            <Wallet size={18} className="text-accent" />
+            <div>
+              <p className="font-medium text-ink">Gestão</p>
+              <p className="text-sm text-foreground-muted">
+                {earnings ? `R$ ${earnings.currentMonthTotal.toFixed(2).replace('.', ',')} este mês` : 'Acompanhe seus ganhos'}
+              </p>
+            </div>
           </div>
-        </div>
-        <ArrowRight size={16} className="text-foreground-muted" />
-      </Link>
+          <ArrowRight size={16} className="text-foreground-muted" />
+        </Link>
+      )}
 
       <Link
         href="/painel/oportunidades"

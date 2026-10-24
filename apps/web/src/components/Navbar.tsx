@@ -46,10 +46,12 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
     ];
   }
   if (role === 'PRESTADOR' && businessMode === 'CONTRATACAO') {
-    // Espelho do modo GESTAO: quem só quer ser encontrado e contratado não
-    // precisa das ferramentas de gestão do negócio na navegação.
+    // Quem só quer ser encontrado e contratado não precisa da ferramenta de
+    // Gestão (faturamento/despesas/metas) — mas mantém Agenda, já que os
+    // compromissos vêm das reservas que essa contratação gera.
     return [
       { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
+      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
       { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
       { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
