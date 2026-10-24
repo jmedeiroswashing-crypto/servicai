@@ -44,7 +44,16 @@ export function ServiceTypeGate() {
   if (!shouldShow) return null;
 
   function toggleCategory(label: string) {
-    setCategories((prev) => (prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label]));
+    setCategories((prev) => {
+      const active = prev.includes(label);
+      // Ao marcar uma categoria, já preenche a especialidade com o mesmo
+      // nome — só quando o campo ainda está vazio, pra não sobrescrever o
+      // que a pessoa já escreveu.
+      if (!active) {
+        setSpecialty((current) => (current.trim() ? current : label));
+      }
+      return active ? prev.filter((c) => c !== label) : [...prev, label];
+    });
   }
 
   const canSave = specialty.trim().length > 0 && categories.length > 0;
