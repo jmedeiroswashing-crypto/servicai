@@ -29,9 +29,15 @@ export default function ConsertoLoginPage() {
       setAuth(res.data.accessToken, res.data.shop);
       router.push('/conserto');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Credenciais inválidas.';
-      setError(Array.isArray(message) ? message.join(', ') : message);
+      const axiosErr = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
+      const serverMessage = axiosErr?.response?.data?.message;
+      const message = Array.isArray(serverMessage)
+        ? serverMessage.join(', ')
+        : serverMessage ??
+          (axiosErr?.response
+            ? `Erro inesperado (código ${axiosErr.response.status}).`
+            : `Não foi possível conectar ao servidor (${axiosErr?.message ?? 'erro de rede'}).`);
+      setError(message);
     } finally {
       setLoading(false);
     }
