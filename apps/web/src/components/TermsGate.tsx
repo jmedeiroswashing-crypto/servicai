@@ -32,7 +32,7 @@ export function TermsGate() {
     }
   }
 
-  if (accepted || EXEMPT_PATHS.includes(pathname)) return null;
+  if (accepted || EXEMPT_PATHS.includes(pathname) || pathname.startsWith('/conserto')) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center">

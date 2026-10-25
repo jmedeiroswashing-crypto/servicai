@@ -76,7 +76,11 @@ export function ServiceTypeGate() {
   });
 
   const shouldShow =
-    isPubliclyVisible && !!provider && provider.categories.length === 0 && !EXEMPT_PATHS.includes(pathname);
+    isPubliclyVisible &&
+    !!provider &&
+    provider.categories.length === 0 &&
+    !EXEMPT_PATHS.includes(pathname) &&
+    !pathname.startsWith('/conserto');
 
   if (!shouldShow) return null;
 

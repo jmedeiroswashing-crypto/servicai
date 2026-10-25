@@ -24,7 +24,11 @@ export function BusinessModeGate() {
   const [submitting, setSubmitting] = useState<BusinessMode | null>(null);
 
   const shouldShow =
-    !!token && user?.role === 'PRESTADOR' && user.businessMode == null && !EXEMPT_PATHS.includes(pathname);
+    !!token &&
+    user?.role === 'PRESTADOR' &&
+    user.businessMode == null &&
+    !EXEMPT_PATHS.includes(pathname) &&
+    !pathname.startsWith('/conserto');
 
   if (!shouldShow) return null;
 
