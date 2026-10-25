@@ -110,7 +110,10 @@ export function Navbar() {
 
   const links = getNavLinks(user?.role, user?.businessMode);
 
-  if (HIDDEN_PATHS.includes(pathname)) return null;
+  // /conserto é uma área totalmente separada (login próprio de loja de
+  // conserto) — esconde em todas as subpáginas, incluindo a de
+  // acompanhamento público com token dinâmico.
+  if (HIDDEN_PATHS.includes(pathname) || pathname.startsWith('/conserto')) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink bg-ink">

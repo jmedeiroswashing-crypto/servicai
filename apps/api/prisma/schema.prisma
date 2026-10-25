@@ -594,3 +594,51 @@ model Report {
   @@index([targetType, targetId])
   @@index([status])
 }
+
+// --- Ferramenta de balcão de conserto (lojas de celular) ---
+// Login totalmente separado do User/Role do resto do ServiçAi — login de
+// loja, não de prestador/cliente — só reaproveita a mesma infraestrutura
+// (banco, auth JWT, upload, deploy).
+
+enum RepairStatus {
+  EM_ANALISE
+  AGUARDANDO_APROVACAO
+  AGUARDANDO_PECA
+  PRONTO
+  ENTREGUE
+}
+
+model RepairShop {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  phone        String?
+  createdAt    DateTime       @default(now())
+
+  devices      RepairDevice[]
+}
+
+model RepairDevice {
+  id          String       @id @default(cuid())
+
+  shopId      String
+  shop        RepairShop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  clientName  String
+  clientPhone String
+  deviceModel String
+  imei        String?
+  defect      String
+  photos      String[]
+  budgetValue Float?
+  status      RepairStatus @default(EM_ANALISE)
+
+  // Token público (não-sequencial) pro cliente acompanhar sem precisar de login.
+  trackingToken String     @unique @default(cuid())
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([shopId, status])
+}

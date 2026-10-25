@@ -477,3 +477,31 @@ export interface Report {
   respondentStatement?: string | null;
   respondedAt?: string | null;
 }
+
+export type RepairStatus = 'EM_ANALISE' | 'AGUARDANDO_APROVACAO' | 'AGUARDANDO_PECA' | 'PRONTO' | 'ENTREGUE';
+
+export interface RepairDevice {
+  id: string;
+  shopId: string;
+  clientName: string;
+  clientPhone: string;
+  deviceModel: string;
+  imei?: string | null;
+  defect: string;
+  photos: string[];
+  budgetValue?: number | null;
+  status: RepairStatus;
+  trackingToken: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicRepairTracking {
+  deviceModel: string;
+  defect: string;
+  status: RepairStatus;
+  budgetValue?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  shop: { name: string };
+}

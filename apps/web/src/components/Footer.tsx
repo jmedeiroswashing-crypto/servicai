@@ -8,7 +8,10 @@ const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
 
 export function Footer() {
   const pathname = usePathname();
-  if (HIDDEN_PATHS.includes(pathname)) return null;
+  // /conserto é uma área totalmente separada (login próprio de loja de
+  // conserto) — esconde em todas as subpáginas, incluindo a de
+  // acompanhamento público com token dinâmico.
+  if (HIDDEN_PATHS.includes(pathname) || pathname.startsWith('/conserto')) return null;
 
   return (
     <footer className="mt-auto border-t border-border py-12 text-sm text-foreground-muted">

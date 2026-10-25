@@ -29,6 +29,7 @@ import { ExpensesModule } from './expenses/expenses.module.js';
 import { IncomesModule } from './incomes/incomes.module.js';
 import { AppointmentsModule } from './appointments/appointments.module.js';
 import { GoalsModule } from './goals/goals.module.js';
+import { RepairModule } from './repair/repair.module.js';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { GoalsModule } from './goals/goals.module.js';
     IncomesModule,
     AppointmentsModule,
     GoalsModule,
+    RepairModule,
   ],
   controllers: [AppController],
   // Limite geral contra abuso (spam de cadastro, força bruta de login, custo de IA)
