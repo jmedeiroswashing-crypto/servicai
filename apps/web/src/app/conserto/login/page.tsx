@@ -51,14 +51,25 @@ export default function ConsertoLoginPage() {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
               className={inputClass}
               required
             />
           </div>
           <div>
             <label className={labelClass}>Senha</label>
-            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} required />
+            <PasswordInput
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
+              className={inputClass}
+              required
+            />
           </div>
           {error && <p className="text-xs text-danger">{error}</p>}
           <button

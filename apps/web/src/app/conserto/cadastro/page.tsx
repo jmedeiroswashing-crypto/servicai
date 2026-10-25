@@ -64,7 +64,10 @@ export default function ConsertoCadastroPage() {
             <label className={labelClass}>Senha</label>
             <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
               className={inputClass}
               placeholder="Mínimo 6 caracteres"
               required
