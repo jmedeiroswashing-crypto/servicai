@@ -17,3 +17,6 @@ apps/api/uploads-private/
 
 .DS_Store
 Thumbs.db
+
+.claude-flow/
+.swarm/

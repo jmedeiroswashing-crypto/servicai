@@ -85,6 +85,11 @@ enum IncomeSource {
   RESERVA
 }
 
+enum CashMovementType {
+  SANGRIA
+  SUPRIMENTO
+}
+
 enum DealStatus {
   ATIVA
   RESERVADA
@@ -245,6 +250,7 @@ model ProviderProfile {
   incomes       Income[]
   appointments  Appointment[]
   financialGoals FinancialGoal[]
+  cashRegisters CashRegister[]
 
   @@index([city])
 }
@@ -300,6 +306,42 @@ model FinancialGoal {
   updatedAt    DateTime @updatedAt
 
   @@unique([providerId, month])
+}
+
+// Caixa do dia: abre com o troco, registra sangria/suprimento ao longo do
+// dia e fecha conferindo o contado contra o esperado (troco + receita manual
+// do dia + suprimentos - sangrias - despesas pagas em dinheiro do dia). É uma
+// estimativa — o ServiçAi não rastreia forma de pagamento por lançamento.
+model CashRegister {
+  id            String   @id @default(cuid())
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  date          String   // "YYYY-MM-DD"
+  openingAmount Float
+  openedAt      DateTime @default(now())
+
+  closingCountedAmount Float?
+  closedAt             DateTime?
+
+  movements     CashMovement[]
+
+  createdAt     DateTime @default(now())
+
+  @@unique([providerId, date])
+  @@index([providerId, date])
+}
+
+model CashMovement {
+  id             String   @id @default(cuid())
+  cashRegisterId String
+  cashRegister   CashRegister @relation(fields: [cashRegisterId], references: [id], onDelete: Cascade)
+
+  type           CashMovementType
+  amount         Float
+  reason         String
+
+  createdAt      DateTime @default(now())
 }
 
 model Appointment {

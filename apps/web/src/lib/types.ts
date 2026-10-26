@@ -274,6 +274,36 @@ export interface FinancialGoal {
   reachedAt?: string | null;
 }
 
+export type CashMovementType = 'SANGRIA' | 'SUPRIMENTO';
+
+export interface CashMovement {
+  id: string;
+  type: CashMovementType;
+  amount: number;
+  reason: string;
+  createdAt: string;
+}
+
+export interface CashRegister {
+  id: string;
+  date: string;
+  openingAmount: number;
+  openedAt: string;
+  closingCountedAmount?: number | null;
+  closedAt?: string | null;
+  movements: CashMovement[];
+  expectedAmount?: number | null;
+}
+
+export interface CalendarDay {
+  date: string;
+  incomeTotal: number;
+  expenseTotal: number;
+  profit: number;
+  appointmentsCount: number;
+  bookingsCount: number;
+}
+
 export interface Appointment {
   id: string;
   title: string;

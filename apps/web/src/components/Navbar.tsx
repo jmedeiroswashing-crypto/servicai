@@ -16,7 +16,9 @@ import {
   Users,
   Briefcase,
   CalendarDays,
+  CalendarRange,
   Wallet,
+  BarChart3,
   CalendarClock,
   Search,
   Megaphone,
@@ -39,7 +41,10 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
     // preocupar com isso — a navegação reflete só o que a pessoa pediu.
     return [
       { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
+      { href: '/painel/caixa', label: 'Caixa', icon: Wallet },
+      { href: '/painel/calendario', label: 'Calendário', icon: CalendarRange },
+      { href: '/painel/faturamento', label: 'Gestão', icon: BarChart3 },
+      { href: '/painel/clientes', label: 'Clientes', icon: Users },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
       { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
       { href: '/perfil', label: 'Meu perfil', icon: User },
@@ -63,7 +68,9 @@ function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
     return [
       { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
       { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/faturamento', label: 'Gestão', icon: Wallet },
+      { href: '/painel/caixa', label: 'Caixa', icon: Wallet },
+      { href: '/painel/calendario', label: 'Calendário', icon: CalendarRange },
+      { href: '/painel/faturamento', label: 'Gestão', icon: BarChart3 },
       { href: '/painel/clientes', label: 'Clientes', icon: Users },
       { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
       { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
