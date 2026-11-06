@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
+import { refreshProfileComplete } from '../providers/public-visibility.js';
 
 @Injectable()
 export class UsersService {
@@ -32,8 +33,8 @@ export class UsersService {
     return user;
   }
 
-  update(id: string, dto: UpdateUserDto) {
-    return this.prisma.user.update({
+  async update(id: string, dto: UpdateUserDto) {
+    const updated = await this.prisma.user.update({
       where: { id },
       data: dto,
       select: {
@@ -53,6 +54,9 @@ export class UsersService {
         createdAt: true,
       },
     });
+    // Nome e foto também decidem se um prestador pode aparecer na vitrine.
+    await refreshProfileComplete(this.prisma, id);
+    return updated;
   }
 
   /**

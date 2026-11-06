@@ -234,6 +234,11 @@ model ProviderProfile {
   // caso a pessoa é perguntada uma vez no primeiro acesso.
   businessMode  BusinessMode?
 
+  // Conta de teste nunca aparece para clientes, mesmo com o perfil preenchido.
+  isTest          Boolean @default(false)
+  // Mantido por ProvidersService: foto, nome, profissão, categoria e cidade válida.
+  profileComplete Boolean @default(false)
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -253,6 +258,28 @@ model ProviderProfile {
   cashRegisters CashRegister[]
 
   @@index([city])
+  @@index([isTest, profileComplete])
+}
+
+// Taxonomia pública de serviços (ver src/categories/taxonomy.ts). Prestadores e
+// pedidos guardam o nome da subcategoria em texto.
+model ServiceCategory {
+  id            String   @id
+  slug          String   @unique
+  label         String
+  position      Int
+  subcategories ServiceSubcategory[]
+}
+
+model ServiceSubcategory {
+  id         String   @id
+  slug       String   @unique
+  label      String   @unique
+  position   Int
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
 }
 
 model Expense {

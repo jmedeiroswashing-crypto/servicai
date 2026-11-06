@@ -5,6 +5,21 @@ import { UpdateProviderDto } from './dto/update-provider.dto.js';
 import { computeRankingScore, type RankingContext, type RankingInput } from './ranking.js';
 import { getEffectivePlan } from '../subscriptions/subscription-state.js';
 import { validateBusinessHours } from './business-hours.js';
+import { publicProviderWhere, refreshProfileComplete } from './public-visibility.js';
+import { normalizeCityName } from '../common/city-name.js';
+import type { Prisma } from '../generated/prisma/client.js';
+
+/** Dados que a vitrine e a busca precisam carregar de cada prestador. */
+export const PUBLIC_PROVIDER_INCLUDE = {
+  user: { select: { name: true, avatarUrl: true, addressState: true, identityStatus: true } },
+  media: { take: 6 },
+  services: { where: { active: true }, select: { priceMin: true } },
+  subscription: { select: { plan: true, status: true, currentPeriodEnd: true } },
+  _count: { select: { reviews: true, media: true } },
+} satisfies Prisma.ProviderProfileInclude;
+
+/** Abaixo disso a nota ainda não diz muito, e o prestador não disputa "Melhor avaliados". */
+const MIN_REVIEWS_FOR_RATING = 3;
 
 const ACCEPTED_STATUSES: BookingStatus[] = [
   BookingStatus.ACEITO,
@@ -108,25 +123,12 @@ export class ProvidersService {
     const { city, category, skip = 0, take = 20, availableNow } = params;
     const candidates = await this.prisma.providerProfile.findMany({
       where: {
-        user: { deletedAt: null },
-        // `not: GESTAO` excluiria também quem ainda não escolheu (null) —
-        // aqui precisa ser explícito pra manter compatibilidade com contas
-        // antigas enquanto elas não passam pela pergunta de intenção.
-        OR: [
-          { businessMode: null },
-          { businessMode: BusinessMode.COMPLETO },
-          { businessMode: BusinessMode.CONTRATACAO },
-        ],
+        ...publicProviderWhere(),
         ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
         ...(category ? { categories: { has: category } } : {}),
         ...(availableNow ? { availableNow: true, availableUntil: { gt: new Date() } } : {}),
       },
-      include: {
-        user: { select: { name: true, avatarUrl: true, addressState: true, identityStatus: true } },
-        media: { take: 6 },
-        subscription: { select: { plan: true, status: true, currentPeriodEnd: true } },
-        _count: { select: { reviews: true, media: true } },
-      },
+      include: PUBLIC_PROVIDER_INCLUDE,
       take: Math.min(skip + take + 150, 500),
     });
 
@@ -140,7 +142,86 @@ export class ProvidersService {
     );
     const page = ranked.slice(skip, skip + take);
     await this.trackSearchAppearances(page.map((p) => p.id));
-    return page;
+    return this.withCardData(page);
+  }
+
+  /**
+   * Vitrine da home. A ordem não considera plano nem impulso pago: primeiro quem
+   * tem nota com avaliações suficientes, depois quem responde mais rápido.
+   * Distância fica de fora porque o banco ainda não guarda coordenadas.
+   */
+  async findShowcase(params: { city?: string; take?: number }) {
+    const take = Math.min(params.take ?? 8, 24);
+    const candidates = await this.prisma.providerProfile.findMany({
+      where: {
+        ...publicProviderWhere(),
+        ...(params.city ? { city: { equals: params.city, mode: 'insensitive' } } : {}),
+      },
+      include: PUBLIC_PROVIDER_INCLUDE,
+      take: 100,
+    });
+    const decorated = await this.withCardData(candidates.map((c) => withEffectiveAvailability(c)));
+    const ratingOf = (p: (typeof decorated)[number]) => (p.reviewCount >= MIN_REVIEWS_FOR_RATING ? p.ratingAvg : -1);
+    const responseOf = (p: (typeof decorated)[number]) => p.responseMinutes ?? Number.POSITIVE_INFINITY;
+    return decorated
+      .sort((a, b) => ratingOf(b) - ratingOf(a) || responseOf(a) - responseOf(b))
+      .slice(0, take);
+  }
+
+  /** Acrescenta ao prestador o que o card público mostra, calculado de dados reais. */
+  async withCardData<
+    T extends {
+      id: string;
+      userId: string;
+      services?: { priceMin: number | null }[];
+      _count?: { reviews?: number };
+    },
+  >(providers: T[]) {
+    const responseMinutes = await this.averageResponseMinutes(providers);
+    return providers.map((provider) => {
+      const prices = (provider.services ?? []).map((s) => s.priceMin).filter((p): p is number => p != null && p > 0);
+      return {
+        ...provider,
+        reviewCount: provider._count?.reviews ?? 0,
+        responseMinutes: responseMinutes.get(provider.id) ?? null,
+        priceFrom: prices.length > 0 ? Math.min(...prices) : null,
+      };
+    });
+  }
+
+  /** Média entre a primeira mensagem do cliente e a primeira resposta do prestador. */
+  private async averageResponseMinutes(providers: { id: string; userId: string }[]) {
+    const result = new Map<string, number>();
+    if (providers.length === 0) return result;
+
+    const userIdByProvider = new Map(providers.map((p) => [p.id, p.userId]));
+    const conversations = await this.prisma.conversation.findMany({
+      where: { providerId: { in: providers.map((p) => p.id) } },
+      select: {
+        providerId: true,
+        clientId: true,
+        messages: { orderBy: { createdAt: 'asc' }, take: 20, select: { senderId: true, createdAt: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 500,
+    });
+
+    const samples = new Map<string, number[]>();
+    for (const conversation of conversations) {
+      const firstClient = conversation.messages.find((m) => m.senderId === conversation.clientId);
+      if (!firstClient) continue;
+      const providerUserId = userIdByProvider.get(conversation.providerId);
+      const reply = conversation.messages.find((m) => m.senderId === providerUserId && m.createdAt > firstClient.createdAt);
+      if (!reply) continue;
+      const list = samples.get(conversation.providerId) ?? [];
+      list.push((reply.createdAt.getTime() - firstClient.createdAt.getTime()) / 60_000);
+      samples.set(conversation.providerId, list);
+    }
+
+    for (const [providerId, minutes] of samples) {
+      result.set(providerId, Math.max(1, Math.round(minutes.reduce((sum, m) => sum + m, 0) / minutes.length)));
+    }
+    return result;
   }
 
   /**
@@ -185,6 +266,7 @@ export class ProvidersService {
 
   async findOne(id: string) {
     const provider = await this.loadRichProfile(id);
+    if (provider.isTest) throw new NotFoundException('Prestador não encontrado');
 
     this.prisma.providerProfile
       .update({ where: { id }, data: { profileViews: { increment: 1 } } })
@@ -261,11 +343,15 @@ export class ProvidersService {
 
   async update(userId: string, dto: UpdateProviderDto) {
     const provider = await this.findByUserId(userId);
-    const data = dto.businessHours !== undefined ? { ...dto, businessHours: validateBusinessHours(dto.businessHours) } : dto;
-    return this.prisma.providerProfile.update({
+    const data: UpdateProviderDto =
+      dto.businessHours !== undefined ? { ...dto, businessHours: validateBusinessHours(dto.businessHours) } : { ...dto };
+    if (data.city) data.city = normalizeCityName(data.city);
+    const updated = await this.prisma.providerProfile.update({
       where: { id: provider.id },
       data: data as never,
     });
+    await refreshProfileComplete(this.prisma, userId);
+    return updated;
   }
 
   /**

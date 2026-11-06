@@ -12,6 +12,7 @@ import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
+import { normalizeCityName } from '../common/city-name.js';
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const EMAIL_VERIFICATION_TTL_MS = 48 * 60 * 60 * 1000;
@@ -43,6 +44,7 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
+    const city = dto.city ? normalizeCityName(dto.city) : undefined;
 
     const user = await this.prisma.user.create({
       data: {
@@ -51,7 +53,7 @@ export class AuthService {
         name: dto.name,
         role: dto.role,
         phone: dto.phone,
-        city: dto.city,
+        city,
         personType: dto.personType,
         cpf: dto.cpf,
         cnpj: dto.cnpj,
@@ -69,7 +71,7 @@ export class AuthService {
         data: {
           userId: user.id,
           specialty: 'A definir',
-          city: dto.city ?? 'Não informado',
+          city: city ?? 'Não informado',
           categories: [],
           businessMode: dto.businessMode,
         },
