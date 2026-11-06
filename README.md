@@ -219,9 +219,10 @@ npm run dev              # http://localhost:3000
 - **Contato**: os WhatsApps de suporte ficam em `apps/web/src/lib/site-config.ts`. As redes
   sociais usam `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` e
   `NEXT_PUBLIC_TIKTOK_URL`; a que não estiver definida não aparece.
-- **Publicação**: um push na `main` publica site e API juntos. Rode
-  `npx prisma migrate deploy` em `apps/api`, com a URL do Session pooler, **antes** de
-  enviar código que dependa de uma migração nova.
+- **Publicação**: um push na `main` publica site e API juntos. O build de produção da API
+  roda `prisma migrate deploy` com o `DATABASE_URL` da Vercel; se a migração falhar, o
+  deploy falha e a versão anterior continua no ar. Ao mudar site e banco juntos, publique
+  a API primeiro e o site só depois de ela responder.
 
 ## Roadmap (fora do escopo desta primeira entrega)
 
