@@ -31,7 +31,13 @@ async function bootstrap() {
 }
 
 export default async function handler(req, res) {
-  if (!ready) ready = bootstrap();
+  // Uma falha ao iniciar não pode deixar a instância quebrada: a próxima requisição tenta de novo.
+  if (!ready) {
+    ready = bootstrap().catch((error) => {
+      ready = undefined;
+      throw error;
+    });
+  }
   await ready;
   expressApp(req, res);
 }
