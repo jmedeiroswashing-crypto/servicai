@@ -1,21 +1,75 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens do ServiçAi: este é o único lugar onde cores, raios e sombras
+ * são definidos. O modo escuro só troca os valores destas variáveis.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #18160f;
-  --foreground-muted: #57503f;
-  --surface: #ffffff;
-  --surface-muted: #f1ede3;
-  --border: #e3ddcd;
+  color-scheme: light;
 
+  --background: #ffffff;
+  --foreground: #152033;
+  --foreground-muted: #526075;
+  --surface: #ffffff;
+  --surface-muted: #f3f6fa;
+  --border: #dfe5ee;
+
+  /* "ink" é a cor de maior contraste com o fundo: inverte no modo escuro. */
   --ink: #0b1c33;
-  --accent: #1e83fe;
+  /* Azul da marca ajustado para contraste AA sobre branco. */
+  --accent: #1a6fe8;
   --accent-strong: #0f5fd1;
   --accent-soft: #dceafd;
+
+  /* Azul-marinho do header e do splash: igual nos dois modos. */
+  --brand-dark: #0b1c33;
+  --on-brand-dark: #ffffff;
+
+  /* Destaque para CTA e urgência. */
+  --cta: #d9480f;
+  --cta-strong: #b93c0b;
+  --cta-soft: #ffe8dc;
+  --on-cta: #ffffff;
 
   --success: #2f6d42;
   --warning: #a8660c;
   --danger: #b3261e;
+
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(11 28 51 / 0.06), 0 1px 3px rgb(11 28 51 / 0.08);
+  --shadow-md: 0 8px 24px -8px rgb(11 28 51 / 0.18);
+  --shadow-lg: 0 16px 40px -12px rgb(11 28 51 / 0.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --background: #0b1220;
+    --foreground: #e6ebf3;
+    --foreground-muted: #a4b0c3;
+    --surface: #131c2e;
+    --surface-muted: #1a2438;
+    --border: #2b3750;
+
+    --ink: #f3f6fb;
+    --accent: #6aa9ff;
+    --accent-strong: #9cc5ff;
+    --accent-soft: #16294a;
+
+    --cta: #d9480f;
+    --cta-strong: #f0652b;
+    --cta-soft: #3d2115;
+
+    --success: #5ccb8f;
+    --warning: #e6ad5c;
+    --danger: #f28b82;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  }
 }
 
 @theme inline {
@@ -29,21 +83,44 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-brand-dark: var(--brand-dark);
+  --color-on-brand-dark: var(--on-brand-dark);
+  --color-cta: var(--cta);
+  --color-cta-strong: var(--cta-strong);
+  --color-cta-soft: var(--cta-soft);
+  --color-on-cta: var(--on-cta);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-fraunces);
+
+  --radius-card: var(--radius-card);
+  --radius-pill: var(--radius-pill);
+  --shadow-soft-sm: var(--shadow-sm);
+  --shadow-soft-md: var(--shadow-md);
+  --shadow-soft-lg: var(--shadow-lg);
+
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-jakarta);
+
+  /* Escala tipográfica */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.1;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
 }
 
 * {
   border-color: var(--border);
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: clip;
 }
 
 ::selection {
@@ -51,32 +128,44 @@ body {
   color: white;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Mantida porque dezenas de telas usam a classe: agora é só peso e espaçamento. */
 .font-display {
-  font-family: var(--font-fraunces), serif;
-  font-feature-settings: "ss01" 1;
-  letter-spacing: -0.01em;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.link-underline {
-  background-image: linear-gradient(var(--accent), var(--accent));
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 1px;
-  transition: background-size 0.2s ease;
+/* Carrossel horizontal sem barra visível (categorias no celular). */
+.no-scrollbar {
+  scrollbar-width: none;
 }
-.link-underline:hover {
-  background-size: 100% 1px;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.grain {
-  position: relative;
+.skeleton {
+  background: var(--surface-muted);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
-.grain::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

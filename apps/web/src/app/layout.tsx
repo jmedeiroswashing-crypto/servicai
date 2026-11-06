@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/Navbar";
@@ -8,34 +8,44 @@ import { TermsGate } from "@/components/TermsGate";
 import { BusinessModeGate } from "@/components/BusinessModeGate";
 import { ServiceTypeGate } from "@/components/ServiceTypeGate";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
-  style: ["normal", "italic"],
-});
+const SITE_URL = "https://servicai.vercel.app";
+const SITE_DESCRIPTION =
+  "Encontre profissionais perto de você, receba propostas grátis e converse pelo chat antes de contratar.";
 
 export const metadata: Metadata = {
-  title: "ServiçAi — Intermediação inteligente de serviços",
-  description:
-    "Conecte-se a empresas e profissionais autônomos verificados com ajuda de Inteligência Artificial, avaliações reais e pagamento protegido.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "ServiçAi: encontre o profissional certo, perto de você",
+    template: "%s | ServiçAi",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "ServiçAi",
+  manifest: "/manifest.webmanifest",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "ServiçAi",
+    url: SITE_URL,
+    title: "ServiçAi: encontre o profissional certo, perto de você",
+    description: SITE_DESCRIPTION,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b1c33",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${jakarta.variable} h-full font-sans antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>

@@ -1,0 +1,13 @@
+{
+  "name": "ServiçAi",
+  "short_name": "ServiçAi",
+  "description": "Encontre profissionais perto de você, receba propostas grátis e converse pelo chat antes de contratar.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1c33",
+  "theme_color": "#0b1c33",
+  "icons": [
+    { "src": "/logo-icon.png", "sizes": "any", "type": "image/png" }
+  ]
+}
