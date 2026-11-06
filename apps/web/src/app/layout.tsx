@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { SectionTabs } from "@/components/SectionTabs";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { SplashIntro } from "@/components/home/SplashIntro";
 import { HERO_IMAGES } from "@/lib/images";
 import { BusinessModeGate } from "@/components/BusinessModeGate";
 import { ServiceTypeGate } from "@/components/ServiceTypeGate";
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <Providers>
+          <SplashIntro />
           <Navbar />
           <SectionTabs />
           <main className="flex-1">{children}</main>

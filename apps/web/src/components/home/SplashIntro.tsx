@@ -1,28 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
 import { LOGO_S_PATH } from '@/components/Logo';
 
-const SESSION_KEY = 'servicai:splash-seen';
 const INTRO_MS = 1300;
 const LEAVE_MS = 450;
-
-function alreadySeen() {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) === '1';
-  } catch {
-    return true;
-  }
-}
-
-function markSeen() {
-  try {
-    sessionStorage.setItem(SESSION_KEY, '1');
-  } catch {
-    // Sem sessionStorage a abertura pode repetir, sem outro efeito.
-  }
-}
 
 interface LogoTarget {
   x: number;
@@ -31,25 +15,20 @@ interface LogoTarget {
 }
 
 /**
- * Abertura exibida uma vez por sessão, com a home já carregada por baixo. No fim,
- * a logo vai até a posição medida no header enquanto o fundo desaparece. Quem
- * prefere menos movimento não vê a animação.
+ * Abertura exibida sempre que o site carrega. Já vem no HTML, para a página não
+ * aparecer antes dela, e o conteúdo carrega por baixo. No fim, a logo vai até a
+ * posição medida no header enquanto o fundo desaparece. A área /conserto tem marca
+ * própria, e quem prefere menos movimento não vê a animação.
  */
 export function SplashIntro() {
-  const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+  const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);
   const [target, setTarget] = useState<LogoTarget | null>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const gradientId = useId();
-
-  useEffect(() => {
-    if (reducedMotion || alreadySeen()) return;
-    markSeen();
-    // sessionStorage só existe no navegador, então decide depois de montar.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisible(true);
-  }, [reducedMotion]);
+  const enabled = visible && !reducedMotion && !pathname.startsWith('/conserto');
 
   const leave = useCallback(() => {
     const logo = logoRef.current?.getBoundingClientRect();
@@ -65,10 +44,10 @@ export function SplashIntro() {
   }, []);
 
   useEffect(() => {
-    if (!visible || leaving) return;
+    if (!enabled || leaving) return;
     const timer = setTimeout(leave, INTRO_MS);
     return () => clearTimeout(timer);
-  }, [visible, leaving, leave]);
+  }, [enabled, leaving, leave]);
 
   useEffect(() => {
     if (!leaving) return;
@@ -76,10 +55,20 @@ export function SplashIntro() {
     return () => clearTimeout(timer);
   }, [leaving]);
 
-  if (!visible) return null;
+  if (!enabled) return null;
 
   return (
-    <div onClick={leave} className={`fixed inset-0 z-[200] flex items-center justify-center ${leaving ? 'pointer-events-none' : 'cursor-pointer'}`}>
+    <div
+      onClick={leave}
+      className={`splash-intro fixed inset-0 z-[200] flex items-center justify-center motion-reduce:hidden ${
+        leaving ? 'pointer-events-none' : 'cursor-pointer'
+      }`}
+    >
+      {/* Sem JavaScript a abertura não terminaria sozinha. */}
+      <noscript>
+        <style>{'.splash-intro{display:none}'}</style>
+      </noscript>
+
       <motion.div
         aria-hidden="true"
         className="absolute inset-0 bg-brand-dark"

@@ -210,14 +210,18 @@ npm run dev              # http://localhost:3000
   `node scripts/list-test-providers.mjs` em `apps/api`; o script não apaga dados.
 - **Sem dados inventados**: tempo de resposta, preço e pedidos recentes vêm do banco e
   somem quando não há dados. Distância e bairro não aparecem porque o banco não os guarda.
-- **Fotos**: `PEXELS_API_KEY=... node scripts/download-images.mjs` em `apps/web` baixa as
-  fotos e gera `public/images/CREDITS.md`. Sem elas, os cards usam um fundo gradiente.
+- **Fotos**: a lista fica em `apps/web/scripts/download-images.mjs`. Rode o script em
+  `apps/web` para baixar, otimizar e gerar `public/images/CREDITS.md`. Categoria sem foto
+  usa um fundo gradiente (hoje, Saúde e Pets).
 - **Páginas por serviço e cidade**: as cidades de `/eletricista/recife` ficam em
   `apps/web/src/lib/seo-pages.ts`. Cada combinação gera um arquivo no build, então novas
   cidades aumentam o tamanho do site e do app Android.
-- **Variáveis opcionais do site**: `NEXT_PUBLIC_WHATSAPP_NUMBER` (com DDI, só dígitos),
-  `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` e `NEXT_PUBLIC_TIKTOK_URL`. O
-  que não estiver definido não aparece.
+- **Contato**: os WhatsApps de suporte ficam em `apps/web/src/lib/site-config.ts`. As redes
+  sociais usam `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` e
+  `NEXT_PUBLIC_TIKTOK_URL`; a que não estiver definida não aparece.
+- **Publicação**: um push na `main` publica site e API juntos. Rode
+  `npx prisma migrate deploy` em `apps/api`, com a URL do Session pooler, **antes** de
+  enviar código que dependa de uma migração nova.
 
 ## Roadmap (fora do escopo desta primeira entrega)
 

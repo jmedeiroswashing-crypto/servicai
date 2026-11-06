@@ -1,4 +1,66 @@
 {
-  "hero": [],
-  "categories": {}
+  "hero": [
+    {
+      "src": "/images/hero/profissional-1.webp",
+      "alt": "Eletricista trabalhando em um quadro de luz"
+    },
+    {
+      "src": "/images/hero/profissional-2.webp",
+      "alt": "Profissional de limpeza usando um aspirador"
+    },
+    {
+      "src": "/images/hero/profissional-3.webp",
+      "alt": "Encanador instalando conexões"
+    },
+    {
+      "src": "/images/hero/profissional-4.webp",
+      "alt": "Barbeiro atendendo um cliente"
+    }
+  ],
+  "categories": {
+    "reformas-e-construcao": {
+      "src": "/images/categorias/reformas-e-construcao.webp",
+      "alt": "Pedreiro trabalhando em uma fundação"
+    },
+    "casa-e-manutencao": {
+      "src": "/images/categorias/casa-e-manutencao.webp",
+      "alt": "Profissional fazendo a limpeza de uma casa"
+    },
+    "assistencia-tecnica": {
+      "src": "/images/categorias/assistencia-tecnica.webp",
+      "alt": "Técnico consertando um celular"
+    },
+    "automotivo": {
+      "src": "/images/categorias/automotivo.webp",
+      "alt": "Mecânico trabalhando no motor de um carro"
+    },
+    "beleza": {
+      "src": "/images/categorias/beleza.webp",
+      "alt": "Profissional cortando cabelo em um salão"
+    },
+    "cuidados": {
+      "src": "/images/categorias/cuidados.webp",
+      "alt": "Cuidadora acompanhando uma idosa em casa"
+    },
+    "eventos": {
+      "src": "/images/categorias/eventos.webp",
+      "alt": "Fotógrafo trabalhando em um evento"
+    },
+    "fretes-e-mudancas": {
+      "src": "/images/categorias/fretes-e-mudancas.webp",
+      "alt": "Profissionais carregando caixas de uma mudança"
+    },
+    "aulas": {
+      "src": "/images/categorias/aulas.webp",
+      "alt": "Professora dando aula para uma aluna"
+    },
+    "tecnologia-e-design": {
+      "src": "/images/categorias/tecnologia-e-design.webp",
+      "alt": "Desenvolvedor trabalhando no computador"
+    },
+    "juridico-e-financeiro": {
+      "src": "/images/categorias/juridico-e-financeiro.webp",
+      "alt": "Advogado atendendo clientes em um escritório"
+    }
+  }
 }

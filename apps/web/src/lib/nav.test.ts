@@ -29,6 +29,7 @@ describe('menus por perfil', () => {
       expect(items[2]).toMatchObject({ label: 'Publicar', primary: true });
     }
     expect(getBottomNav(undefined)[4].href).toBe('/login');
+    expect(getBottomNav(undefined).map((item) => item.href)).not.toContain('/mensagens');
     expect(getBottomNav('CLIENTE')[4].href).toBe('/perfil');
   });
 

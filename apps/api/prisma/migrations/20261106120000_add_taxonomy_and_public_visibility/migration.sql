@@ -187,3 +187,11 @@ SET "profileComplete" = (
 )
 FROM "User" u
 WHERE u."id" = p."userId";
+
+-- Contas de teste identificadas pelo nome e confirmadas pelo responsável em 2026-11-06.
+-- Ficam escondidas de clientes; nenhum registro é apagado.
+UPDATE "ProviderProfile" p
+SET "isTest" = true
+FROM "User" u
+WHERE u."id" = p."userId"
+  AND u."name" IN ('Debug Prestador', 'Seller WS', 'Vendedor PF', 'Vendedor Prestador', 'Prestador Ativo', 'Prestador Parado', 'Outro Prestador', 'Paulo Prestador', 'Nina Prestadora', 'Bruna Prestadora', 'Rafael Prestador', 'João Prestador');

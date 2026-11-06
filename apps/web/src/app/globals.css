@@ -151,6 +151,17 @@ body {
   display: none;
 }
 
+/* Se o JavaScript falhar depois de carregar, a abertura não prende a pessoa. */
+.splash-intro {
+  animation: splash-failsafe 0s linear 6s forwards;
+}
+
+@keyframes splash-failsafe {
+  to {
+    visibility: hidden;
+  }
+}
+
 .skeleton {
   background: var(--surface-muted);
   animation: skeleton-pulse 1.4s ease-in-out infinite;

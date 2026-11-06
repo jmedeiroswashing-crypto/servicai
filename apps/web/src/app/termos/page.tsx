@@ -4,7 +4,7 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 export default function TermosPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
-      <Link href="/perfil" className="mb-6 flex w-fit items-center gap-1.5 text-sm text-foreground-muted hover:text-ink">
+      <Link href="/" className="mb-6 flex w-fit items-center gap-1.5 text-sm text-foreground-muted hover:text-ink">
         <ArrowLeft size={14} /> Voltar
       </Link>
       <h1 className="font-display text-3xl text-ink">Termos de Uso</h1>
@@ -15,8 +15,7 @@ export default function TermosPage() {
           <p className="font-medium text-ink">Aviso importante — rascunho sem validade jurídica ainda</p>
           <p className="mt-1">
             Este texto é um rascunho estruturado, <strong>não revisado nem aprovado por um advogado</strong>. Não
-            use como proteção jurídica definitiva antes de uma revisão formal. Trechos marcados com{' '}
-            <code className="text-xs">[PREENCHER]</code> precisam dos dados reais da empresa.
+            use como proteção jurídica definitiva antes de uma revisão formal.
           </p>
         </div>
       </div>
@@ -38,7 +37,7 @@ export default function TermosPage() {
         <section>
           <h2 className="mb-2 font-medium text-ink">2. O que é o ServiçAi</h2>
           <p>
-            O ServiçAi, operado por <strong>[PREENCHER: razão social]</strong>, é um marketplace que conecta
+            O ServiçAi é um marketplace que conecta
             clientes a profissionais autônomos e empresas prestadoras de serviço. A plataforma é apenas uma{' '}
             <strong>intermediária</strong>: não presta os serviços anunciados e não é parte no contrato firmado
             diretamente entre cliente e prestador.
@@ -66,8 +65,8 @@ export default function TermosPage() {
             <strong className="text-ink">O ServiçAi não garante, não arbitra e não se responsabiliza</strong> pela
             qualidade dos serviços prestados, por prejuízos financeiros, materiais ou de qualquer natureza
             decorrentes de negociações realizadas entre usuários. O
-            selo de &ldquo;identidade verificada&rdquo; confirma apenas que um documento foi analisado pela nossa
-            equipe — não é garantia de idoneidade, qualidade do serviço ou ausência de risco.
+            selo de &ldquo;identidade verificada&rdquo; confirma apenas que um documento foi analisado, de forma
+            automática ou pela nossa equipe. Não é garantia de idoneidade, qualidade do serviço ou ausência de risco.
           </p>
         </section>
 
@@ -103,7 +102,7 @@ export default function TermosPage() {
         <section>
           <h2 className="mb-2 font-medium text-ink">8. Propriedade intelectual</h2>
           <p>
-            A marca ServiçAi, seu logotipo e o software da plataforma pertencem a <strong>[PREENCHER]</strong>. O
+            A marca ServiçAi, seu logotipo e o software da plataforma pertencem aos responsáveis pelo ServiçAi. O
             conteúdo que você publica (fotos, descrições, avaliações) continua sendo seu, mas você concede à
             plataforma licença para exibi-lo dentro do ServiçAi para o funcionamento do serviço.
           </p>
@@ -128,9 +127,8 @@ export default function TermosPage() {
         <section>
           <h2 className="mb-2 font-medium text-ink">11. Lei aplicável e foro</h2>
           <p>
-            Estes Termos são regidos pela legislação brasileira. Fica eleito o foro da comarca de{' '}
-            <strong>[PREENCHER: cidade/estado]</strong> para dirimir eventuais controvérsias, com renúncia a
-            qualquer outro, por mais privilegiado que seja.
+            Estes Termos são regidos pela legislação brasileira. Eventuais controvérsias serão resolvidas no foro
+            definido pela legislação aplicável.
           </p>
         </section>
 

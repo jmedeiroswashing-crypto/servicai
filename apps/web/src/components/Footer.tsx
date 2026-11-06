@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HAS_IMAGE_CREDITS } from '@/lib/images';
 import { isChromeHidden } from '@/lib/nav';
-import { SOCIAL_LINKS, WHATSAPP_NUMBER, whatsappSupportUrl } from '@/lib/site-config';
+import { SOCIAL_LINKS, SUPPORT_WHATSAPP, whatsappUrl } from '@/lib/site-config';
 import { Logo } from './Logo';
 
 const COLUMNS = [
@@ -59,13 +59,14 @@ export function Footer() {
                     </Link>
                   </li>
                 ))}
-                {column.title === 'Ajuda' && WHATSAPP_NUMBER && (
-                  <li>
-                    <a href={whatsappSupportUrl()} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                      Contato via WhatsApp
-                    </a>
-                  </li>
-                )}
+                {column.title === 'Ajuda' &&
+                  SUPPORT_WHATSAPP.map((contact) => (
+                    <li key={contact.number}>
+                      <a href={whatsappUrl(contact.number)} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                        WhatsApp {contact.label}
+                      </a>
+                    </li>
+                  ))}
               </ul>
             </nav>
           ))}

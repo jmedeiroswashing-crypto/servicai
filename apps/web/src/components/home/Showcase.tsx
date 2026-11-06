@@ -22,7 +22,7 @@ export function ComingSoon({ city }: { city: string | null }) {
       <h3 className="mt-3 text-lg font-semibold text-ink">
         {city ? `Ainda estamos chegando em ${city}` : 'Ainda estamos chegando na sua região'}
       </h3>
-      <p className="mt-1 text-sm text-foreground-muted">Publique seu pedido e avisamos os profissionais assim que entrarem.</p>
+      <p className="mt-1 text-sm text-foreground-muted">Publique seu pedido para os profissionais da região poderem enviar propostas.</p>
       <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
         <Link
           href="/solicitar"

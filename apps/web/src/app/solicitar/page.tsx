@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Send, Sparkles, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore, hasSession } from '@/store/auth-store';
+import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import { useCidadesPorEstado } from '@/lib/use-cidades';
 import type { IntakeResult, PriceEstimate, RequestDraft } from '@/lib/types';
-import { loginUrl } from '@/lib/redirect';
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
@@ -348,9 +348,39 @@ export default function SolicitarPage() {
   const [mode, setMode] = useState<'ia' | 'formulario'>('ia');
 
   useEffect(() => {
-    if (!hasSession()) router.push(loginUrl());
-    else if (user && user.role !== 'CLIENTE') router.push('/');
-  }, [token, user, router]);
+    if (user && user.role !== 'CLIENTE') router.push('/');
+  }, [user, router]);
+
+  // Visitante vê o que a página faz e decide se quer criar a conta.
+  if (!token) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">
+        <h1 className="font-display text-3xl text-ink">Publique seu pedido</h1>
+        <p className="mt-2 text-foreground-muted">
+          Conte o que você precisa, e os profissionais da sua região que oferecem esse serviço podem enviar propostas.
+          Publicar é grátis.
+        </p>
+        <p className="mt-4 text-sm text-foreground-muted">Para publicar e receber as propostas, você precisa de uma conta.</p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/cadastro?tipo=CLIENTE&next=%2Fsolicitar"
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-on-accent hover:bg-accent-strong"
+          >
+            Criar conta grátis
+          </Link>
+          <Link
+            href="/login/cliente?next=%2Fsolicitar"
+            className="flex min-h-11 items-center justify-center rounded-lg border border-border px-5 text-sm font-medium text-ink hover:border-accent"
+          >
+            Já tenho conta
+          </Link>
+          <Link href="/buscar" className="flex min-h-11 items-center justify-center px-5 text-sm font-medium text-accent hover:underline">
+            Continuar olhando
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">

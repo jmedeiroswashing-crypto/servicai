@@ -1,8 +1,8 @@
-/**
- * Canais públicos da empresa, definidos por variável de ambiente. O que não estiver
- * configurado simplesmente não aparece, para o site nunca mostrar contato inventado.
- */
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') ?? '';
+/** Canais públicos da empresa. Redes sociais sem endereço configurado não aparecem. */
+export const SUPPORT_WHATSAPP = [
+  { label: '(68) 99218-6867', number: '5568992186867' },
+  { label: '(68) 99226-3953', number: '5568992263953' },
+];
 
 export const SOCIAL_LINKS = [
   { label: 'Instagram', href: process.env.NEXT_PUBLIC_INSTAGRAM_URL },
@@ -10,8 +10,8 @@ export const SOCIAL_LINKS = [
   { label: 'TikTok', href: process.env.NEXT_PUBLIC_TIKTOK_URL },
 ].filter((link): link is { label: string; href: string } => !!link.href);
 
-export function whatsappSupportUrl(message = 'Olá! Preciso de ajuda com o ServiçAi.') {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+export function whatsappUrl(number: string, message = 'Olá! Preciso de ajuda com o ServiçAi.') {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
 export const SITE_URL = 'https://servicai.vercel.app';

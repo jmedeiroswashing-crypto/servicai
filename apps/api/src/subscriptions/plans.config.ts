@@ -76,7 +76,6 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
       'Até 60 propostas de oportunidades por mês',
       'Estatísticas de desempenho do perfil',
       'Visualizações do perfil e aparições em buscas',
-      'Selo Prata de destaque',
     ],
   },
   BUSINESS: {
@@ -101,7 +100,6 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
       'Prioridade máxima nas buscas',
       'Propostas de oportunidades ilimitadas',
       'Insights avançados de desempenho',
-      'Selo de prestador verificado',
     ],
   },
   PREMIUM: {
@@ -124,7 +122,6 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
       'Prioridade máxima nas buscas',
       'Propostas de oportunidades ilimitadas',
       'Insights avançados de desempenho',
-      'Selo de prestador verificado',
     ],
   },
 };

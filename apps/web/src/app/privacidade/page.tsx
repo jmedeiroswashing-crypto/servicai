@@ -4,7 +4,7 @@ import { ArrowLeft, AlertTriangle } from 'lucide-react';
 export default function PrivacidadePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16">
-      <Link href="/perfil" className="mb-6 flex w-fit items-center gap-1.5 text-sm text-foreground-muted hover:text-ink">
+      <Link href="/" className="mb-6 flex w-fit items-center gap-1.5 text-sm text-foreground-muted hover:text-ink">
         <ArrowLeft size={14} /> Voltar
       </Link>
       <h1 className="font-display text-3xl text-ink">Política de Privacidade</h1>
@@ -17,8 +17,7 @@ export default function PrivacidadePage() {
             Este texto foi estruturado para cobrir os pontos que a LGPD (Lei Geral de Proteção de Dados) exige, mas{' '}
             <strong>não foi revisado nem aprovado por um advogado</strong>. Como o ServiçAi trata CPF, CNPJ e foto de
             documento de identidade (dados sensíveis), a revisão jurídica é indispensável antes de operar
-            publicamente. Trechos marcados com <code className="text-xs">[PREENCHER]</code> precisam dos dados reais
-            da empresa.
+            publicamente.
           </p>
         </div>
       </div>
@@ -29,13 +28,12 @@ export default function PrivacidadePage() {
         <section>
           <h2 className="mb-2 font-medium text-ink">1. Quem somos</h2>
           <p>
-            O ServiçAi é operado por <strong>[PREENCHER: razão social]</strong>, inscrita no CNPJ{' '}
-            <strong>[PREENCHER]</strong>, com sede em <strong>[PREENCHER: endereço]</strong>. Para qualquer assunto
-            relacionado a dados pessoais, entre em contato pela nossa{' '}
+            O ServiçAi é uma plataforma que conecta clientes a profissionais. Para qualquer assunto relacionado a
+            dados pessoais, entre em contato pela nossa{' '}
             <Link href="/ajuda" className="text-accent hover:underline">
               Central de Ajuda
             </Link>{' '}
-            ou pelo e-mail <strong>[PREENCHER: e-mail do encarregado de dados / DPO]</strong>.
+            ou pelo WhatsApp (68) 99218-6867 ou (68) 99226-3953.
           </p>
         </section>
 
@@ -66,8 +64,13 @@ export default function PrivacidadePage() {
             </li>
             <li>
               <strong className="text-ink">Armazenamento local no seu dispositivo:</strong> usamos o armazenamento
-              local do navegador (localStorage) para manter você conectado e lembrar que você já confirmou estes
-              termos — isso não é compartilhado com terceiros.
+              local do navegador (localStorage) para manter você conectado e lembrar a cidade escolhida. Isso não é
+              compartilhado com terceiros.
+            </li>
+            <li>
+              <strong className="text-ink">Localização (opcional):</strong> se você tocar em &ldquo;Usar minha
+              localização&rdquo; e permitir no navegador, suas coordenadas são enviadas ao serviço BigDataCloud para
+              identificar sua cidade. Não guardamos essas coordenadas.
             </li>
           </ul>
         </section>

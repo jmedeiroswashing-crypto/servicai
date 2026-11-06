@@ -9,7 +9,6 @@ import { ForProviders } from '@/components/home/ForProviders';
 import { HomeHero } from '@/components/home/HomeHero';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Showcase } from '@/components/home/Showcase';
-import { SplashIntro } from '@/components/home/SplashIntro';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function HomePage() {
@@ -24,7 +23,6 @@ export default function HomePage() {
 
   return (
     <>
-      <SplashIntro />
       <HomeHero />
       <CategoryGrid />
       <PopularServices />

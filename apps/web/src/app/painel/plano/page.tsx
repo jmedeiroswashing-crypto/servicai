@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, ArrowRight, Eye, Search, MessageSquare, Send, ShieldCheck } from 'lucide-react';
+import { Check, ArrowRight, Eye, Search, MessageSquare, Send } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { PerformanceMetrics, Subscription } from '@/lib/types';
@@ -87,11 +87,6 @@ function MeuPlanoContent() {
             <p className="font-display text-2xl text-ink">{planLabel}</p>
             <p className={`mt-1 text-sm font-medium ${status.tone}`}>{status.label}</p>
           </div>
-          {subscription.config.verifiedBadge && (
-            <span className="flex items-center gap-1.5 border border-border px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-ink">
-              <ShieldCheck size={14} className="text-accent" /> Prestador verificado
-            </span>
-          )}
         </div>
 
         <ul className="mt-6 grid gap-2.5 text-sm sm:grid-cols-2">

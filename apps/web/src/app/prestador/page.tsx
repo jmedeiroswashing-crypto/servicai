@@ -146,7 +146,7 @@ function ProviderProfileContent() {
           <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
             {provider.user.name}
             {provider.user.identityStatus === 'APROVADO' && (
-              <span className="flex items-center gap-1 text-sm font-medium text-accent" title="Identidade verificada pela equipe ServiçAi">
+              <span className="flex items-center gap-1 text-sm font-medium text-accent" title="Documento de identidade enviado e aprovado">
                 <ShieldCheck size={18} />
               </span>
             )}

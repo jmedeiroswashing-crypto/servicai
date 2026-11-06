@@ -14,40 +14,30 @@ const FEATURES = [
   { icon: ClipboardList, title: 'Ordens de serviço', text: 'Reservas organizadas e controle de aparelhos para assistências técnicas.' },
 ];
 
-/** Desenho da tela do painel com valores de exemplo, identificado como tal. */
+/** Desenho da tela do painel, sem números: mostra o que existe, não resultados. */
 function PanelMockup() {
   return (
     <figure className="rounded-card border border-white/15 bg-surface p-4 text-foreground shadow-soft-lg">
-      <figcaption className="mb-3 text-xs font-medium text-foreground-muted">Exemplo ilustrativo do painel</figcaption>
+      <figcaption className="mb-3 text-xs font-medium text-foreground-muted">Como o painel se organiza</figcaption>
       <div aria-hidden="true">
         <div className="grid grid-cols-3 gap-2">
-          {[
-            ['Entradas', 'R$ 4.800', 'text-success'],
-            ['Saídas', 'R$ 1.350', 'text-danger'],
-            ['Lucro', 'R$ 3.450', 'text-ink'],
-          ].map(([label, value, color]) => (
+          {['Entradas', 'Saídas', 'Lucro'].map((label) => (
             <div key={label} className="min-w-0 rounded-lg bg-surface-muted p-2.5">
               <p className="text-xs text-foreground-muted">{label}</p>
-              <p className={`truncate text-sm font-bold ${color}`}>{value}</p>
+              <div className="mt-2 h-3 w-3/4 rounded-pill bg-border" />
             </div>
           ))}
         </div>
         <div className="mt-3 rounded-lg bg-surface-muted p-3">
-          <div className="flex justify-between text-xs text-foreground-muted">
-            <span>Meta do mês</span>
-            <span>69%</span>
-          </div>
+          <p className="text-xs text-foreground-muted">Meta do mês</p>
           <div className="mt-1.5 h-2 overflow-hidden rounded-pill bg-border">
-            <div className="h-full w-[69%] rounded-pill bg-accent" />
+            <div className="h-full w-1/2 rounded-pill bg-accent" />
           </div>
         </div>
         <ul className="mt-3 space-y-2 text-sm">
-          {[
-            ['09:00', 'Instalação de tomadas'],
-            ['14:30', 'Visita para orçamento'],
-          ].map(([time, title]) => (
-            <li key={time} className="flex items-center gap-3 rounded-lg bg-surface-muted p-2.5">
-              <span className="font-semibold text-accent-strong">{time}</span>
+          {['Agenda de hoje', 'Próximo lembrete'].map((title) => (
+            <li key={title} className="flex items-center gap-3 rounded-lg bg-surface-muted p-2.5">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />
               <span className="truncate text-ink">{title}</span>
             </li>
           ))}

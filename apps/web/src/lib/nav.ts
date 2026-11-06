@@ -5,6 +5,7 @@ import {
   Flag,
   Home,
   LayoutDashboard,
+  LayoutGrid,
   LogIn,
   MessageCircle,
   Plus,
@@ -87,7 +88,8 @@ export function getBottomNav(role?: Role, mode?: BusinessMode | null): NavItem[]
     { href: '/', label: 'Início', icon: Home },
     { href: '/buscar', label: 'Buscar', icon: Search },
     { href: '/solicitar', label: 'Publicar', icon: Plus, primary: true },
-    MENSAGENS,
+    // Visitante navega sem conta: Mensagens só levaria ao login.
+    role ? MENSAGENS : { href: '/categorias', label: 'Categorias', icon: LayoutGrid },
     role
       ? { href: '/perfil', label: 'Perfil', icon: User, match: ['/perfil', '/minhas-solicitacoes', '/minhas-reservas'] }
       : { href: '/login', label: 'Entrar', icon: LogIn },
