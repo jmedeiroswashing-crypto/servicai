@@ -64,10 +64,15 @@ export function isChromeHidden(pathname: string): boolean {
   );
 }
 
+/** O painel do prestador tem moldura própria: nada da navegação do site aparece nele. */
+export function hasOwnShell(pathname: string): boolean {
+  return isChromeHidden(pathname) || pathname === '/painel' || pathname.startsWith('/painel/');
+}
+
 /** Links do empresário e do admin no header. Cliente e visitante usam busca e botões. */
 export function getHeaderLinks(role?: Role, mode?: BusinessMode | null): NavItem[] {
   if (role === 'PRESTADOR') {
-    if (mode === 'GESTAO') return [AGENDA, CLIENTES, DINHEIRO];
+    if (mode === 'GESTAO') return [INICIO, AGENDA, CLIENTES, DINHEIRO];
     if (mode === 'CONTRATACAO') return [INICIO, AGENDA, NOVOS_CLIENTES, MENSAGENS];
     return [INICIO, AGENDA, CLIENTES, DINHEIRO, MENSAGENS];
   }
@@ -96,10 +101,10 @@ export function getBottomNav(role?: Role, mode?: BusinessMode | null): NavItem[]
   ];
 }
 
-export function getAccountMenu(role?: Role, mode?: BusinessMode | null): { href: string; label: string }[] {
+export function getAccountMenu(role?: Role): { href: string; label: string }[] {
   if (role === 'PRESTADOR') {
     return [
-      { href: mode === 'GESTAO' ? '/painel/agenda' : '/painel', label: 'Modo prestador' },
+      { href: '/painel', label: 'Modo prestador' },
       { href: '/painel/perfil', label: 'Dados profissionais' },
       { href: '/painel/plano', label: 'Meu plano' },
       { href: '/perfil', label: 'Meu perfil' },

@@ -685,7 +685,7 @@ export default function PerfilPrestadorPage() {
         Essas informações definem em quais oportunidades você aparece no mural de clientes procurando serviços.
       </p>
 
-      <div className="mt-6 flex gap-6 border-b border-border text-sm">
+      <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-b border-border text-sm">
         <button
           onClick={() => setMode('ia')}
           className={`-mb-px flex items-center gap-1.5 border-b-2 pb-2.5 transition-colors ${

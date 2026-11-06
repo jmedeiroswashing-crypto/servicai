@@ -34,8 +34,8 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 
 function ClientCard({ client, message }: { client: ClientSummary; message?: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border border-border p-5">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-4 border border-border p-5">
+      <div className="flex min-w-0 items-center gap-3">
         {client.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={client.avatarUrl} alt={client.name} className="h-11 w-11 rounded-full object-cover" />
@@ -53,7 +53,7 @@ function ClientCard({ client, message }: { client: ClientSummary; message?: stri
           )}
         </div>
       </div>
-      <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div className="text-right">
           <p className="flex items-center justify-end gap-1 text-sm text-foreground-muted">
             <Wallet size={13} /> Total gasto

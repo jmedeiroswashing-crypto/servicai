@@ -15,9 +15,9 @@ import { useCidadesPorEstado } from '@/lib/use-cidades';
 import { withNext } from '@/lib/redirect';
 import type { BusinessMode, Role } from '@/lib/types';
 
-function destinationFor(role: Role, businessMode?: BusinessMode | null) {
+function destinationFor(role: Role) {
   if (role !== 'PRESTADOR') return '/';
-  return businessMode === 'GESTAO' ? '/painel/agenda' : '/painel';
+  return '/painel';
 }
 
 type Mode = 'login' | 'cadastro';
@@ -93,7 +93,7 @@ export function AuthForm({
         if (wrongDoor) {
           toast.info(account.role === 'CLIENTE' ? 'Esta é uma conta de cliente.' : 'Esta é uma conta de empresário.');
         }
-        router.push(!wrongDoor && next ? next : destinationFor(account.role, account.businessMode));
+        router.push(!wrongDoor && next ? next : destinationFor(account.role));
         return;
       }
 
@@ -123,7 +123,7 @@ export function AuthForm({
 
       const res = await api.post('/auth/register', payload);
       setAuth(res.data.accessToken, res.data.user);
-      router.push(next ?? destinationFor(res.data.user.role, res.data.user.businessMode));
+      router.push(next ?? destinationFor(res.data.user.role));
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??

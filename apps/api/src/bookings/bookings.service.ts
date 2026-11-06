@@ -267,7 +267,11 @@ export class BookingsService {
         select: { priceQuoted: true },
       }),
       this.prisma.expense.findMany({ where: { providerId, date: { gte: start, lt: end } }, select: { amount: true } }),
-      this.prisma.income.findMany({ where: { providerId, date: { gte: start, lt: end } }, select: { amount: true } }),
+      // A reserva concluída já está somada acima: aqui entra só o lançamento manual.
+      this.prisma.income.findMany({
+        where: { providerId, source: IncomeSource.MANUAL, date: { gte: start, lt: end } },
+        select: { amount: true },
+      }),
     ]);
 
     const revenue = bookings.reduce((sum, b) => sum + (b.priceQuoted ?? 0), 0) + incomes.reduce((sum, i) => sum + i.amount, 0);
@@ -295,8 +299,9 @@ export class BookingsService {
         where: { providerId: provider.id },
         select: { amount: true, date: true },
       }),
+      // A reserva concluída também gera um Income: filtrar evita contar a mesma venda duas vezes.
       this.prisma.income.findMany({
-        where: { providerId: provider.id },
+        where: { providerId: provider.id, source: IncomeSource.MANUAL },
         select: { amount: true, date: true },
       }),
     ]);

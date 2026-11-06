@@ -13,7 +13,7 @@ describe('menus por perfil', () => {
   });
 
   it('só gestão não vê busca de clientes nem mensagens', () => {
-    expect(labels(getHeaderLinks('PRESTADOR', 'GESTAO'))).toEqual(['Agenda', 'Clientes', 'Dinheiro']);
+    expect(labels(getHeaderLinks('PRESTADOR', 'GESTAO'))).toEqual(['Início', 'Agenda', 'Clientes', 'Dinheiro']);
     expect(getSectionTabs('/painel/clientes', 'PRESTADOR', 'GESTAO')).toEqual([]);
   });
 
@@ -42,7 +42,7 @@ describe('menus por perfil', () => {
   it('nenhum menu de prestador perde as funções antigas', () => {
     const reachable = [
       ...getHeaderLinks('PRESTADOR', 'COMPLETO').flatMap((item) => [item.href, ...(item.match ?? [])]),
-      ...getAccountMenu('PRESTADOR', 'COMPLETO').map((item) => item.href),
+      ...getAccountMenu('PRESTADOR').map((item) => item.href),
     ];
     for (const route of ['/painel/caixa', '/painel/calendario', '/painel/faturamento', '/painel/clientes', '/painel/conseguir-clientes', '/painel/perfil', '/painel/plano', '/perfil']) {
       expect(reachable).toContain(route);

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HAS_IMAGE_CREDITS } from '@/lib/images';
-import { isChromeHidden } from '@/lib/nav';
+import { hasOwnShell } from '@/lib/nav';
 import { SOCIAL_LINKS, SUPPORT_WHATSAPP, whatsappUrl } from '@/lib/site-config';
 import { Logo } from './Logo';
 
@@ -37,7 +37,7 @@ const linkClass = 'inline-flex min-h-9 items-center hover:text-ink hover:underli
 
 export function Footer() {
   const pathname = usePathname();
-  if (isChromeHidden(pathname)) return null;
+  if (hasOwnShell(pathname)) return null;
 
   return (
     <footer className="mt-auto border-t border-border bg-surface-muted text-sm text-foreground-muted">

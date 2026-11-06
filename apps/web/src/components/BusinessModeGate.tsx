@@ -35,7 +35,7 @@ export function BusinessModeGate() {
     try {
       await api.patch('/providers/me/business-mode', { businessMode });
       setAuth(token!, { ...user!, businessMode });
-      if (businessMode === 'GESTAO') router.push('/painel/agenda');
+      if (businessMode === 'GESTAO') router.push('/painel');
     } catch {
       setSubmitting(null);
     }

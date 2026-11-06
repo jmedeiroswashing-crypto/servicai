@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MessageCircle, Plus } from 'lucide-react';
-import { getHeaderLinks, isChromeHidden, isItemActive } from '@/lib/nav';
+import { getHeaderLinks, hasOwnShell, isItemActive } from '@/lib/nav';
 import { useUnreadMessages } from '@/lib/use-unread-messages';
 import { useAuthStore } from '@/store/auth-store';
 import { AccountMenu } from './AccountMenu';
@@ -44,7 +44,7 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  if (isChromeHidden(pathname)) return null;
+  if (hasOwnShell(pathname)) return null;
 
   const links = getHeaderLinks(user?.role, user?.businessMode);
   const isClientOrVisitor = !user || user.role === 'CLIENTE';

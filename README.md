@@ -224,6 +224,28 @@ npm run dev              # http://localhost:3000
   deploy falha e a versão anterior continua no ar. Ao mudar site e banco juntos, publique
   a API primeiro e o site só depois de ela responder.
 
+### Painel de gestão do prestador
+
+O `/painel` segue o modelo do sistema Escala Business, adaptado a serviços, com moldura
+própria em `components/painel/PainelShell.tsx` e visual em `app/painel/escala.css`.
+
+- **Mapa**: `lib/painel/modulos.ts` lista cada módulo, seu grupo, a ajuda do "?" e quem o vê.
+  Quem escolheu "só contratação" não vê o financeiro; quem escolheu "só gestão" não vê a
+  captação de clientes.
+- **Correspondência com o modelo**: Vender virou Lançar serviço; Vendas, Serviços feitos;
+  Consertos, Quadro de serviços; Produtos, Perfil e serviços. Estoque, compras, etiquetas e
+  troca de usado não se aplicam a serviços.
+- **Contas**: `lib/painel/numeros.ts`. Faturamento é a soma das receitas (`Income`), e toda
+  reserva concluída com valor gera uma; lucro é faturamento menos despesas. Nada aqui é
+  pagamento confirmado: o app não processa pagamentos.
+- **Período**: `lib/painel/periodo.ts`. Vale para todas as telas com números, fica lembrado
+  no aparelho e usa o fuso do aparelho.
+- **Forma de pagamento e cliente** de um lançamento ficam no texto da descrição, sem coluna
+  própria no banco (`montarDescricao` e `lerDescricao`).
+- **Telas reaproveitadas**: Caixa, Calendário, Clientes, Agenda, Conseguir clientes, Perfil e
+  Plano mantêm a lógica antiga e herdam o visual pela classe `e-legado`.
+- **Ainda não existem**: contas a pagar com vencimento, equipe com permissões e assistente.
+
 ## Roadmap (fora do escopo desta primeira entrega)
 
 - App mobile de verdade em **Flutter/React Native** — hoje o "app" Android é o

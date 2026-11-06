@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageCircle, X } from 'lucide-react';
-import { isChromeHidden } from '@/lib/nav';
+import { hasOwnShell } from '@/lib/nav';
 import { SUPPORT_WHATSAPP, whatsappUrl } from '@/lib/site-config';
 
 export function WhatsAppButton() {
@@ -27,7 +27,7 @@ export function WhatsAppButton() {
     };
   }, [open]);
 
-  if (isChromeHidden(pathname) || pathname === '/mensagens') return null;
+  if (hasOwnShell(pathname) || pathname === '/mensagens') return null;
 
   return (
     <div

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getBottomNav, isChromeHidden, isItemActive, type NavItem } from '@/lib/nav';
+import { getBottomNav, hasOwnShell, isItemActive, type NavItem } from '@/lib/nav';
 import { useUnreadMessages } from '@/lib/use-unread-messages';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -54,7 +54,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
 
-  if (isChromeHidden(pathname)) return null;
+  if (hasOwnShell(pathname)) return null;
 
   const items = getBottomNav(user?.role, user?.businessMode);
 

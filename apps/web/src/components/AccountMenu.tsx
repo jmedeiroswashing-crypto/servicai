@@ -51,7 +51,7 @@ export function AccountMenu() {
           className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-card border border-border bg-surface py-1 text-foreground shadow-soft-lg"
         >
           <p className="truncate border-b border-border px-4 py-3 text-sm font-semibold text-ink">{user.name}</p>
-          {getAccountMenu(user.role, user.businessMode).map((item) => (
+          {getAccountMenu(user.role).map((item) => (
             <Link
               key={item.href + item.label}
               href={item.href}

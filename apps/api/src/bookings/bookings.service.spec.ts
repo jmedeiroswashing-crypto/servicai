@@ -328,6 +328,18 @@ describe('BookingsService', () => {
       expect(result.avgTicket).toBe(200);
       expect(result.totalServicesCompleted).toBe(1);
     });
+
+    it('não conta duas vezes a receita gerada pela própria reserva concluída', async () => {
+      const { service, prisma, providersService } = buildService();
+      providersService.findByUserId.mockResolvedValue({ id: 'provider1' });
+      prisma.booking.findMany.mockResolvedValue([]);
+
+      await service.getEarnings('user1');
+
+      expect(prisma.income.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { providerId: 'provider1', source: 'MANUAL' } }),
+      );
+    });
   });
 
   describe('getClients', () => {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getSectionTabs } from '@/lib/nav';
+import { getSectionTabs, hasOwnShell } from '@/lib/nav';
 import { useAuthStore } from '@/store/auth-store';
 
 /** Abas entre telas do mesmo assunto, como Caixa, Calendário e Gestão. */
@@ -11,7 +11,7 @@ export function SectionTabs() {
   const user = useAuthStore((s) => s.user);
   const tabs = getSectionTabs(pathname, user?.role, user?.businessMode);
 
-  if (tabs.length === 0) return null;
+  if (tabs.length === 0 || hasOwnShell(pathname)) return null;
 
   return (
     <nav aria-label="Seções" className="border-b border-border bg-surface">
