@@ -57,7 +57,10 @@ export function Navbar() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:px-6 lg:gap-3">
         <Link href="/" aria-label="ServiçAi, página inicial" className="shrink-0 rounded-lg">
-          <Logo onDark />
+          {/* A abertura da home mede esta posição para levar a logo até aqui. */}
+          <span data-brand-logo className="inline-flex">
+            <Logo onDark />
+          </span>
         </Link>
 
         {isClientOrVisitor && (

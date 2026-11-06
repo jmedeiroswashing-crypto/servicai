@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import type { UserProfile } from '@/lib/types';
@@ -40,7 +40,7 @@ export default function EditarPerfilPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
   }, [token, router]);
 
   const { data: user } = useQuery({

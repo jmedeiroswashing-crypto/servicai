@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, RotateCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/error-message';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { AdminOverview } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -17,7 +17,7 @@ export default function AdminPlanosPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'ADMIN') router.push('/');
   }, [token, user, router]);
 

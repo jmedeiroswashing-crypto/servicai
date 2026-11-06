@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Send, Sparkles, FileText, Images, Trash2, Pencil, X, Check, ShieldCheck, ShieldAlert, Clock3, ImagePlus } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import { WEEKDAYS, type BusinessHours, type DayHours } from '@/lib/business-hours';
@@ -664,7 +664,7 @@ export default function PerfilPrestadorPage() {
   const [mode, setMode] = useState<'ia' | 'formulario' | 'portfolio' | 'identidade'>('formulario');
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

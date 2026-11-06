@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, ArrowRight, Eye, Search, MessageSquare, Send, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { PerformanceMetrics, Subscription } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -31,7 +31,7 @@ function MeuPlanoContent() {
   const [showConfirmation, setShowConfirmation] = useState(!!ativado);
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

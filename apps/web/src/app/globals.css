@@ -20,6 +20,7 @@
   --accent: #1a6fe8;
   --accent-strong: #0f5fd1;
   --accent-soft: #dceafd;
+  --on-accent: #ffffff;
 
   /* Azul-marinho do header e do splash: igual nos dois modos. */
   --brand-dark: #0b1c33;
@@ -57,6 +58,7 @@
     --accent: #6aa9ff;
     --accent-strong: #9cc5ff;
     --accent-soft: #16294a;
+    --on-accent: #0b1220;
 
     --cta: #d9480f;
     --cta-strong: #f0652b;
@@ -83,6 +85,7 @@
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-brand-dark: var(--brand-dark);
   --color-on-brand-dark: var(--on-brand-dark);
   --color-cta: var(--cta);

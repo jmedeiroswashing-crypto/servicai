@@ -35,7 +35,7 @@ export default function AjudaPage() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/login?next=%2Fajuda"
-            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong"
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-on-accent hover:bg-accent-strong"
           >
             Entrar para enviar mensagem
           </Link>

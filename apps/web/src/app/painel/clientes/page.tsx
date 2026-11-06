@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Phone, Wallet, CalendarCheck, MessageCircle, Star, UserX } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { ClientSummary } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -87,7 +87,7 @@ export default function ClientesPage() {
   const [tab, setTab] = useState<Tab>('todos');
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

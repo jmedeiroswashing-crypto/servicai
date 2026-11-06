@@ -1,7 +1,8 @@
 # Reorganização da navegação do ServiçAi
 
 Data: 2026-11-05
-Status: aguardando revisão
+Status: substituída pelo briefing de redesign de 2026-11-06, que também muda o visual.
+Continuam valendo os logins separados, o retorno após login e os menus do prestador.
 
 ## Objetivo
 

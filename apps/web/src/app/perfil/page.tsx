@@ -26,7 +26,7 @@ import {
   Flag,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { isPushSupported, getCurrentPushSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import { PasswordInput } from '@/components/PasswordInput';
 import type { AuthUser, ProviderProfile, UserProfile } from '@/lib/types';
@@ -388,7 +388,7 @@ export default function MeuPerfilPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
   }, [token, router]);
 
   const { data: user, isLoading, isError } = useQuery({

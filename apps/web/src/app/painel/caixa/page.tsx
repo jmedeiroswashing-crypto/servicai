@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Wallet, ArrowDownCircle, ArrowUpCircle, Lock, LockOpen, History, Info } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { CashMovementType, CashRegister } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -168,7 +168,7 @@ export default function CaixaPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

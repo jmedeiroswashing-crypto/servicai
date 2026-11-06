@@ -7,7 +7,7 @@ import type { Socket } from 'socket.io-client';
 import { ArrowLeft, Send } from 'lucide-react';
 import { api } from '@/lib/api';
 import { createChatSocket } from '@/lib/socket';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { ChatConversation, ChatMessage } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -158,7 +158,7 @@ function MensagensContent() {
   const [activeId, setActiveId] = useState<string | null>(searchParams.get('c'));
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
   }, [token, router]);
 
   const { data: conversations, isLoading } = useQuery({

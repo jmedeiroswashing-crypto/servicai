@@ -6,6 +6,8 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BottomNav } from "@/components/BottomNav";
 import { SectionTabs } from "@/components/SectionTabs";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { HERO_IMAGES } from "@/lib/images";
 import { BusinessModeGate } from "@/components/BusinessModeGate";
 import { ServiceTypeGate } from "@/components/ServiceTypeGate";
 
@@ -34,6 +36,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     title: "ServiçAi: encontre o profissional certo, perto de você",
     description: SITE_DESCRIPTION,
+    images: [HERO_IMAGES[0]?.src ?? "/logo-icon.png"],
   },
 };
 
@@ -55,6 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1">{children}</main>
           <Footer />
           <BottomNav />
+          <WhatsAppButton />
           <BusinessModeGate />
           <ServiceTypeGate />
         </Providers>

@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { MapPin, Calendar, Clock3, Wallet, Users } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { UNLIMITED, type OpportunityMatch, type PerformanceMetrics } from '@/lib/types';
@@ -170,7 +170,7 @@ export default function OportunidadesPage({ embedded = false }: { embedded?: boo
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

@@ -99,8 +99,8 @@ export function CitySelector({ variant = 'header' }: { variant?: 'header' | 'her
 
   const triggerClass =
     variant === 'header'
-      ? 'text-on-brand-dark hover:bg-white/10'
-      : 'h-12 w-full border border-border bg-surface text-foreground hover:border-accent';
+      ? 'rounded-pill text-on-brand-dark hover:bg-white/10'
+      : 'h-12 w-full rounded-lg border border-border bg-surface text-foreground hover:border-accent';
 
   return (
     <div ref={rootRef} className={`relative min-w-0 ${variant === 'hero' ? 'w-full' : ''}`}>
@@ -110,7 +110,7 @@ export function CitySelector({ variant = 'header' }: { variant?: 'header' | 'her
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={city ? `Cidade selecionada: ${city}. Alterar cidade` : 'Escolher cidade'}
-        className={`flex min-h-11 min-w-0 max-w-full items-center gap-1.5 rounded-pill px-3 text-sm font-medium transition-colors duration-150 ${triggerClass}`}
+        className={`flex min-h-11 min-w-0 max-w-full items-center gap-1.5 px-3 text-sm font-medium transition-colors duration-150 ${triggerClass}`}
       >
         <MapPin size={16} className="shrink-0" aria-hidden="true" />
         <span className={`truncate ${variant === 'header' ? 'max-w-28 lg:max-w-40' : 'flex-1 text-left'}`}>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Flag, User, Star, Wrench, CalendarClock, ChevronDown, Info } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { Report, ReportStatus, ReportTargetType } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -165,7 +165,7 @@ export default function AdminDenunciasPage() {
   const [filter, setFilter] = useState<ReportStatus | 'TODAS'>('PENDENTE');
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'ADMIN') router.push('/');
   }, [token, user, router]);
 

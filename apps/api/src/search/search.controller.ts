@@ -46,7 +46,7 @@ export class SearchController {
             OR: [
               { specialty: { contains: intent.category, mode: 'insensitive' } },
               { categories: { has: intent.category } },
-              { categories: { hasSome: categoryLabelsMatching(intent.category) } },
+              { categories: { hasSome: [...categoryLabelsMatching(intent.category), ...categoryLabelsMatching(query)] } },
               { specialty: { contains: query, mode: 'insensitive' } },
             ],
           },

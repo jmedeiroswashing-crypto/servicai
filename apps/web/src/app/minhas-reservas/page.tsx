@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, Star, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { BookingDisputeSection } from '@/components/BookingDisputeSection';
 import type { Booking, BookingStatus } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
@@ -177,7 +177,7 @@ export default function MinhasReservasPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'CLIENTE') router.push('/');
   }, [token, user, router]);
 

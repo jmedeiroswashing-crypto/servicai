@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, Star, Plus, Check, X, Pencil, Ban } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
@@ -234,7 +234,7 @@ export default function MinhasSolicitacoesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'CLIENTE') router.push('/');
   }, [token, user, router]);
 

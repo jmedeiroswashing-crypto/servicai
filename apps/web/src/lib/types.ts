@@ -153,6 +153,8 @@ export interface ProviderProfile {
   reviews?: Review[];
   reviewCount?: number;
   respondsWithinHour?: boolean | null;
+  responseMinutes?: number | null;
+  priceFrom?: number | null;
   availableNow?: boolean;
   businessHours?: import('./business-hours').BusinessHours | null;
 }

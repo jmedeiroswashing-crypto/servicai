@@ -20,3 +20,12 @@ export const useAuthStore = create<AuthState>()(
     { name: 'servicai-auth' },
   ),
 );
+
+/**
+ * Use nas checagens de acesso. No primeiro render o hook ainda devolve token nulo
+ * para combinar com o HTML estático, mesmo com sessão salva: decidir por ele manda
+ * para o login quem só atualizou a página.
+ */
+export function hasSession(): boolean {
+  return !!useAuthStore.getState().token;
+}

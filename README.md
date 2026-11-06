@@ -194,6 +194,31 @@ npm run dev              # http://localhost:3000
 - **App Android** via Capacitor — empacota o mesmo frontend web como app nativo,
   sem lógica duplicada.
 
+### Home, navegação e vitrine pública
+
+- **Logins separados**: `/login` pergunta o tipo de conta e leva a `/login/cliente` ou
+  `/login/empresario`. As duas telas usam `POST /auth/login`; quem entra pela outra vai
+  para a própria área. O parâmetro `next` só aceita caminhos internos.
+- **Menus**: ficam em `apps/web/src/lib/nav.ts`, por perfil e modo de negócio, com barra
+  inferior no celular e abas entre telas do mesmo assunto.
+- **Design tokens**: só em `apps/web/src/app/globals.css`, incluindo o modo escuro.
+- **Taxonomia**: `apps/api/src/categories/taxonomy.ts`, com cópia idêntica em
+  `apps/web/src/lib/taxonomy.ts` (um teste confere) e dados gravados por migração.
+- **Vitrine pública**: `publicProviderWhere()` é a regra única. Exige `isTest = false` e
+  `profileComplete = true` (foto, nome, profissão, categoria e cidade válida) e esconde
+  quem escolheu "só gestão". Para revisar contas suspeitas, rode
+  `node scripts/list-test-providers.mjs` em `apps/api`; o script não apaga dados.
+- **Sem dados inventados**: tempo de resposta, preço e pedidos recentes vêm do banco e
+  somem quando não há dados. Distância e bairro não aparecem porque o banco não os guarda.
+- **Fotos**: `PEXELS_API_KEY=... node scripts/download-images.mjs` em `apps/web` baixa as
+  fotos e gera `public/images/CREDITS.md`. Sem elas, os cards usam um fundo gradiente.
+- **Páginas por serviço e cidade**: as cidades de `/eletricista/recife` ficam em
+  `apps/web/src/lib/seo-pages.ts`. Cada combinação gera um arquivo no build, então novas
+  cidades aumentam o tamanho do site e do app Android.
+- **Variáveis opcionais do site**: `NEXT_PUBLIC_WHATSAPP_NUMBER` (com DDI, só dígitos),
+  `NEXT_PUBLIC_INSTAGRAM_URL`, `NEXT_PUBLIC_FACEBOOK_URL` e `NEXT_PUBLIC_TIKTOK_URL`. O
+  que não estiver definido não aparece.
+
 ## Roadmap (fora do escopo desta primeira entrega)
 
 - App mobile de verdade em **Flutter/React Native** — hoje o "app" Android é o

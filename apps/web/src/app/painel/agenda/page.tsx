@@ -22,7 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { BookingDisputeSection } from '@/components/BookingDisputeSection';
 import { isPushSupported, getCurrentPushSubscription } from '@/lib/push';
 import type { Appointment, Booking, BookingStatus } from '@/lib/types';
@@ -342,7 +342,7 @@ export default function AgendaPage() {
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

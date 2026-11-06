@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Zap, MapPin, Calendar, Clock3, X, Pencil } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import type { MyDeal } from '@/lib/types';
@@ -270,7 +270,7 @@ export default function VagasUltimaHoraPainelPage({ embedded = false }: { embedd
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

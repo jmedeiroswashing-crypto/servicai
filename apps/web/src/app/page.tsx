@@ -1,289 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  Hammer,
-  Home as HomeIcon,
-  Car,
-  Sparkles,
-  HeartPulse,
-  Scale,
-  Code2,
-  GraduationCap,
-  FileText,
-  Inbox,
-  MessageCircle,
-  Star,
-  ShieldCheck,
-  Lock,
-  Wrench,
-  Paintbrush,
-  Sparkle,
-  Scissors,
-  Truck,
-  Laptop,
-  Wind,
-  BookOpen,
-  MapPin,
-  Rocket,
-  TrendingUp,
-  AlertTriangle,
-  RotateCw,
-} from 'lucide-react';
-import { SearchBar } from '@/components/SearchBar';
-import { ProviderCard } from '@/components/ProviderCard';
-import { api } from '@/lib/api';
-import { extractErrorMessage } from '@/lib/error-message';
+import { CategoryGrid } from '@/components/home/CategoryGrid';
+import { PopularServices, RecentRequests } from '@/components/home/DemandSections';
+import { Faq } from '@/components/home/Faq';
+import { ForProviders } from '@/components/home/ForProviders';
+import { HomeHero } from '@/components/home/HomeHero';
+import { HowItWorks } from '@/components/home/HowItWorks';
+import { Showcase } from '@/components/home/Showcase';
+import { SplashIntro } from '@/components/home/SplashIntro';
 import { useAuthStore } from '@/store/auth-store';
-import type { ProviderProfile } from '@/lib/types';
-
-const CATEGORY_GROUPS = [
-  { label: 'Reformas e reparos', query: 'eletricista, encanador, pedreiro, pintor', icon: Hammer },
-  { label: 'Casa', query: 'limpeza, mudanças, ar-condicionado', icon: HomeIcon },
-  { label: 'Autos', query: 'mecânico, lava rápido', icon: Car },
-  { label: 'Beleza', query: 'estética, salão, barbeiro', icon: Sparkles },
-  { label: 'Saúde', query: 'médico, psicólogo, odontologia', icon: HeartPulse },
-  { label: 'Consultoria', query: 'advogado', icon: Scale },
-  { label: 'Tecnologia', query: 'desenvolvedor, designer', icon: Code2 },
-  { label: 'Aulas', query: 'professor particular', icon: GraduationCap },
-];
-
-const POPULAR_SERVICES = [
-  { label: 'Eletricista', icon: Wrench },
-  { label: 'Encanador', icon: Wrench },
-  { label: 'Pintor', icon: Paintbrush },
-  { label: 'Limpeza', icon: Sparkle },
-  { label: 'Barbeiro', icon: Scissors },
-  { label: 'Mudanças', icon: Truck },
-  { label: 'Desenvolvedor', icon: Laptop },
-  { label: 'Ar-condicionado', icon: Wind },
-  { label: 'Professor Particular', icon: BookOpen },
-];
-
-function ClientHome() {
-  const {
-    data,
-    isError: isTopRatedError,
-    error: topRatedError,
-    refetch: refetchTopRated,
-  } = useQuery({
-    queryKey: ['providers', 'top-rated'],
-    queryFn: async () => (await api.get<ProviderProfile[]>('/providers', { params: { take: 8 } })).data,
-  });
-
-  const { data: allProviders } = useQuery({
-    queryKey: ['providers', 'cities'],
-    queryFn: async () => (await api.get<ProviderProfile[]>('/providers', { params: { take: 100 } })).data,
-  });
-
-  const cities = allProviders
-    ? Array.from(new Set(allProviders.map((p) => p.city).filter(Boolean))).slice(0, 10)
-    : [];
-
-  return (
-    <div>
-      <section className="border-b border-border">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/hero-worker-transparent.png"
-          alt=""
-          className="mx-auto w-full max-w-2xl"
-        />
-        <div className="mx-auto max-w-xl px-4 py-10 text-center sm:px-6">
-          <SearchBar large />
-          <p className="mt-8 text-sm text-foreground-muted">
-            Não achou quem procurava?{' '}
-            <Link href="/solicitar" className="text-accent hover:underline">
-              Publique uma solicitação
-            </Link>{' '}
-            e deixe os profissionais da sua região virem até você.
-          </p>
-        </div>
-      </section>
-
-      <section className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <div className="grid grid-cols-4 gap-x-2 gap-y-6 sm:grid-cols-8">
-            {CATEGORY_GROUPS.map(({ label, query, icon: Icon }) => (
-              <Link
-                key={label}
-                href={`/buscar?q=${encodeURIComponent(query)}`}
-                className="group flex flex-col items-center gap-2 text-center"
-              >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-soft text-accent-strong transition-colors group-hover:bg-accent group-hover:text-white">
-                  <Icon size={24} strokeWidth={1.75} />
-                </span>
-                <span className="text-xs leading-tight text-foreground-muted group-hover:text-ink">{label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="font-display text-2xl text-ink">Serviços mais buscados</h2>
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {POPULAR_SERVICES.map(({ label, icon: Icon }) => (
-              <Link
-                key={label}
-                href={`/buscar?q=${encodeURIComponent(label)}`}
-                className="group flex items-center gap-3 border border-border px-4 py-3 transition-colors hover:border-accent"
-              >
-                <Icon size={18} className="text-accent shrink-0" strokeWidth={1.75} />
-                <span className="text-sm text-ink">{label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {(isTopRatedError || (data && data.length > 0)) && (
-        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <div className="mb-8 flex items-end justify-between border-b border-border pb-4">
-            <h2 className="font-display text-2xl text-ink">Melhor avaliados</h2>
-            <Link href="/buscar" className="flex items-center gap-1 text-sm text-foreground-muted hover:text-ink">
-              Ver todas <ArrowRight size={14} />
-            </Link>
-          </div>
-          {isTopRatedError ? (
-            <div className="flex flex-col items-start gap-3 border border-danger/30 bg-danger/5 p-5">
-              <p className="flex items-center gap-2 text-danger">
-                <AlertTriangle size={16} /> {extractErrorMessage(topRatedError, 'Não foi possível carregar agora.')}
-              </p>
-              <button
-                onClick={() => refetchTopRated()}
-                className="flex items-center gap-1.5 border border-danger px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger hover:text-white"
-              >
-                <RotateCw size={12} /> Tentar de novo
-              </button>
-            </div>
-          ) : (
-            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-              {data!.map((provider) => (
-                <ProviderCard key={provider.id} provider={provider} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      <section className="border-t border-border bg-surface-muted">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="font-display text-2xl text-ink">Como funciona</h2>
-          <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: FileText, title: 'Descreva o que precisa', text: 'Preencha o formulário ou converse com a IA — ela monta o pedido pra você.' },
-              { icon: Inbox, title: 'Receba propostas', text: 'Prestadores da sua região e categoria enviam valor, prazo e mensagem.' },
-              { icon: MessageCircle, title: 'Compare e contrate', text: 'Converse pelo chat, tire dúvidas e escolha quem contratar.' },
-              { icon: Star, title: 'Avalie o serviço', text: 'Sua nota ajuda a formar o Score do prestador pra próxima pessoa.' },
-            ].map((step, i) => (
-              <div key={step.title}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
-                    <step.icon size={18} strokeWidth={1.75} />
-                  </span>
-                  <span className="text-xs font-medium text-foreground-muted">Passo {i + 1}</span>
-                </div>
-                <h3 className="mt-3 font-medium text-ink">{step.title}</h3>
-                <p className="mt-1 text-sm text-foreground-muted">{step.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <h2 className="font-display text-2xl text-ink">Por que confiar no ServiçAi</h2>
-          <div className="mt-10 grid gap-8 sm:grid-cols-3">
-            <div>
-              <ShieldCheck size={22} className="text-accent" strokeWidth={1.75} />
-              <h3 className="mt-3 font-medium text-ink">Score ServiçAi</h3>
-              <p className="mt-1 text-sm text-foreground-muted">
-                Calculado a partir de avaliações reais de pontualidade, qualidade, preço e atendimento — não só uma média de estrelas.
-              </p>
-            </div>
-            <div>
-              <MessageCircle size={22} className="text-accent" strokeWidth={1.75} />
-              <h3 className="mt-3 font-medium text-ink">Converse antes de contratar</h3>
-              <p className="mt-1 text-sm text-foreground-muted">
-                Chat direto com o prestador pra tirar dúvidas e combinar detalhes antes de fechar negócio.
-              </p>
-            </div>
-            <div>
-              <Lock size={22} className="text-accent" strokeWidth={1.75} />
-              <h3 className="mt-3 font-medium text-ink">Sua privacidade primeiro</h3>
-              <p className="mt-1 text-sm text-foreground-muted">
-                Telefone, e-mail e endereço só aparecem pro prestador depois que você decide seguir com a conversa.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {cities.length > 0 && (
-        <section className="border-t border-border bg-surface-muted">
-          <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-foreground-muted">
-              <span className="flex items-center gap-1.5 font-medium text-ink">
-                <MapPin size={15} className="text-accent" /> Já disponível em:
-              </span>
-              {cities.map((city) => (
-                <span key={city} className="border border-border px-3 py-1 text-ink">
-                  {city}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="border-t border-border bg-ink">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:items-center">
-          <div>
-            <p className="mb-3 flex items-center gap-1.5 text-sm uppercase tracking-[0.15em] text-white/60">
-              <Rocket size={14} /> Para prestadores
-            </p>
-            <h2 className="font-display text-3xl text-white">
-              Preste serviços e apareça pra quem já está procurando por você.
-            </h2>
-            <Link
-              href="/comecar"
-              className="mt-8 inline-flex items-center gap-2 bg-accent px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85"
-            >
-              Criar perfil de prestador <ArrowRight size={15} />
-            </Link>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-3">
-            <div>
-              <TrendingUp size={20} className="text-accent" strokeWidth={1.75} />
-              <p className="mt-2 text-sm text-white/80">
-                <strong className="text-white">5 propostas/mês</strong> no plano Grátis, até ilimitadas no Premium
-              </p>
-            </div>
-            <div>
-              <ShieldCheck size={20} className="text-accent" strokeWidth={1.75} />
-              <p className="mt-2 text-sm text-white/80">
-                <strong className="text-white">Selo verificado</strong> pra quem assina o plano Premium
-              </p>
-            </div>
-            <div>
-              <Star size={20} className="text-accent" strokeWidth={1.75} />
-              <p className="mt-2 text-sm text-white/80">
-                Ranking de busca leva em conta <strong className="text-white">nota e avaliações</strong>, não só quem paga mais
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
 
 export default function HomePage() {
   const { user } = useAuthStore();
@@ -295,5 +22,17 @@ export default function HomePage() {
 
   if (user?.role === 'PRESTADOR') return null;
 
-  return <ClientHome />;
+  return (
+    <>
+      <SplashIntro />
+      <HomeHero />
+      <CategoryGrid />
+      <PopularServices />
+      <Showcase />
+      <RecentRequests />
+      <HowItWorks />
+      <ForProviders />
+      <Faq />
+    </>
+  );
 }

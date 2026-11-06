@@ -392,7 +392,7 @@ export function AuthForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-accent py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-accent-strong disabled:opacity-50"
+          className="min-h-11 w-full rounded-lg bg-accent py-3 text-sm font-semibold text-on-accent transition-colors duration-150 hover:bg-accent-strong disabled:opacity-50"
         >
           {isSubmitting ? 'Enviando...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
         </button>

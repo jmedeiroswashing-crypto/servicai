@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { CalendarDay } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
 
@@ -36,7 +36,7 @@ export default function CalendarioPage() {
   const [selected, setSelected] = useState<CalendarDay | null>(null);
 
   useEffect(() => {
-    if (!token) router.push(loginUrl());
+    if (!hasSession()) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 
