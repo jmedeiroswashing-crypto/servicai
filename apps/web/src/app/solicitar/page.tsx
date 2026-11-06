@@ -11,6 +11,7 @@ import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import { useCidadesPorEstado } from '@/lib/use-cidades';
 import type { IntakeResult, PriceEstimate, RequestDraft } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
@@ -347,7 +348,7 @@ export default function SolicitarPage() {
   const [mode, setMode] = useState<'ia' | 'formulario'>('ia');
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'CLIENTE') router.push('/');
   }, [token, user, router]);
 

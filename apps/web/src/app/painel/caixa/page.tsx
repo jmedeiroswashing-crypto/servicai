@@ -7,6 +7,7 @@ import { Wallet, ArrowDownCircle, ArrowUpCircle, Lock, LockOpen, History, Info }
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { CashMovementType, CashRegister } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
@@ -167,7 +168,7 @@ export default function CaixaPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

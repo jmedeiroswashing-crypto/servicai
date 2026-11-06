@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import type { LastMinuteDeal } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const inputClass = 'border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink';
 
@@ -101,7 +102,7 @@ export default function VagasUltimaHoraPage() {
 
   function handleClaim(id: string) {
     if (!token) {
-      router.push('/login');
+      router.push(loginUrl());
       return;
     }
     if (user?.role !== 'CLIENTE') return;

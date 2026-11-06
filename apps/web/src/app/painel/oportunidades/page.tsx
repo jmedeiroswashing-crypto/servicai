@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import { UNLIMITED, type OpportunityMatch, type PerformanceMetrics } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const inputClass = 'border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-ink';
 
@@ -169,7 +170,7 @@ export default function OportunidadesPage({ embedded = false }: { embedded?: boo
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

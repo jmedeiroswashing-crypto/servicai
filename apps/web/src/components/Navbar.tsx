@@ -1,186 +1,129 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import {
-  LogOut,
-  LayoutDashboard,
-  CreditCard,
-  MessageCircle,
-  FileText,
-  UserCog,
-  Zap,
-  Menu,
-  X,
-  User,
-  Users,
-  Briefcase,
-  CalendarDays,
-  CalendarRange,
-  Wallet,
-  BarChart3,
-  CalendarClock,
-  Search,
-  Megaphone,
-  Flag,
-  ShieldCheck,
-} from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { MessageCircle, Plus } from 'lucide-react';
+import { getHeaderLinks, isChromeHidden, isItemActive } from '@/lib/nav';
+import { useUnreadMessages } from '@/lib/use-unread-messages';
 import { useAuthStore } from '@/store/auth-store';
+import { AccountMenu } from './AccountMenu';
+import { CitySelector } from './CitySelector';
+import { Logo } from './Logo';
 import { NotificationBell } from './NotificationBell';
-import { useState } from 'react';
+import { SearchBar } from './SearchBar';
 
-interface NavLink {
-  href: string;
-  label: string;
-  icon: typeof Search;
+function MessagesLink() {
+  const { unreadCount, markAllRead } = useUnreadMessages();
+  return (
+    <Link
+      href="/mensagens"
+      onClick={markAllRead}
+      aria-label={unreadCount > 0 ? `Mensagens, ${unreadCount} não lidas` : 'Mensagens'}
+      className="relative hidden h-11 w-11 items-center justify-center rounded-full text-on-brand-dark transition-colors duration-150 hover:bg-white/10 md:flex"
+    >
+      <MessageCircle size={20} aria-hidden="true" />
+      {unreadCount > 0 && (
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-cta px-1 text-[0.65rem] font-semibold text-on-cta">
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </span>
+      )}
+    </Link>
+  );
 }
-
-function getNavLinks(role?: string, businessMode?: string | null): NavLink[] {
-  if (role === 'PRESTADOR' && businessMode === 'GESTAO') {
-    // Quem escolheu "só gestão" não quer aparecer pra clientes nem se
-    // preocupar com isso — a navegação reflete só o que a pessoa pediu.
-    return [
-      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/caixa', label: 'Caixa', icon: Wallet },
-      { href: '/painel/calendario', label: 'Calendário', icon: CalendarRange },
-      { href: '/painel/faturamento', label: 'Gestão', icon: BarChart3 },
-      { href: '/painel/clientes', label: 'Clientes', icon: Users },
-      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
-      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
-      { href: '/perfil', label: 'Meu perfil', icon: User },
-    ];
-  }
-  if (role === 'PRESTADOR' && businessMode === 'CONTRATACAO') {
-    // Quem só quer ser encontrado e contratado não precisa da ferramenta de
-    // Gestão (faturamento/despesas/metas) — mas mantém Agenda, já que os
-    // compromissos vêm das reservas que essa contratação gera.
-    return [
-      { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
-      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
-      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
-      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
-      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
-      { href: '/perfil', label: 'Meu perfil', icon: User },
-    ];
-  }
-  if (role === 'PRESTADOR') {
-    return [
-      { href: '/painel', label: 'Visão geral', icon: LayoutDashboard },
-      { href: '/painel/agenda', label: 'Agenda', icon: CalendarDays },
-      { href: '/painel/caixa', label: 'Caixa', icon: Wallet },
-      { href: '/painel/calendario', label: 'Calendário', icon: CalendarRange },
-      { href: '/painel/faturamento', label: 'Gestão', icon: BarChart3 },
-      { href: '/painel/clientes', label: 'Clientes', icon: Users },
-      { href: '/painel/conseguir-clientes', label: 'Conseguir clientes', icon: Briefcase },
-      { href: '/painel/perfil', label: 'Dados profissionais', icon: UserCog },
-      { href: '/painel/plano', label: 'Meu plano', icon: CreditCard },
-      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
-      { href: '/perfil', label: 'Meu perfil', icon: User },
-    ];
-  }
-  if (role === 'CLIENTE') {
-    return [
-      { href: '/buscar', label: 'Buscar serviços', icon: Search },
-      { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-      { href: '/solicitar', label: 'Publicar solicitação', icon: FileText },
-      { href: '/minhas-solicitacoes', label: 'Minhas solicitações', icon: LayoutDashboard },
-      { href: '/minhas-reservas', label: 'Minhas reservas', icon: CalendarClock },
-      { href: '/mensagens', label: 'Mensagens', icon: MessageCircle },
-      { href: '/perfil', label: 'Meu perfil', icon: User },
-    ];
-  }
-  if (role === 'ADMIN') {
-    return [
-      { href: '/admin/denuncias', label: 'Denúncias', icon: Flag },
-      { href: '/admin/identidade', label: 'Verificação de identidade', icon: ShieldCheck },
-      { href: '/admin/planos', label: 'Planos', icon: CreditCard },
-      { href: '/perfil', label: 'Meu perfil', icon: User },
-    ];
-  }
-  // Visitante (não logado)
-  return [
-    { href: '/buscar', label: 'Buscar serviços', icon: Search },
-    { href: '/vagas-ultima-hora', label: 'Vagas de última hora', icon: Zap },
-    { href: '/comecar', label: 'Anuncie seu serviço', icon: Megaphone },
-    { href: '/precos', label: 'Planos', icon: CreditCard },
-  ];
-}
-
-const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
 
 export function Navbar() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const pathname = usePathname();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const links = getNavLinks(user?.role, user?.businessMode);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  // /conserto é uma área totalmente separada (login próprio de loja de
-  // conserto) — esconde em todas as subpáginas, incluindo a de
-  // acompanhamento público com token dinâmico.
-  if (HIDDEN_PATHS.includes(pathname) || pathname.startsWith('/conserto')) return null;
+  if (isChromeHidden(pathname)) return null;
+
+  const links = getHeaderLinks(user?.role, user?.businessMode);
+  const isClientOrVisitor = !user || user.role === 'CLIENTE';
 
   return (
-    <header className="sticky top-0 z-50 border-b border-ink bg-ink">
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.png" alt="" className="h-8 w-auto" />
-          <span className="font-display hidden text-xl font-medium tracking-tight sm:inline">
-            <span className="text-white">Servic</span>
-            <span className="text-accent">AI</span>
-          </span>
+    <header
+      className={`sticky top-0 z-40 bg-brand-dark pt-[env(safe-area-inset-top)] transition-shadow duration-200 ${
+        scrolled ? 'shadow-soft-md' : ''
+      }`}
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:px-6 lg:gap-3">
+        <Link href="/" aria-label="ServiçAi, página inicial" className="shrink-0 rounded-lg">
+          <Logo onDark />
         </Link>
 
-        {/* Todas as funções, em fila, direto na barra — sem menu escondido */}
-        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto sm:flex" aria-label="Navegação principal">
-          {links.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-[0.82rem] transition-colors ${
-                  active ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <link.icon size={13} /> {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {isClientOrVisitor && (
+          <>
+            <div className="hidden min-w-0 flex-1 md:block lg:max-w-md">
+              <SearchBar compact />
+            </div>
+            <CitySelector />
+          </>
+        )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
-          <button
-            onClick={() => setMobileNavOpen((v) => !v)}
-            aria-label="Abrir menu"
-            className="flex items-center justify-center p-1.5 text-white sm:hidden"
-          >
-            {mobileNavOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+        {links.length > 0 && (
+          <nav aria-label="Navegação principal" className="ml-2 hidden min-w-0 items-center gap-1 md:flex">
+            {links.map((link) => {
+              const active = isItemActive(pathname, link);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex min-h-11 items-center whitespace-nowrap rounded-pill px-3 text-sm font-medium transition-colors duration-150 ${
+                    active ? 'bg-white/15 text-on-brand-dark' : 'text-on-brand-dark/80 hover:bg-white/10 hover:text-on-brand-dark'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
+        <div className="ml-auto flex shrink-0 items-center gap-1 lg:gap-2">
+          {isClientOrVisitor && (
+            <Link
+              href="/solicitar"
+              className="hidden min-h-11 items-center gap-1.5 whitespace-nowrap rounded-pill bg-cta px-4 text-sm font-semibold text-on-cta transition-colors duration-150 hover:bg-cta-strong lg:flex"
+            >
+              <Plus size={16} aria-hidden="true" /> Publicar pedido
+            </Link>
+          )}
+
           {user ? (
             <>
               <NotificationBell />
-              <button
-                onClick={() => {
-                  logout();
-                  router.push('/');
-                }}
-                className="hidden items-center gap-1.5 border border-white/25 px-3 py-1.5 text-sm text-white hover:border-danger hover:text-danger sm:flex"
-              >
-                <LogOut size={14} /> Sair
-              </button>
+              {user.role === 'CLIENTE' && <MessagesLink />}
+              <div className={user.role === 'CLIENTE' ? 'hidden md:block' : ''}>
+                <AccountMenu />
+              </div>
             </>
           ) : (
             <>
-              <Link href="/login" className="hidden text-sm text-white/70 transition-colors hover:text-white sm:block">
+              <Link
+                href="/comecar?tipo=empresario"
+                className="hidden min-h-11 items-center whitespace-nowrap rounded-pill px-3 text-sm font-medium text-on-brand-dark/90 transition-colors duration-150 hover:bg-white/10 xl:flex"
+              >
+                Seja um prestador
+              </Link>
+              <Link
+                href="/login"
+                className="hidden min-h-11 items-center rounded-pill px-3 text-sm font-medium text-on-brand-dark transition-colors duration-150 hover:bg-white/10 md:flex"
+              >
                 Entrar
               </Link>
               <Link
                 href="/comecar"
-                className="border border-accent bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
+                className="hidden min-h-11 items-center whitespace-nowrap rounded-pill border border-white/40 px-4 text-sm font-semibold text-on-brand-dark transition-colors duration-150 hover:bg-white/10 md:flex"
               >
                 Criar conta
               </Link>
@@ -188,37 +131,6 @@ export function Navbar() {
           )}
         </div>
       </div>
-
-      {mobileNavOpen && (
-        <nav className="flex max-h-[75vh] flex-col overflow-y-auto border-t border-white/15 bg-ink px-4 py-2 text-sm text-white/85 sm:hidden">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileNavOpen(false)}
-              className="flex items-center gap-2.5 border-b border-white/10 py-3"
-            >
-              <link.icon size={15} className="shrink-0 text-white/60" /> {link.label}
-            </Link>
-          ))}
-          {user ? (
-            <button
-              onClick={() => {
-                logout();
-                setMobileNavOpen(false);
-                router.push('/');
-              }}
-              className="flex items-center gap-2.5 py-3 text-left text-danger"
-            >
-              <LogOut size={15} /> Sair
-            </button>
-          ) : (
-            <Link href="/login" onClick={() => setMobileNavOpen(false)} className="py-3">
-              Entrar
-            </Link>
-          )}
-        </nav>
-      )}
     </header>
   );
 }

@@ -26,6 +26,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { BookingDisputeSection } from '@/components/BookingDisputeSection';
 import { isPushSupported, getCurrentPushSubscription } from '@/lib/push';
 import type { Appointment, Booking, BookingStatus } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function PushReminderNotice() {
   const [status, setStatus] = useState<{ supported: boolean; subscribed: boolean } | null>(null);
@@ -341,7 +342,7 @@ export default function AgendaPage() {
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

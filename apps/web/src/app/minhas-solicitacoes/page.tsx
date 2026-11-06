@@ -12,6 +12,7 @@ import { CategorySelect } from '@/components/CategorySelect';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import { useCidadesPorEstado } from '@/lib/use-cidades';
 import type { Proposal, ServiceRequestItem } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function formatMoney(v?: number | null) {
   if (v == null) return null;
@@ -233,7 +234,7 @@ export default function MinhasSolicitacoesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'CLIENTE') router.push('/');
   }, [token, user, router]);
 

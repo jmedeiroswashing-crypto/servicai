@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import Link from 'next/link';
 import { useMutation } from '@tanstack/react-query';
 import { LifeBuoy, CheckCircle2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -12,13 +12,8 @@ const inputClass =
 
 export default function AjudaPage() {
   const { token } = useAuthStore();
-  const router = useRouter();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (!token) router.push('/login');
-  }, [token, router]);
 
   const mutation = useMutation({
     mutationFn: async () => (await api.post('/support/contact', { subject, message })).data,
@@ -28,7 +23,32 @@ export default function AjudaPage() {
     },
   });
 
-  if (!token) return null;
+  if (!token) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">
+        <h1 className="flex items-center gap-2 font-display text-3xl text-ink">
+          <LifeBuoy size={26} aria-hidden="true" /> Central de ajuda
+        </h1>
+        <p className="mt-2 text-foreground-muted">
+          Para enviar uma mensagem à nossa equipe, entre na sua conta. A resposta chega no e-mail cadastrado.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/login?next=%2Fajuda"
+            className="flex min-h-11 items-center justify-center rounded-lg bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-strong"
+          >
+            Entrar para enviar mensagem
+          </Link>
+          <Link
+            href="/esqueci-senha"
+            className="flex min-h-11 items-center justify-center rounded-lg border border-border px-5 text-sm font-medium text-ink hover:border-accent"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12 sm:px-6 sm:py-16">

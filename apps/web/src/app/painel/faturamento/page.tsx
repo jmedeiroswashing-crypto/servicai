@@ -27,6 +27,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { EXPENSE_CATEGORIES, suggestExpenseCategory } from '@/lib/expense-categories';
 import { ReceiptScanButton } from '@/components/ReceiptScanButton';
 import type { Booking, Earnings, Expense, FinancialGoal, Income } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function isToday(dateStr: string) {
   const d = new Date(dateStr);
@@ -549,7 +550,7 @@ export default function FaturamentoPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

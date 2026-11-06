@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { AuthenticatedImage } from '@/components/AuthenticatedImage';
 import type { IdentityVerification } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function PendingRow({ item }: { item: IdentityVerification }) {
   const queryClient = useQueryClient();
@@ -129,7 +130,7 @@ export default function AdminIdentidadePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'ADMIN') router.push('/');
   }, [token, user, router]);
 

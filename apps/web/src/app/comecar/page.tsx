@@ -1,134 +1,111 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowRight } from 'lucide-react';
+import { Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Briefcase, Search } from 'lucide-react';
 import { MinimalLogo } from '@/components/MinimalLogo';
+import { safeNext, withNext } from '@/lib/redirect';
 
-const SPLASH_VISIBLE_MS = 1800;
-const SPLASH_TRANSITION_MS = 400;
-
-const OPTIONS = [
+const BUSINESS_OPTIONS = [
   {
-    id: 'cliente',
-    title: 'Contratar serviços',
-    description: 'Quero encontrar e contratar um profissional pra resolver algo.',
-    image: '/comecar/contratar.png',
-    href: '/cadastro?tipo=CLIENTE',
-  },
-  {
-    id: 'gestao',
-    title: 'Gestão inteligente do meu negócio',
-    description: 'Já tenho clientes — quero organizar agenda, receita e despesas num só lugar.',
     image: '/comecar/gestao.png',
+    title: 'Organizar meu negócio',
+    description: 'Já tenho clientes e quero cuidar de agenda, receitas e despesas em um só lugar.',
     href: '/cadastro?tipo=PRESTADOR&modo=GESTAO',
   },
   {
-    id: 'completo',
-    title: 'Gestão inteligente e contratação dos meus serviços',
-    description: 'Quero organizar meu negócio e também receber novos clientes pelo ServiçAi.',
     image: '/comecar/completo.png',
+    title: 'Organizar e conseguir clientes',
+    description: 'Quero as ferramentas de gestão e também receber novos clientes pelo ServiçAi.',
     href: '/cadastro?tipo=PRESTADOR&modo=COMPLETO',
   },
   {
-    id: 'contratacao',
-    title: 'Contratação dos meus serviços',
-    description: 'Já tenho minha rotina organizada — só quero aparecer e receber novos clientes pelo ServiçAi.',
     image: '/comecar/contratacao.png',
+    title: 'Só conseguir clientes',
+    description: 'Minha rotina já está organizada. Só quero aparecer para novos clientes.',
     href: '/cadastro?tipo=PRESTADOR&modo=CONTRATACAO',
   },
 ];
 
-/**
- * Transição básica: entra com fade+leve zoom, fica parada um instante, sai
- * com fade — só pra marcar a passagem de uma área (abertura) pra outra
- * (perguntas). Clicável pra quem não quiser esperar.
- */
-function Splash({ onDone }: { onDone: () => void }) {
-  const [entered, setEntered] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+const cardClass =
+  'group flex items-center gap-4 rounded-card border border-border bg-surface p-4 transition duration-150 hover:-translate-y-0.5 hover:border-accent hover:shadow-soft-md sm:p-5';
 
-  useEffect(() => {
-    const enterFrame = requestAnimationFrame(() => setEntered(true));
-    const leaveTimer = setTimeout(() => setLeaving(true), SPLASH_VISIBLE_MS);
-    const doneTimer = setTimeout(onDone, SPLASH_VISIBLE_MS + SPLASH_TRANSITION_MS);
-    return () => {
-      cancelAnimationFrame(enterFrame);
-      clearTimeout(leaveTimer);
-      clearTimeout(doneTimer);
-    };
-  }, [onDone]);
-
-  function skip() {
-    setLeaving(true);
-    setTimeout(onDone, SPLASH_TRANSITION_MS);
-  }
+function ComecarContent() {
+  const params = useSearchParams();
+  const next = safeNext(params.get('next'));
+  const isBusiness = params.get('tipo') === 'empresario';
 
   return (
-    <button
-      onClick={skip}
-      aria-label="Pular introdução"
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-ink transition-opacity duration-[400ms] ${
-        leaving ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/comecar/splash.png"
-        alt="ServiçAi — Conectando pessoas a soluções"
-        className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ease-out ${
-          entered && !leaving ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
-        }`}
-      />
-    </button>
+    <div className="mx-auto max-w-2xl px-4 py-16">
+      <MinimalLogo />
+
+      {isBusiness ? (
+        <>
+          <Link
+            href={withNext('/comecar', next)}
+            className="mb-6 inline-flex min-h-11 items-center gap-1.5 text-sm text-foreground-muted hover:text-ink"
+          >
+            <ArrowLeft size={14} aria-hidden="true" /> Voltar
+          </Link>
+          <h1 className="font-display text-3xl text-ink">O que você quer fazer no ServiçAi?</h1>
+          <p className="mt-2 text-foreground-muted">Você pode mudar isso depois.</p>
+          <div className="mt-8 space-y-3">
+            {BUSINESS_OPTIONS.map((option) => (
+              <Link key={option.href} href={withNext(option.href, next)} className={cardClass}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={option.image} alt="" className="h-16 w-16 shrink-0 rounded-lg object-cover sm:h-20 sm:w-20" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-ink">{option.title}</span>
+                  <span className="mt-0.5 block text-sm text-foreground-muted">{option.description}</span>
+                </span>
+                <ArrowRight size={18} aria-hidden="true" className="shrink-0 text-foreground-muted group-hover:text-accent" />
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <h1 className="font-display text-3xl text-ink">Como você quer usar o ServiçAi?</h1>
+          <div className="mt-8 space-y-3">
+            <Link href={withNext('/cadastro?tipo=CLIENTE', next)} className={cardClass}>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
+                <Search size={22} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-ink">Quero contratar</span>
+                <span className="mt-0.5 block text-sm text-foreground-muted">Encontrar um profissional para resolver algo.</span>
+              </span>
+              <ArrowRight size={18} aria-hidden="true" className="shrink-0 text-foreground-muted group-hover:text-accent" />
+            </Link>
+            <Link href={withNext('/comecar?tipo=empresario', next)} className={cardClass}>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-strong">
+                <Briefcase size={22} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold text-ink">Sou empresário</span>
+                <span className="mt-0.5 block text-sm text-foreground-muted">Sou profissional autônomo ou tenho uma empresa.</span>
+              </span>
+              <ArrowRight size={18} aria-hidden="true" className="shrink-0 text-foreground-muted group-hover:text-accent" />
+            </Link>
+          </div>
+        </>
+      )}
+
+      <p className="mt-8 text-center text-sm text-foreground-muted">
+        Já tem conta?{' '}
+        <Link href={withNext('/login', next)} className="font-medium text-accent hover:underline">
+          Entrar
+        </Link>
+      </p>
+    </div>
   );
 }
 
 export default function ComecarPage() {
-  const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
-
-  if (showSplash) {
-    return <Splash onDone={() => setShowSplash(false)} />;
-  }
-
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24">
-      <MinimalLogo />
-
-      <h1 className="font-display text-3xl text-ink">Qual seu objetivo com o ServiçAi?</h1>
-      <p className="mt-2 text-foreground-muted">Isso ajuda a montar a experiência certa pra você.</p>
-
-      <div className="mt-10 space-y-3">
-        {OPTIONS.map((opt) => (
-          <button
-            key={opt.id}
-            onClick={() => router.push(opt.href)}
-            className="group flex w-full items-center justify-between gap-4 border border-border p-4 text-left transition-colors hover:border-ink sm:p-5"
-          >
-            <div className="flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={opt.image}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-lg object-cover transition-transform group-hover:scale-[1.03] sm:h-20 sm:w-20"
-              />
-              <div>
-                <p className="font-medium text-ink">{opt.title}</p>
-                <p className="mt-0.5 text-sm text-foreground-muted">{opt.description}</p>
-              </div>
-            </div>
-            <ArrowRight size={18} className="shrink-0 text-foreground-muted/50 transition-colors group-hover:text-ink" />
-          </button>
-        ))}
-      </div>
-
-      <p className="mt-8 text-center text-sm text-foreground-muted">
-        Já tem conta?{' '}
-        <button onClick={() => router.push('/login')} className="font-medium text-accent hover:underline">
-          Entrar
-        </button>
-      </p>
-    </div>
+    <Suspense fallback={null}>
+      <ComecarContent />
+    </Suspense>
   );
 }

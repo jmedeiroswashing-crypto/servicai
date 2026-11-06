@@ -8,6 +8,7 @@ import { Check, ArrowRight, Eye, Search, MessageSquare, Send, ShieldCheck } from
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import type { PerformanceMetrics, Subscription } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const STATUS_LABEL: Record<string, { label: string; tone: string }> = {
   ATIVA: { label: 'Ativa', tone: 'text-success' },
@@ -30,7 +31,7 @@ function MeuPlanoContent() {
   const [showConfirmation, setShowConfirmation] = useState(!!ativado);
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

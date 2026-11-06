@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { isChromeHidden } from '@/lib/nav';
 import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { ImageUploadField } from './ImageUploadField';
 import type { ProviderProfile, UserProfile } from '@/lib/types';
-
-const EXEMPT_PATHS = ['/login', '/cadastro', '/comecar'];
 
 /**
  * Perfil obrigatório pra prestador em modo publicamente visível (COMPLETO
@@ -79,8 +78,7 @@ export function ServiceTypeGate() {
     isPubliclyVisible &&
     !!provider &&
     provider.categories.length === 0 &&
-    !EXEMPT_PATHS.includes(pathname) &&
-    !pathname.startsWith('/conserto');
+    !isChromeHidden(pathname);
 
   if (!shouldShow) return null;
 

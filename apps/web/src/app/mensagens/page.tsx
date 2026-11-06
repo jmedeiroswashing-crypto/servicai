@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { createChatSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth-store';
 import type { ChatConversation, ChatMessage } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -157,7 +158,7 @@ function MensagensContent() {
   const [activeId, setActiveId] = useState<string | null>(searchParams.get('c'));
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
   }, [token, router]);
 
   const { data: conversations, isLoading } = useQuery({

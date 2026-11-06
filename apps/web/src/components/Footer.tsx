@@ -3,15 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CATEGORIES } from '@/lib/categories';
-
-const HIDDEN_PATHS = ['/comecar', '/cadastro', '/login'];
+import { isChromeHidden } from '@/lib/nav';
 
 export function Footer() {
   const pathname = usePathname();
-  // /conserto é uma área totalmente separada (login próprio de loja de
-  // conserto) — esconde em todas as subpáginas, incluindo a de
-  // acompanhamento público com token dinâmico.
-  if (HIDDEN_PATHS.includes(pathname) || pathname.startsWith('/conserto')) return null;
+  if (isChromeHidden(pathname)) return null;
 
   return (
     <footer className="mt-auto border-t border-border py-12 text-sm text-foreground-muted">

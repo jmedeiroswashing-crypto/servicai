@@ -4,7 +4,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TermsGate } from "@/components/TermsGate";
+import { BottomNav } from "@/components/BottomNav";
+import { SectionTabs } from "@/components/SectionTabs";
 import { BusinessModeGate } from "@/components/BusinessModeGate";
 import { ServiceTypeGate } from "@/components/ServiceTypeGate";
 
@@ -50,9 +51,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <Providers>
           <Navbar />
+          <SectionTabs />
           <main className="flex-1">{children}</main>
           <Footer />
-          <TermsGate />
+          <BottomNav />
           <BusinessModeGate />
           <ServiceTypeGate />
         </Providers>

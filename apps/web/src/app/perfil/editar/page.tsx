@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { ESTADOS_BR } from '@/lib/estados-brasil';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import type { UserProfile } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 interface IbgeMunicipio {
   id: number;
@@ -39,7 +40,7 @@ export default function EditarPerfilPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
   }, [token, router]);
 
   const { data: user } = useQuery({

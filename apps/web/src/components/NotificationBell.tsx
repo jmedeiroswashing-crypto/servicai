@@ -80,18 +80,18 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notificações"
-        className="relative flex items-center justify-center border border-border p-2 text-foreground hover:border-ink/40"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full text-on-brand-dark transition-colors duration-150 hover:bg-white/10"
       >
-        <Bell size={16} />
+        <Bell size={20} aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center bg-accent px-1 text-[0.65rem] font-medium text-white">
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-pill bg-cta px-1 text-[0.65rem] font-semibold text-on-cta">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] border border-border bg-surface shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)]">
+        <div className="fixed inset-x-4 top-[calc(4rem+env(safe-area-inset-top))] z-50 overflow-hidden rounded-card border border-border bg-surface text-foreground shadow-soft-lg md:absolute md:inset-x-auto md:right-0 md:top-full md:mt-2 md:w-80">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm font-medium text-ink">Notificações</span>
             {unreadCount > 0 && (

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { CATEGORIES } from '@/lib/categories';
 import { CategorySelect } from '@/components/CategorySelect';
 import type { MyDeal } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const inputClass =
   'w-full border border-border bg-transparent px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-ink placeholder:text-foreground-muted/50';
@@ -269,7 +270,7 @@ export default function VagasUltimaHoraPainelPage({ embedded = false }: { embedd
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

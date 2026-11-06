@@ -8,6 +8,7 @@ import { ArrowRight, Sparkles, Crown, CalendarDays, Wallet, Radio } from 'lucide
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { UNLIMITED, type Booking, type Earnings, type ProviderProfile, type Subscription } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function AvailabilityToggle({ provider }: { provider: ProviderProfile }) {
   const queryClient = useQueryClient();
@@ -66,7 +67,7 @@ export default function PainelPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

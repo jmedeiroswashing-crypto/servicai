@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Wallet, Briefcase, Handshake } from 'lucide-react';
 import { api } from '@/lib/api';
+import { isChromeHidden } from '@/lib/nav';
 import { useAuthStore } from '@/store/auth-store';
 import type { BusinessMode } from '@/lib/types';
-
-const EXEMPT_PATHS = ['/login', '/cadastro', '/comecar'];
 
 /**
  * Pergunta única pra quem já tinha conta de prestador antes dessa opção
@@ -27,8 +26,7 @@ export function BusinessModeGate() {
     !!token &&
     user?.role === 'PRESTADOR' &&
     user.businessMode == null &&
-    !EXEMPT_PATHS.includes(pathname) &&
-    !pathname.startsWith('/conserto');
+    !isChromeHidden(pathname);
 
   if (!shouldShow) return null;
 

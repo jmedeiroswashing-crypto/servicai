@@ -10,6 +10,7 @@ import { CATEGORIES } from '@/lib/categories';
 import { ImageUploadField } from '@/components/ImageUploadField';
 import { WEEKDAYS, type BusinessHours, type DayHours } from '@/lib/business-hours';
 import type { IdentityVerification, MediaItem, ProviderDraft, ProviderIntakeResult, ProviderProfile } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 const DEFAULT_DAY_HOURS: DayHours = { start: '08:00', end: '18:00' };
 
@@ -663,7 +664,7 @@ export default function PerfilPrestadorPage() {
   const [mode, setMode] = useState<'ia' | 'formulario' | 'portfolio' | 'identidade'>('formulario');
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
     else if (user && user.role !== 'PRESTADOR') router.push('/');
   }, [token, user, router]);
 

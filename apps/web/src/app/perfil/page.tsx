@@ -30,6 +30,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { isPushSupported, getCurrentPushSubscription, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import { PasswordInput } from '@/components/PasswordInput';
 import type { AuthUser, ProviderProfile, UserProfile } from '@/lib/types';
+import { loginUrl } from '@/lib/redirect';
 
 function roleLabel(user: UserProfile) {
   if (user.role === 'ADMIN') return 'Administrador';
@@ -387,7 +388,7 @@ export default function MeuPerfilPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push('/login');
+    if (!token) router.push(loginUrl());
   }, [token, router]);
 
   const { data: user, isLoading, isError } = useQuery({
