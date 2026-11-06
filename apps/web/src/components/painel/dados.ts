@@ -23,7 +23,10 @@ export const useExpenses = () => useLista<Expense[]>(['expenses', 'mine'], '/exp
 export const useBookings = () => useLista<Booking[]>(['bookings', 'provider'], '/bookings/provider');
 export const useGoals = () => useLista<FinancialGoal[]>(['goals', 'mine'], '/goals/mine');
 export const useClientes = () => useLista<ClientSummary[]>(['bookings', 'clients'], '/bookings/clients');
-export const useProvider = () => useLista<ProviderProfile>(['providers', 'me'], '/providers/me');
+/** Só os campos do próprio perfil: `user` e `services` não vêm aqui. */
+export const useProvider = () => useLista<Omit<ProviderProfile, 'user' | 'services'>>(['providers', 'me'], '/providers/me');
+/** O perfil com nome, foto, telefone e serviços. */
+export const useProviderCompleto = () => useLista<ProviderProfile>(['providers', 'me', 'full'], '/providers/me/full');
 
 /** O intervalo escolhido no cabeçalho, com o "Desde o início" no primeiro movimento real. */
 export function useIntervalo() {

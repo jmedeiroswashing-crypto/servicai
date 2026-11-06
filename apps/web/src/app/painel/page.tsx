@@ -21,7 +21,7 @@ const ICONE_ALERTA: Record<Alerta['id'] | string, typeof Clock> = {
 const ICONE_MSG: Record<Mensagem['tipo'], typeof Clock> = { lembrete: CalendarClock, obrigado: Heart, sumido: UserX };
 const NOME_MSG: Record<Mensagem['tipo'], string> = { lembrete: 'Lembrete', obrigado: 'Agradecer', sumido: 'Cliente sumido' };
 
-function Disponibilidade({ provider }: { provider: ProviderProfile }) {
+function Disponibilidade({ provider }: { provider: Pick<ProviderProfile, 'availableNow'> }) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (available: boolean) => (await api.patch('/providers/me/availability', { available })).data,

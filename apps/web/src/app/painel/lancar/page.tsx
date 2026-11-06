@@ -7,7 +7,7 @@ import { CheckCircle2, MessageCircle, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { ReceiptScanButton } from '@/components/ReceiptScanButton';
-import { useProvider } from '@/components/painel/dados';
+import { useProviderCompleto } from '@/components/painel/dados';
 import { abrirRecibo } from '@/lib/painel/exportar';
 import { brl, FORMAS, linkWhats, montarDescricao } from '@/lib/painel/numeros';
 import { dataParaApi, hoje } from '@/lib/painel/periodo';
@@ -17,7 +17,7 @@ import type { Income } from '@/lib/types';
 export default function LancarPage() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
-  const { data: provider } = useProvider();
+  const { data: provider } = useProviderCompleto();
   const [servico, setServico] = useState('');
   const [cliente, setCliente] = useState('');
   const [telefone, setTelefone] = useState('');

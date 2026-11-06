@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Printer, ReceiptText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { useIncomes, useIntervalo, useProvider } from '@/components/painel/dados';
+import { useIncomes, useIntervalo, useProviderCompleto } from '@/components/painel/dados';
 import { ErroAoCarregar, Esqueleto, Mini, Vazio } from '@/components/painel/pecas';
 import { abrirRecibo, baixarCsv } from '@/lib/painel/exportar';
 import { brl, lerDescricao, resumo } from '@/lib/painel/numeros';
@@ -16,7 +16,7 @@ export default function FeitosPage() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const incomes = useIncomes();
-  const { data: provider } = useProvider();
+  const { data: provider } = useProviderCompleto();
   const iv = useIntervalo();
   const [busca, setBusca] = useState('');
 

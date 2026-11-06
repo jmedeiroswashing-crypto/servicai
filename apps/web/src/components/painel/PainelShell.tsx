@@ -12,7 +12,7 @@ import { GRUPOS, menuDe, moduloDaRota, temFinanceiro, type Grupo } from '@/lib/p
 import { loginUrl } from '@/lib/redirect';
 import { hasSession, useAuthStore } from '@/store/auth-store';
 import { Busca, FolhaNovo } from './Busca';
-import { useBookings, useIntervalo, useProvider } from './dados';
+import { useBookings, useIntervalo, useProviderCompleto } from './dados';
 import { Esqueleto } from './pecas';
 import { Topo } from './Topo';
 import { Tour } from './Tour';
@@ -166,7 +166,7 @@ function Moldura({
   const menu = useMemo(() => menuDe(modo), [modo]);
   const modulo = moduloDaRota(pathname);
   const rota = pathname.replace(/\/$/, '') || '/';
-  const { data: provider } = useProvider();
+  const { data: provider } = useProviderCompleto();
   const iv = useIntervalo();
   const contadores = useContadores();
   const { data: bookings } = useBookings();
@@ -174,7 +174,8 @@ function Moldura({
   const empresa = {
     nome: user.name,
     local: provider ? [provider.specialty, provider.city].filter(Boolean).join(' · ') : 'Prestador',
-    avatar: provider?.user.avatarUrl,
+    // A moldura fica acima da tela de erro do painel: um dado faltando não pode derrubá-la.
+    avatar: provider?.user?.avatarUrl,
   };
 
   const comPeriodo = !!modulo?.periodo && (modulo.id !== 'inicio' || financeiro);
