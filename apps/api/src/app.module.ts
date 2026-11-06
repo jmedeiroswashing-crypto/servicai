@@ -32,6 +32,7 @@ import { GoalsModule } from './goals/goals.module.js';
 import { RepairModule } from './repair/repair.module.js';
 import { CashRegisterModule } from './cash-register/cash-register.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
+import { CategoriesModule } from './categories/categories.module.js';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { CalendarModule } from './calendar/calendar.module.js';
     MediaModule,
     ChatModule,
     SearchModule,
+    CategoriesModule,
     AiModule,
     SubscriptionsModule,
     RequestsModule,

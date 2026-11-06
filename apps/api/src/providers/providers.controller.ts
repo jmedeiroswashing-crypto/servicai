@@ -35,6 +35,11 @@ export class ProvidersController {
     });
   }
 
+  @Get('showcase')
+  findShowcase(@Query('city') city?: string, @Query('take') take?: string) {
+    return this.providersService.findShowcase({ city, take: take ? Number(take) : undefined });
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.PRESTADOR)
