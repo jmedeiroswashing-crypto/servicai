@@ -1,45 +1,49 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'framer-motion';
-import { LOGO_S_PATH } from '@/components/Logo';
 
-const INTRO_MS = 1300;
-const LEAVE_MS = 450;
+const INTRO_MS = 2100;
+const LEAVE_MS = 500;
+const SAIDA = [0.4, 0, 0.2, 1] as const;
 
-interface LogoTarget {
+interface Destino {
   x: number;
   y: number;
   scale: number;
 }
 
+function medir(de: HTMLElement | null, seletor: string): Destino | null {
+  const origem = de?.getBoundingClientRect();
+  const alvo = document.querySelector(`[data-brand-logo] [data-logo="${seletor}"]`)?.getBoundingClientRect();
+  if (!origem || !alvo || alvo.width === 0) return null;
+  return {
+    x: alvo.left + alvo.width / 2 - (origem.left + origem.width / 2),
+    y: alvo.top + alvo.height / 2 - (origem.top + origem.height / 2),
+    scale: alvo.width / origem.width,
+  };
+}
+
 /**
  * Abertura exibida sempre que o site carrega. Já vem no HTML, para a página não
- * aparecer antes dela, e o conteúdo carrega por baixo. No fim, a logo vai até a
- * posição medida no header enquanto o fundo desaparece. A área /conserto tem marca
- * própria, e quem prefere menos movimento não vê a animação.
+ * aparecer antes dela, e o conteúdo carrega por baixo. A logo se monta peça por
+ * peça: órbita, S, casa, nome, frase e selos. No fim, símbolo e nome vão até o
+ * header enquanto o fundo desaparece. A área /conserto tem marca própria, e quem
+ * prefere menos movimento não vê a animação.
  */
 export function SplashIntro() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(true);
   const [leaving, setLeaving] = useState(false);
-  const [target, setTarget] = useState<LogoTarget | null>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
+  const [destinos, setDestinos] = useState<{ simbolo: Destino | null; nome: Destino | null }>({ simbolo: null, nome: null });
+  const simboloRef = useRef<HTMLDivElement>(null);
+  const nomeRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  const gradientId = useId();
   const enabled = visible && !reducedMotion && !pathname.startsWith('/conserto');
 
   const leave = useCallback(() => {
-    const logo = logoRef.current?.getBoundingClientRect();
-    const header = document.querySelector('[data-brand-logo]')?.getBoundingClientRect();
-    if (logo && header && header.width > 0) {
-      setTarget({
-        x: header.left + header.width / 2 - (logo.left + logo.width / 2),
-        y: header.top + header.height / 2 - (logo.top + logo.height / 2),
-        scale: header.width / logo.width,
-      });
-    }
+    setDestinos({ simbolo: medir(simboloRef.current, 'simbolo'), nome: medir(nomeRef.current, 'nome') });
     setLeaving(true);
   }, []);
 
@@ -57,10 +61,15 @@ export function SplashIntro() {
 
   if (!enabled) return null;
 
+  const voo = (destino: Destino | null) =>
+    leaving ? (destino ? { x: destino.x, y: destino.y, scale: destino.scale, opacity: [1, 1, 0] } : { opacity: 0 }) : {};
+  const transicaoVoo = { duration: LEAVE_MS / 1000, ease: SAIDA };
+  const peca = 'absolute inset-0 h-full w-full';
+
   return (
     <div
       onClick={leave}
-      className={`splash-intro fixed inset-0 z-[200] flex items-center justify-center motion-reduce:hidden ${
+      className={`splash-intro fixed inset-0 z-[200] flex items-center justify-center overflow-hidden px-6 motion-reduce:hidden ${
         leaving ? 'pointer-events-none' : 'cursor-pointer'
       }`}
     >
@@ -69,54 +78,80 @@ export function SplashIntro() {
         <style>{'.splash-intro{display:none}'}</style>
       </noscript>
 
-      <motion.div
-        aria-hidden="true"
-        className="absolute inset-0 bg-brand-dark"
-        animate={{ opacity: leaving ? 0 : 1 }}
-        transition={{ duration: LEAVE_MS / 1000 }}
-      />
+      <motion.div aria-hidden="true" className="absolute inset-0 bg-white" animate={{ opacity: leaving ? 0 : 1 }} transition={{ duration: LEAVE_MS / 1000 }} />
 
-      <motion.div
-        ref={logoRef}
-        className="relative flex items-center gap-3"
-        animate={target ? { x: target.x, y: target.y, scale: target.scale } : { scale: 1.06 }}
-        transition={target ? { duration: LEAVE_MS / 1000, ease: 'easeInOut' } : { delay: 1, duration: 0.3 }}
-      >
-        <svg viewBox="0 0 48 48" className="h-16 w-16 md:h-20 md:w-20" aria-hidden="true">
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#4FA0FF" />
-              <stop offset="100%" stopColor="#1E7BFF" />
-            </linearGradient>
-          </defs>
-          <motion.path
-            d={LOGO_S_PATH}
-            stroke="#6AA9FF"
-            strokeWidth={1}
-            fill={`url(#${gradientId})`}
-            initial={{ pathLength: 0, fillOpacity: 0 }}
-            animate={{ pathLength: 1, fillOpacity: 1 }}
-            transition={{
-              pathLength: { duration: 0.65, ease: 'easeInOut' },
-              fillOpacity: { delay: 0.55, duration: 0.25 },
-            }}
+      <div className="relative flex w-full max-w-[560px] flex-col items-center" aria-hidden="true">
+        <motion.div ref={simboloRef} className="relative aspect-[725/438] w-[63%]" animate={voo(destinos.simbolo)} transition={transicaoVoo}>
+          {/* A órbita passa da esquerda para a direita e traz a base do S. */}
+          <motion.img
+            src="/marca/orbita.webp"
+            alt=""
+            fetchPriority="high"
+            className={peca}
+            initial={{ clipPath: 'inset(0 100% 0 0)' }}
+            animate={{ clipPath: 'inset(0 0% 0 0)' }}
+            transition={{ duration: 0.65, ease: 'easeInOut' }}
           />
-        </svg>
-        <motion.span
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.7, duration: 0.3 }}
-          className="text-3xl font-bold tracking-tight text-on-brand-dark md:text-4xl"
-        >
-          Serviç<span className="text-[#6AA9FF]">Ai</span>
-        </motion.span>
-      </motion.div>
+          {/* O topo do S encaixa e fecha a letra em volta da chave. */}
+          <motion.img
+            src="/marca/s-topo.webp"
+            alt=""
+            fetchPriority="high"
+            className={peca}
+            initial={{ opacity: 0, y: -22, rotate: -6 }}
+            animate={{ opacity: 1, y: 0, rotate: 0 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 260, damping: 20 }}
+          />
+          {/* A casa pousa por último, com um pequeno quique. */}
+          <motion.img
+            src="/marca/casa.webp"
+            alt=""
+            fetchPriority="high"
+            className={peca}
+            style={{ transformOrigin: '72% 45%' }}
+            initial={{ opacity: 0, y: -36, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.72, type: 'spring', stiffness: 380, damping: 15 }}
+          />
+        </motion.div>
+
+        <motion.div ref={nomeRef} className="relative mt-[3%] aspect-[1136/213] w-full" animate={voo(destinos.nome)} transition={transicaoVoo}>
+          <motion.img
+            src="/marca/nome.webp"
+            alt=""
+            fetchPriority="high"
+            className={peca}
+            initial={{ clipPath: 'inset(-10% 100% -10% 0)' }}
+            animate={{ clipPath: 'inset(-10% 0% -10% 0)' }}
+            transition={{ delay: 0.95, duration: 0.45, ease: 'easeOut' }}
+          />
+        </motion.div>
+
+        <motion.div className="mt-[4%] w-full" animate={{ opacity: leaving ? 0 : 1 }} transition={{ duration: 0.15 }}>
+          <motion.img
+            src="/marca/frase.webp"
+            alt=""
+            className="h-auto w-full"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.35, duration: 0.3 }}
+          />
+          <motion.img
+            src="/marca/selos.webp"
+            alt=""
+            className="mx-auto mt-[4%] h-auto w-[84%]"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.55, duration: 0.3 }}
+          />
+        </motion.div>
+      </div>
 
       {!leaving && (
         <button
           type="button"
           onClick={leave}
-          className="absolute bottom-6 right-6 min-h-11 rounded-pill px-4 text-sm font-medium text-on-brand-dark/80 hover:text-on-brand-dark"
+          className="absolute bottom-6 right-6 min-h-11 rounded-pill px-4 text-sm font-medium text-[#0b1c33]/70 hover:text-[#0b1c33]"
         >
           Pular
         </button>

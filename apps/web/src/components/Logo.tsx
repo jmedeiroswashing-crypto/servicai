@@ -1,32 +1,28 @@
-import { useId } from 'react';
+/* eslint-disable @next/next/no-img-element -- exportação estática, sem otimizador de imagens */
 
-/** Símbolo "S" da marca. Exportado para o splash desenhar o mesmo traçado. */
-export const LOGO_S_PATH =
-  'M44 4 L36 16 H22 C20 16 19.5 18 21 19 L36 25 C45 28.5 46 38 39 42 C36 44 33 44.5 30 44.5 H4 L12 33 H28 C30 33 30.5 31 29 30 L13 23.5 C4 20 3.5 10 10 6 C13 4.4 16 4 19 4 Z';
+const ALTURAS = 'h-8 md:h-9';
+const ALTURAS_NOME = 'h-[18px] md:h-5';
 
-export function LogoMark({ className = 'h-8 w-8' }: { className?: string }) {
-  const gradientId = useId();
-  return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#4FA0FF" />
-          <stop offset="100%" stopColor="#1E7BFF" />
-        </linearGradient>
-      </defs>
-      <path d={LOGO_S_PATH} fill={`url(#${gradientId})`} />
-    </svg>
-  );
-}
-
-/** Logo completa. `onDark` é para fundos azul-marinho, como o header. */
+/**
+ * Logo em peças recortadas da arte original. Azul-marinho sumiria em fundo escuro:
+ * `onDark` usa a versão clara. Sem `onDark`, a versão segue o tema do aparelho.
+ */
 export function Logo({ onDark = false, className = '' }: { onDark?: boolean; className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <LogoMark />
-      <span className={`text-xl font-bold tracking-tight ${onDark ? 'text-on-brand-dark' : 'text-ink'}`}>
-        Serviç<span className={onDark ? 'text-[#6AA9FF]' : 'text-accent'}>Ai</span>
-      </span>
+    <span role="img" aria-label="ServiçAi" className={`inline-flex items-center gap-2 ${className}`}>
+      {onDark ? (
+        <>
+          <img data-logo="simbolo" src="/marca/simbolo-claro.webp" alt="" width={278} height={168} className={`${ALTURAS} w-auto`} />
+          <img data-logo="nome" src="/marca/nome-claro.webp" alt="" width={512} height={96} className={`${ALTURAS_NOME} w-auto`} />
+        </>
+      ) : (
+        <>
+          <img src="/marca/simbolo.webp" alt="" width={278} height={168} className={`${ALTURAS} w-auto dark:hidden`} />
+          <img src="/marca/simbolo-claro.webp" alt="" width={278} height={168} className={`${ALTURAS} hidden w-auto dark:block`} />
+          <img src="/marca/nome-pequeno.webp" alt="" width={512} height={96} className={`${ALTURAS_NOME} w-auto dark:hidden`} />
+          <img src="/marca/nome-claro.webp" alt="" width={512} height={96} className={`${ALTURAS_NOME} hidden w-auto dark:block`} />
+        </>
+      )}
     </span>
   );
 }
