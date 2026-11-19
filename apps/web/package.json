@@ -9,7 +9,12 @@
     "lint": "eslint",
     "test": "vitest run",
     "mobile:sync": "next build && npx cap sync android",
-    "mobile:open": "npx cap open android"
+    "mobile:open": "npx cap open android",
+    "roteiro:ensaio": "node scripts/gerar-roteiro.mjs",
+    "gravar:demo": "node scripts/gravar-demo.mjs",
+    "pitch:capturas": "node scripts/verificar-pitch.mjs capturas",
+    "pitch:ensaio-auto": "node scripts/verificar-pitch.mjs auto",
+    "pitch:servir": "node scripts/servir-pitch.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -38,6 +43,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "playwright": "^1.65.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.12"
