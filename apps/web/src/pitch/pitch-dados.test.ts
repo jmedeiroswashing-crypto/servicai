@@ -5,8 +5,10 @@ import {
   DURACAO_TOTAL,
   FIM_ENSAIO_AUTO,
   TELAS,
+  TELAS_DEMO,
   TEXTOS,
   contarPalavras,
+  falaLimpa,
   inicioDaTela,
   listarPendentes,
   montarTelas,
@@ -47,30 +49,63 @@ function itensDoRoadmap(): string[] {
   return [...README.slice(inicio, fim).matchAll(/\*\*([^*]+)\*\*/g)].map((m) => m[1]);
 }
 
-function termosDoRoadmap(): string[] {
-  return Object.values(TERMOS_POR_ITEM).flat();
-}
-
-describe('roteiro do pitch', () => {
-  it('tem 16 telas que somam 180 s', () => {
-    expect(TELAS).toHaveLength(16);
-    expect(TELAS.reduce((s, t) => s + t.duracao, 0)).toBe(DURACAO_TOTAL);
+describe('roteiro do pitch (Problema → Solução → Execução)', () => {
+  it('segue a ordem do roteiro do apresentador', () => {
+    expect(TELAS.map((t) => t.id)).toEqual([
+      'problema',
+      'onde',
+      'quem-sofre',
+      'evidencia',
+      'consequencia',
+      'solucao',
+      'demo-pedido',
+      'demo-resposta',
+      'demo-gestao',
+      'beneficiados',
+      'por-que-resolve',
+      'resultado',
+      'etapas',
+      'recursos',
+      'quem-onde',
+      'metricas',
+      'fechamento',
+    ]);
+    const secoes = TELAS.map((t) => t.secao);
+    expect(secoes.indexOf('Solução')).toBeGreaterThan(secoes.lastIndexOf('Problema'));
+    expect(secoes.indexOf('Execução')).toBeGreaterThan(secoes.lastIndexOf('Solução'));
   });
 
-  it('cada tela começa no tempo do roteiro', () => {
-    const inicios = [0, 12, 18, 34, 46, 56, 64, 72, 88, 102, 116, 124, 138, 150, 160, 168];
-    expect(TELAS.map((t) => inicioDaTela(t.n))).toEqual(inicios);
-    expect(telaNoTempo(0)).toBe(1);
-    expect(telaNoTempo(72)).toBe(8);
-    expect(telaNoTempo(179.9)).toBe(16);
-  });
-
-  it('só as telas 8 a 11 são demo, e cada uma tem roteiro e legenda', () => {
-    expect(TELAS.filter((t) => t.tipo === 'demo').map((t) => t.n)).toEqual([8, 9, 10, 11]);
-    for (const t of TELAS.filter((x) => x.tipo === 'demo')) {
-      expect(t.demo).toBeTruthy();
-      expect(t.legenda).toBeTruthy();
+  it('as falas são o texto do apresentador, palavra por palavra', () => {
+    const texto = falaLimpa(TELAS.map((t) => t.fala).join(' '));
+    for (const trecho of [
+      'O problema é que quem trabalha prestando serviço em Cruzeiro do Sul depende quase só de recomendação para conseguir cliente, e não tem nenhuma estrutura para organizar o próprio trabalho.',
+      'Eletricista, encanador, diarista, pedreiro, manicure: todo mundo vive do boca a boca e do WhatsApp.',
+      'segundo o IBGE, mais da metade dos trabalhadores da Região Norte está na informalidade.',
+      'Se nada for feito, o bom profissional continua invisível, perde cliente e dinheiro, e o morador continua contratando no escuro.',
+      'Funciona assim: o cliente busca um profissional ou envia um pedido, e os prestadores recebem e respondem pelo app.',
+      'o controle de entradas e saídas, as metas e as finanças calculadas automaticamente.',
+      'O resultado esperado é mais clientes e mais renda para quem presta o serviço, e atendimento mais rápido e confiável para quem contrata.',
+      'Depois, ampliar os tipos de serviço e levar o ServiçAi para outras cidades do Juruá.',
+      'Quem vai fazer sou eu, João Washing, cuidando do desenvolvimento e da operação.',
+      'o tempo até o cliente ser atendido e a nota média das avaliações.',
+      'ServiçAi: toda a estrutura do prestador em um lugar só. Obrigado!',
+    ]) {
+      expect(texto).toContain(trecho);
     }
+  });
+
+  it('a duração total é a soma das telas', () => {
+    expect(TELAS.reduce((s, t) => s + t.duracao, 0)).toBe(DURACAO_TOTAL);
+    expect(inicioDaTela(1)).toBe(0);
+    expect(telaNoTempo(0)).toBe(1);
+    expect(telaNoTempo(DURACAO_TOTAL - 0.1)).toBe(TELAS.length);
+    expect(FIM_ENSAIO_AUTO).toBe(DURACAO_TOTAL - 1);
+  });
+
+  it('as demos são as telas da solução que mostram o app, em sequência', () => {
+    expect(TELAS_DEMO).toEqual([7, 8, 9]);
+    expect(TELAS.filter((t) => t.tipo === 'demo').map((t) => t.demo)).toEqual(['pedido', 'proposta', 'gestao']);
+    for (const t of TELAS.filter((x) => x.tipo === 'demo')) expect(t.legenda).toBeTruthy();
   });
 
   it('nenhuma fala passa do ritmo de 2,3 palavras por segundo', () => {
@@ -78,70 +113,33 @@ describe('roteiro do pitch', () => {
       expect(contarPalavras(t.fala), `tela ${t.n}`).toBeLessThanOrEqual(palavrasQueCabem(t));
     }
   });
-
-  it('o ensaio automático termina entre 2:55 e 3:00', () => {
-    expect(FIM_ENSAIO_AUTO).toBeGreaterThanOrEqual(175);
-    expect(FIM_ENSAIO_AUTO).toBeLessThanOrEqual(180);
-  });
 });
 
 describe('só mostra como pronto o que o README diz que funciona', () => {
-  const termos = termosDoRoadmap();
+  const termos = Object.values(TERMOS_POR_ITEM).flat();
 
   it('cobre todo o Roadmap do README', () => {
     expect(itensDoRoadmap().sort()).toEqual(Object.keys(TERMOS_POR_ITEM).sort());
   });
 
-  it('a coluna "Já funciona" não cita nada do Roadmap', () => {
-    for (const item of TEXTOS.estagio.jaFunciona) {
-      const n = normalizar(item);
-      for (const termo of termos) expect(n.includes(termo), `"${item}" cita "${termo}"`).toBe(false);
-    }
-  });
-
-  it('toda frase que cita o Roadmap diz "próximo"', () => {
-    const textos = [
-      ...TELAS.map((t) => t.fala),
-      ...TELAS.map((t) => t.legenda ?? ''),
-      JSON.stringify({ ...TEXTOS, estagio: { proximo: TEXTOS.estagio.proximo } }),
-    ];
+  it('nenhuma fala, legenda ou texto de tela cita o Roadmap', () => {
+    const textos = [...TELAS.map((t) => t.fala), ...TELAS.map((t) => t.legenda ?? ''), JSON.stringify(TEXTOS)];
     for (const texto of textos) {
-      for (const frase of texto.split(/(?<=[.!?])\s+|","/)) {
-        const n = normalizar(frase);
-        const citado = termos.find((t) => n.includes(t));
-        if (citado) expect(n, `"${frase}" cita "${citado}" sem "próximo"`).toContain('proximo');
-      }
+      const n = normalizar(texto);
+      for (const termo of termos) expect(n.includes(termo), `cita "${termo}"`).toBe(false);
     }
   });
 });
 
 describe('campos pendentes', () => {
-  it('sem dados, a fala mostra [__] e a lista de pendentes traz os 5 itens', () => {
-    expect(CONFIG_PITCH.dadoTela5).toBeNull();
-    const pendentes = listarPendentes();
-    expect(pendentes).toHaveLength(5);
-    expect(TELAS[13].fala).toMatch(/^\[__ /);
-    expect(TELAS[14].fala).toMatch(/^\[__ /);
-    expect(TELAS[1].fala).toMatch(/^\[__ saudação\]/);
+  it('sem o caso real, a fala mostra [__] e ele aparece na lista de pendentes', () => {
+    expect(CONFIG_PITCH.casoReal).toBeNull();
+    expect(listarPendentes()).toHaveLength(1);
+    expect(TELAS[3].fala).toMatch(/\[__ um caso real/);
   });
 
-  it('sem fonte, a tela 5 vira a frase e não mostra número', () => {
-    const semFonte = montarTelas({ ...CONFIG_PITCH, dadoTela5: { numero: '9', texto: 'x', fala: 'Nove.' }, fonteTela5: null });
-    expect(semFonte[4].fala).toBe(TEXTOS.numero.semFonte);
-    const comFonte = montarTelas({ ...CONFIG_PITCH, dadoTela5: { numero: '9', texto: 'x', fala: 'Nove.' }, fonteTela5: 'Fonte X' });
-    expect(comFonte[4].fala).toBe('Nove.');
-  });
-
-  it('preenchendo tudo, não sobra pendente', () => {
-    const cheio = {
-      ...CONFIG_PITCH,
-      equipe: 'Equipe',
-      saudacao: 'Boa noite!',
-      dadoTela5: { numero: '1', texto: 't', fala: 'f' },
-      fonteTela5: 'fonte',
-      planoPiloto: { cidade: 'Recife', profissionais: '30', prazo: '3 meses', metricas: ['pedidos'] },
-      pedido: 'Pedido.',
-    };
+  it('preenchendo o caso real, não sobra pendente', () => {
+    const cheio = { ...CONFIG_PITCH, casoReal: 'Vi um eletricista ótimo sem cliente nenhum.' };
     expect(listarPendentes(cheio)).toEqual([]);
     expect(montarTelas(cheio).some((t) => t.fala.includes('[__'))).toBe(false);
   });

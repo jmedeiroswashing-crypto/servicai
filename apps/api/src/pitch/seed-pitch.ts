@@ -24,8 +24,8 @@ import { refreshProfileComplete } from '../providers/public-visibility.js';
 
 export const DEMO_DOMINIO = 'demo.servicai.local';
 export const DEMO_SENHA = 'pitch-demo-2026';
-export const DEMO_CIDADE = 'Recife';
-export const DEMO_UF = 'PE';
+export const DEMO_CIDADE = 'Cruzeiro do Sul';
+export const DEMO_UF = 'AC';
 export const DEMO_EMAIL_CLIENTE = `cliente@${DEMO_DOMINIO}`;
 export const DEMO_EMAIL_ELETRICISTA = `eletricista@${DEMO_DOMINIO}`;
 
@@ -96,7 +96,7 @@ export const ELETRICISTA_DEMO: PrestadorDemo = {
   nome: 'Rafael Souza',
   especialidade: 'Eletricista residencial',
   categoria: 'Eletricista',
-  bio: 'Eletricista residencial em Recife. Troca de chuveiro e resistência, quadro de energia, tomadas e iluminação.',
+  bio: 'Eletricista residencial em Cruzeiro do Sul. Troca de chuveiro e resistência, quadro de energia, tomadas e iluminação.',
   anos: 9,
   selo: Selo.OURO,
   plano: Plan.PRO,
@@ -264,6 +264,123 @@ export const OUTROS_PRESTADORES: PrestadorDemo[] = [
 
 const AVALIADORES = ['Ana P.', 'João M.', 'Luciana R.', 'Pedro S.', 'Carla F.'];
 
+/**
+ * Painel de gestão do eletricista (tela de demo da gestão): compromissos na agenda,
+ * entradas e saídas do mês e a meta do mês. Datas relativas a hoje, para a demo
+ * sempre mostrar o mês corrente.
+ */
+async function semearGestao(
+  prisma: PrismaService,
+  providerId: string,
+): Promise<void> {
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = agora.getMonth();
+  const hoje = agora.getDate();
+  const noMes = (dia: number) =>
+    new Date(ano, mes, Math.min(dia, hoje), 10, 0, 0);
+  const daquiA = (dias: number, hora: number, minuto = 0) =>
+    new Date(ano, mes, hoje + dias, hora, minuto, 0);
+
+  await prisma.income.createMany({
+    data: [
+      {
+        providerId,
+        description: 'Troca de chuveiro — Centro',
+        amount: 180,
+        date: noMes(1),
+      },
+      {
+        providerId,
+        description: 'Instalação de 4 tomadas',
+        amount: 240,
+        date: noMes(3),
+      },
+      {
+        providerId,
+        description: 'Revisão do quadro de energia',
+        amount: 350,
+        date: noMes(6),
+      },
+      {
+        providerId,
+        description: 'Troca de resistência',
+        amount: 120,
+        date: noMes(9),
+      },
+      {
+        providerId,
+        description: 'Iluminação da sala',
+        amount: 280,
+        date: noMes(12),
+      },
+      {
+        providerId,
+        description: 'Conserto de disjuntor',
+        amount: 150,
+        date: noMes(15),
+      },
+    ],
+  });
+  await prisma.expense.createMany({
+    data: [
+      {
+        providerId,
+        description: 'Fio, disjuntores e fita',
+        category: 'Material/insumos',
+        amount: 310,
+        date: noMes(2),
+      },
+      {
+        providerId,
+        description: 'Combustível da moto',
+        category: 'Transporte/combustível',
+        amount: 140,
+        date: noMes(7),
+      },
+      {
+        providerId,
+        description: 'Alicate amperímetro',
+        category: 'Ferramentas e equipamentos',
+        amount: 95,
+        date: noMes(11),
+      },
+    ],
+  });
+  await prisma.financialGoal.create({
+    data: {
+      providerId,
+      month: `${ano}-${String(mes + 1).padStart(2, '0')}`,
+      targetAmount: 1200,
+    },
+  });
+  await prisma.appointment.createMany({
+    data: [
+      {
+        providerId,
+        title: 'Troca de chuveiro',
+        notes: 'Cliente do ServiçAi',
+        scheduledAt: daquiA(0, 21),
+      },
+      {
+        providerId,
+        title: 'Instalação de ventilador de teto',
+        scheduledAt: daquiA(1, 8, 30),
+      },
+      {
+        providerId,
+        title: 'Revisão do quadro de energia',
+        scheduledAt: daquiA(1, 14),
+      },
+      {
+        providerId,
+        title: 'Orçamento de fiação nova',
+        scheduledAt: daquiA(2, 9),
+      },
+    ],
+  });
+}
+
 export interface ResultadoSeedPitch {
   clienteId: string;
   eletricistaUserId: string;
@@ -340,7 +457,7 @@ export async function semearPitch(
       email: DEMO_EMAIL_CLIENTE,
       passwordHash,
       name: 'Juliana Alves',
-      phone: '81999990000',
+      phone: '68999990000',
       role: Role.CLIENTE,
       city: DEMO_CIDADE,
       addressState: DEMO_UF,
@@ -461,6 +578,7 @@ export async function semearPitch(
     if (p === ELETRICISTA_DEMO) {
       eletricistaUserId = user.id;
       eletricistaProviderId = perfil.id;
+      await semearGestao(prisma, perfil.id);
     }
   }
 

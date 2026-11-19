@@ -2,8 +2,23 @@
 
 /* eslint-disable @next/next/no-img-element -- export estático, imagens já otimizadas */
 import { useEffect, useState } from 'react';
-import { Check, Handshake, HardHat, ListOrdered, MessageSquareText, ShowerHead } from 'lucide-react';
-import { CONFIG_PITCH, PENDENTE_TELA, TEXTOS, dadoTela5Valido, type IdTela } from '../pitch-dados';
+import {
+  Check,
+  Hammer,
+  Megaphone,
+  Server,
+  Sparkles,
+  Star,
+  Timer,
+  Handshake,
+  TrendingUp,
+  Users,
+  Zap,
+  Droplets,
+  Brush,
+  type LucideIcon,
+} from 'lucide-react';
+import { CONFIG_PITCH, TEXTOS, type IdTela, type Secao } from '../pitch-dados';
 
 /** Mostra os filhos só depois de `ms` (entrada suave de 300 ms). */
 function Depois({ ms, children }: { ms: number; children: React.ReactNode }) {
@@ -24,225 +39,266 @@ function Logo({ altura }: { altura: number }) {
   );
 }
 
-function valor(texto: string | null | undefined): string {
-  return texto && texto.trim() ? texto : PENDENTE_TELA;
+function Duas({ colunas }: { colunas: { titulo: string; texto: string }[] }) {
+  return (
+    <div className="p-cartoes" style={{ gridTemplateColumns: '1fr 1fr', gap: 'calc(var(--u) * 3)' }}>
+      {colunas.map((c, i) => (
+        <Depois key={c.titulo} ms={300 + i * 2600}>
+          <div className="p-cartao" style={{ padding: 'calc(var(--u) * 3)' }}>
+            <div className="p-preco p-azul" style={{ marginTop: 0 }}>
+              {c.titulo}
+            </div>
+            <div className="p-subtitulo" style={{ marginTop: 'calc(var(--u) * 1.2)', color: 'var(--texto)' }}>
+              {c.texto}
+            </div>
+          </div>
+        </Depois>
+      ))}
+    </div>
+  );
 }
 
-export function TelaDados({ id }: { id: IdTela }) {
-  switch (id) {
-    case 'abertura':
-      return (
-        <div className="p-tela">
-          <div className="p-gigante">{TEXTOS.abertura.grande}</div>
-          <Depois ms={2600}>
-            <ShowerHead className="p-icone-grande p-espaco-3 p-laranja" aria-label="Chuveiro" />
-          </Depois>
-        </div>
-      );
-
-    case 'apresentacao':
-      return (
-        <div className="p-tela">
-          <Logo altura={13} />
-          <div className="p-titulo p-espaco-3">{CONFIG_PITCH.apresentador}</div>
-          <div className="p-subtitulo p-espaco-1">Equipe {valor(CONFIG_PITCH.equipe)}</div>
-        </div>
-      );
-
-    case 'problema-cliente':
-      return (
-        <div className="p-tela">
-          <div className="p-subtitulo">{TEXTOS.problemaCliente.titulo}</div>
-          <div className="p-linha p-espaco-2">
-            {TEXTOS.problemaCliente.frases.map((f, i) => (
-              <Depois key={f} ms={600 + i * 1300}>
-                <div className="p-titulo" style={{ fontSize: 'calc(var(--u) * 6.4)' }}>
-                  {f}
-                </div>
-              </Depois>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'problema-prestador':
-      return (
-        <div className="p-tela">
-          <HardHat className="p-icone-grande" aria-hidden="true" />
-          <div className="p-titulo p-espaco-2">{TEXTOS.problemaPrestador.titulo}</div>
-          <Depois ms={4200}>
-            <div className="p-titulo p-azul">{TEXTOS.problemaPrestador.subtitulo}</div>
-          </Depois>
-        </div>
-      );
-
-    case 'numero': {
-      const dado = dadoTela5Valido();
-      if (!dado) {
+function Grade({ itens, icones, atraso = 700 }: { itens: string[]; icones: LucideIcon[]; atraso?: number }) {
+  return (
+    <div className="p-cartoes" style={{ gridTemplateColumns: `repeat(${itens.length}, 1fr)` }}>
+      {itens.map((item, i) => {
+        const Icone = icones[i % icones.length];
         return (
-          <div className="p-tela">
-            <div className="p-titulo" style={{ fontSize: 'calc(var(--u) * 5.6)' }}>
-              {TEXTOS.numero.semFonte}
-            </div>
-          </div>
-        );
-      }
-      return (
-        <div className="p-tela">
-          <div className="p-gigante p-azul">{dado.numero}</div>
-          <div className="p-subtitulo p-espaco-2" style={{ maxWidth: 'calc(var(--u) * 70)' }}>
-            {dado.texto}
-          </div>
-          <div className="p-pequeno p-espaco-3">Fonte: {dado.fonte}</div>
-        </div>
-      );
-    }
-
-    case 'virada':
-      return (
-        <div className="p-tela">
-          <div className="p-titulo" style={{ fontSize: 'calc(var(--u) * 5.6)', maxWidth: 'calc(var(--u) * 78)' }}>
-            {TEXTOS.virada.pergunta}
-          </div>
-        </div>
-      );
-
-    case 'servicai': {
-      const icones = [MessageSquareText, ListOrdered, Handshake];
-      return (
-        <div className="p-tela">
-          <Logo altura={7} />
-          <div className="p-titulo p-espaco-2">{TEXTOS.servicai.frase}</div>
-          <div className="p-linha p-espaco-3">
-            {TEXTOS.servicai.passos.map((p, i) => {
-              const Icone = icones[i];
-              return (
-                <Depois key={p.rotulo} ms={500 + i * 700}>
-                  <div className="p-passo">
-                    <Icone aria-hidden="true" />
-                    <strong>{p.rotulo}</strong>
-                    <span>{p.detalhe}</span>
-                  </div>
-                </Depois>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    case 'modelo':
-      return (
-        <div className="p-tela">
-          <div className="p-titulo">{TEXTOS.modelo.titulo}</div>
-          <div className="p-cartoes p-espaco-3">
-            {TEXTOS.modelo.planos.map((p, i) => (
-              <Depois key={p.nome} ms={1800 + i * 450}>
-                <div className={`p-cartao ${p.nome === 'Impulso' ? 'p-destaque' : ''}`}>
-                  <div className="p-nome">{p.nome}</div>
-                  <div className="p-preco">{p.preco}</div>
-                  <div className="p-detalhe">{p.detalhe}</div>
-                </div>
-              </Depois>
-            ))}
-          </div>
-          <Depois ms={8200}>
-            <div className="p-subtitulo p-espaco-3" style={{ color: 'var(--texto)' }}>
-              {TEXTOS.modelo.nota}
+          <Depois key={item} ms={400 + i * atraso}>
+            <div className="p-cartao" style={{ textAlign: 'center', minHeight: 'calc(var(--u) * 14)' }}>
+              <Icone aria-hidden="true" style={{ width: 'calc(var(--u) * 4.4)', height: 'calc(var(--u) * 4.4)', color: 'var(--azul)' }} />
+              <div className="p-subtitulo" style={{ marginTop: 'calc(var(--u) * 1.2)', color: 'var(--texto)', fontWeight: 700 }}>
+                {item}
+              </div>
             </div>
           </Depois>
-        </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Conteudo({ id }: { id: IdTela }) {
+  switch (id) {
+    case 'problema':
+      return (
+        <>
+          <div className="p-subtitulo">{TEXTOS.problema.titulo}</div>
+          {TEXTOS.problema.itens.map((item, i) => (
+            <Depois key={item} ms={1200 + i * 4500}>
+              <div className="p-titulo p-espaco-2">{item}.</div>
+            </Depois>
+          ))}
+        </>
       );
 
-    case 'estagio':
+    case 'onde':
       return (
-        <div className="p-tela">
-          <div className="p-colunas">
-            <div>
-              <h3>Já funciona</h3>
-              <ul>
-                {TEXTOS.estagio.jaFunciona.map((item) => (
-                  <li key={item}>
-                    <Check aria-hidden="true" style={{ color: 'var(--verde)' }} />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+        <>
+          <div className="p-titulo">{TEXTOS.onde.titulo}</div>
+          <div className="p-espaco-3" style={{ width: '100%' }}>
+            <Grade itens={TEXTOS.onde.profissoes} icones={[Zap, Droplets, Sparkles, Hammer, Brush]} atraso={500} />
+          </div>
+          <Depois ms={5500}>
+            <div className="p-subtitulo p-espaco-3" style={{ color: 'var(--texto)' }}>
+              {TEXTOS.onde.rodape}
             </div>
-            <Depois ms={4000}>
-              <div>
-                <h3 className="p-azul">Próximo</h3>
-                <ul>
-                  {TEXTOS.estagio.proximo.map((item) => (
-                    <li key={item} style={{ color: 'var(--suave)' }}>
-                      <span aria-hidden="true" style={{ color: 'var(--azul)' }}>
-                        →
-                      </span>
-                      {item.replace(/^Próximo:\s*(.)/, (_, letra: string) => letra.toUpperCase())}
-                    </li>
-                  ))}
-                </ul>
+          </Depois>
+        </>
+      );
+
+    case 'quem-sofre':
+      return (
+        <>
+          <div className="p-subtitulo">Quem sofre</div>
+          <div className="p-espaco-2" style={{ width: '100%' }}>
+            <Duas colunas={TEXTOS.quemSofre.colunas} />
+          </div>
+        </>
+      );
+
+    case 'evidencia':
+      return (
+        <>
+          <div className="p-gigante p-azul">{TEXTOS.evidencia.numero}</div>
+          <div className="p-subtitulo p-espaco-2" style={{ color: 'var(--texto)', maxWidth: 'calc(var(--u) * 70)' }}>
+            {TEXTOS.evidencia.texto}
+          </div>
+          <div className="p-pequeno p-espaco-2">Fonte: {CONFIG_PITCH.fonteInformalidade}</div>
+          {CONFIG_PITCH.casoReal && (
+            <Depois ms={7000}>
+              <div className="p-subtitulo p-espaco-3" style={{ fontStyle: 'italic', maxWidth: 'calc(var(--u) * 72)' }}>
+                “{CONFIG_PITCH.casoReal}”
               </div>
             </Depois>
+          )}
+        </>
+      );
+
+    case 'consequencia':
+      return (
+        <>
+          <div className="p-subtitulo">Se nada for feito</div>
+          {TEXTOS.consequencia.frases.map((f, i) => (
+            <Depois key={f} ms={600 + i * 4200}>
+              <div className="p-titulo p-espaco-2">{f}</div>
+            </Depois>
+          ))}
+        </>
+      );
+
+    case 'solucao':
+      return (
+        <>
+          <Logo altura={12} />
+          <div className="p-subtitulo p-espaco-3">{TEXTOS.solucao.subtitulo}</div>
+          <Depois ms={5000}>
+            <div className="p-titulo p-espaco-2">{TEXTOS.solucao.frase}</div>
+          </Depois>
+        </>
+      );
+
+    case 'beneficiados':
+      return (
+        <>
+          <div className="p-subtitulo">Quem se beneficia</div>
+          <div className="p-espaco-2" style={{ width: '100%' }}>
+            <Duas colunas={TEXTOS.beneficiados.colunas} />
           </div>
+        </>
+      );
+
+    case 'por-que-resolve':
+      return (
+        <>
+          <div className="p-subtitulo" style={{ textDecoration: 'line-through', textDecorationColor: 'var(--laranja)' }}>
+            {TEXTOS.porQueResolve.antes}
+          </div>
+          {TEXTOS.porQueResolve.depois.map((d, i) => (
+            <Depois key={d} ms={4500 + i * 2800}>
+              <div className="p-titulo p-espaco-2">
+                <Check aria-hidden="true" style={{ width: '0.8em', height: '0.8em', color: 'var(--verde)', verticalAlign: '-0.08em', marginRight: '0.3em' }} />
+                {d}
+              </div>
+            </Depois>
+          ))}
+        </>
+      );
+
+    case 'resultado':
+      return (
+        <>
+          <div className="p-subtitulo">{TEXTOS.resultado.titulo}</div>
+          {TEXTOS.resultado.linhas.map((l, i) => (
+            <Depois key={l.quem} ms={400 + i * 4500}>
+              <div className="p-espaco-3">
+                <div className="p-pequeno" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {l.quem}
+                </div>
+                <div className="p-titulo" style={{ marginTop: 'calc(var(--u) * 0.6)' }}>
+                  {l.texto}
+                </div>
+              </div>
+            </Depois>
+          ))}
+        </>
+      );
+
+    case 'etapas':
+      return (
+        <>
+          <div className="p-cartoes" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 'calc(var(--u) * 2.4)' }}>
+            {TEXTOS.etapas.map((e, i) => (
+              <Depois key={e.titulo} ms={300 + i * 5000}>
+                <div className="p-cartao" style={{ padding: 'calc(var(--u) * 2.6)', minHeight: 'calc(var(--u) * 20)' }}>
+                  <div className="p-gigante p-azul" style={{ fontSize: 'calc(var(--u) * 6)' }}>
+                    {i + 1}
+                  </div>
+                  <div className="p-preco">{e.titulo}</div>
+                  <div className="p-subtitulo" style={{ marginTop: 'calc(var(--u) * 1)' }}>
+                    {e.texto}
+                  </div>
+                </div>
+              </Depois>
+            ))}
+          </div>
+        </>
+      );
+
+    case 'recursos':
+      return (
+        <>
+          <div className="p-subtitulo">{TEXTOS.recursos.titulo}</div>
+          <div className="p-espaco-2" style={{ width: '100%' }}>
+            <Grade itens={TEXTOS.recursos.itens} icones={[Server, Megaphone, Handshake]} atraso={1800} />
+          </div>
+        </>
+      );
+
+    case 'quem-onde':
+      return (
+        <div className="p-cartoes" style={{ gridTemplateColumns: '1fr 1fr', gap: 'calc(var(--u) * 3)' }}>
+          <div className="p-cartao" style={{ padding: 'calc(var(--u) * 3)' }}>
+            <div className="p-pequeno" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {TEXTOS.quemOnde.quem.titulo}
+            </div>
+            <div className="p-titulo" style={{ marginTop: 'calc(var(--u) * 0.8)' }}>
+              {CONFIG_PITCH.apresentador}
+            </div>
+            <div className="p-subtitulo" style={{ marginTop: 'calc(var(--u) * 0.8)' }}>
+              {TEXTOS.quemOnde.quem.texto}
+            </div>
+          </div>
+          <Depois ms={5200}>
+            <div className="p-cartao" style={{ padding: 'calc(var(--u) * 3)' }}>
+              <div className="p-pequeno" style={{ textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {TEXTOS.quemOnde.onde.titulo}
+              </div>
+              <div className="p-titulo" style={{ marginTop: 'calc(var(--u) * 0.8)' }}>
+                {CONFIG_PITCH.cidade}
+              </div>
+              <div className="p-subtitulo" style={{ marginTop: 'calc(var(--u) * 0.8)' }}>
+                {TEXTOS.quemOnde.onde.texto}
+              </div>
+            </div>
+          </Depois>
         </div>
       );
 
-    case 'piloto': {
-      const p = CONFIG_PITCH.planoPiloto;
-      const r = TEXTOS.piloto.rotulos;
+    case 'metricas':
       return (
-        <div className="p-tela">
-          <div className="p-subtitulo" style={{ alignSelf: 'flex-start' }}>
-            Plano de piloto
+        <>
+          <div className="p-subtitulo">{TEXTOS.metricas.titulo}</div>
+          <div className="p-espaco-2" style={{ width: '100%' }}>
+            <Grade itens={TEXTOS.metricas.itens} icones={[Users, TrendingUp, Timer, Star]} atraso={1900} />
           </div>
-          <dl className="p-campos p-espaco-2">
-            <div>
-              <dt>{r.cidade}</dt>
-              <dd>{valor(p?.cidade)}</dd>
-            </div>
-            <div>
-              <dt>{r.profissionais}</dt>
-              <dd>{valor(p?.profissionais)}</dd>
-            </div>
-            <div>
-              <dt>{r.prazo}</dt>
-              <dd>{valor(p?.prazo)}</dd>
-            </div>
-            <div>
-              <dt>{r.metricas}</dt>
-              <dd>{p?.metricas.length ? p.metricas.join(', ') : PENDENTE_TELA}</dd>
-            </div>
-          </dl>
-        </div>
-      );
-    }
-
-    case 'pedido':
-      return (
-        <div className="p-tela">
-          <div className="p-titulo" style={{ fontSize: 'calc(var(--u) * 5.6)', maxWidth: 'calc(var(--u) * 80)' }}>
-            {valor(CONFIG_PITCH.pedido)}
-          </div>
-        </div>
+        </>
       );
 
     case 'fechamento':
       return (
-        <div className="p-tela">
-          <div className="p-gigante">{TEXTOS.fechamento.grande}</div>
-          <Depois ms={4200}>
-            <div className="p-titulo p-espaco-3">{TEXTOS.fechamento.frase}</div>
-          </Depois>
-          <Depois ms={8000}>
-            <div className="p-espaco-3">
-              <Logo altura={8} />
+        <>
+          <Logo altura={12} />
+          <div className="p-titulo p-espaco-3">{TEXTOS.fechamento.frase}</div>
+          <Depois ms={3200}>
+            <div className="p-gigante p-espaco-3" style={{ fontSize: 'calc(var(--u) * 6)' }}>
+              {TEXTOS.fechamento.obrigado}
             </div>
           </Depois>
-        </div>
+        </>
       );
 
     default:
       return null;
   }
+}
+
+
+export function TelaDados({ id, secao }: { id: IdTela; secao: Secao }) {
+  return (
+    <div className="p-tela">
+      <div className="p-secao">{secao}</div>
+      <Conteudo id={id} />
+    </div>
+  );
 }

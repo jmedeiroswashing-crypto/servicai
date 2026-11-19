@@ -51,6 +51,9 @@ const PRONTA = {
     porTexto(d, 'h1', 'Oportunidades') &&
     (porTexto(d, 'button', 'Tenho interesse') || porTexto(d, 'p', 'Proposta enviada') || porTexto(d, 'p', 'Nenhuma oportunidade')),
   mensagens: (d: Document) => porTexto(d, 'h1', 'Mensagens') && !porTexto(d, 'p', 'Carregando'),
+  agenda: (d: Document) => d.querySelector('main h1') && !porTexto(d, 'p, div', /^Carregando/),
+  inicio: (d: Document) => porTexto(d, 'h2', 'Faturamento e lucro'),
+  metas: (d: Document) => porTexto(d, 'h2', 'Meta de lucro de'),
 };
 
 interface PedidoDemo {
@@ -144,6 +147,7 @@ export class DiretorDemo {
       if (demo === 'busca') await this.demoBusca(sinal, em, reiniciar);
       if (demo === 'proposta') await this.demoProposta(sinal, em, reiniciar);
       if (demo === 'privacidade') await this.demoPrivacidade(sinal, reiniciar);
+      if (demo === 'gestao') await this.demoGestao(sinal, em, reiniciar);
       this.aoAviso(null);
     } catch (e) {
       if (e instanceof DemoCancelada) return;
@@ -181,7 +185,7 @@ export class DiretorDemo {
     await em(tempos.digitar2);
     await digitar(campo, mensagem2, sinal, 14);
     apertarEnter(campo);
-    await esperar(() => porTexto(doc, 'dd', 'Recife'), sinal, 8000, 'a cidade no rascunho');
+    await esperar(() => porTexto(doc, 'dd', DEMO_ROTEIRO.pedido.esperado.cidade), sinal, 8000, 'a cidade no rascunho');
 
     await em(tempos.publicar);
     const publicar = await esperar(
@@ -351,10 +355,8 @@ export class DiretorDemo {
     clicar(porTexto(cartao, 'button', 'Enviar proposta')!);
     await esperar(() => porTexto(prestador.doc, 'p', 'Proposta enviada'), sinal, 8000, 'a confirmação da proposta');
     this.atualizar({ foco: { prestador: null } });
-    // A tela 11 mostra este mesmo mural: carrega escondido agora.
-    void this.carregarJanela('privacidade', '/painel/oportunidades', 'eletricista', (d) =>
-      PRONTA.oportunidades(d) && this.cartaoDoPedido(d, pedido),
-    );
+    // A próxima tela mostra a gestão do eletricista: carrega a agenda escondida agora.
+    void this.carregarJanela('privacidade', '/painel/agenda', 'eletricista', PRONTA.agenda);
 
     // Cliente: o sino acende sozinho (WebSocket de notificações do app).
     const cd = () => cliente.doc!;
@@ -416,6 +418,39 @@ export class DiretorDemo {
       cliente.win?.scrollTo({ top: 0 });
       prestador.win?.scrollTo({ top: 0 });
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Gestão do prestador: agenda → início (entradas, saídas e lucro) → metas
+  // -------------------------------------------------------------------------
+
+  private async demoGestao(sinal: AbortSignal, em: (t: number) => Promise<void>, reiniciar: boolean) {
+    const j = this.janelas.privacidade;
+    const { tempos } = DEMO_ROTEIRO.gestao;
+    await this.recargas.privacidade;
+    if (reiniciar || j.caminho !== '/painel/agenda') {
+      await this.carregarJanela('privacidade', '/painel/agenda', 'eletricista', PRONTA.agenda);
+    }
+    const doc = () => j.doc!;
+    // Navega clicando nos links de verdade da barra lateral do painel.
+    const irPara = async (href: string, pronta: (d: Document) => unknown, nome: string) => {
+      const link = await esperar(
+        () => doc().querySelector<HTMLAnchorElement>(`a.e-lado-item[href="${href}"]`),
+        sinal,
+        4000,
+        `o link ${nome}`,
+      );
+      clicar(link);
+      await esperar(() => j.caminho === href && pronta(doc()), sinal, 8000, `a página ${nome}`);
+      j.win?.scrollTo({ top: 0 });
+    };
+
+    await em(tempos.agenda);
+    j.win?.scrollTo({ top: 0 });
+    await em(tempos.inicio);
+    await irPara('/painel', PRONTA.inicio, 'Início');
+    await em(tempos.metas);
+    await irPara('/painel/metas', PRONTA.metas, 'Metas');
   }
 
   // -------------------------------------------------------------------------

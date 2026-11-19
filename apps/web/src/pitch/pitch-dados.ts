@@ -1,15 +1,15 @@
 /**
- * ServiçAi — pitch de 3 minutos.
+ * ServiçAi — pitch (roteiro do apresentador: Problema → Solução → Execução).
  *
  * TODO texto, fala, tempo e campo pendente do pitch mora aqui. O telão (/pitch), a
  * janela do apresentador (/pitch/apresentador), o roteiro impresso
- * (`npm run roteiro:ensaio`) e os testes leem deste arquivo.
+ * (`npm run roteiro:ensaio`), os scripts de verificação e os testes leem deste arquivo.
  *
  * Regras:
+ * - As falas são o roteiro do apresentador, na ordem dele. Não corte nem reordene.
  * - Número de mercado, cliente, faturamento ou parceria só entra com fonte. Sem
  *   fonte, o campo fica `null`: a fala mostra `[__ ...]` e a tela mostra `—`.
- * - Só aparece como pronto o que o README diz que funciona. Roadmap só na tela 13,
- *   sempre com a palavra "próximo".
+ * - Só aparece como pronto o que o README diz que funciona.
  * - Nas falas, `[pausa]` marca onde respirar.
  *
  * Este arquivo não importa nada: é lido também pelo Node puro (roteiro impresso)
@@ -20,46 +20,20 @@
 // PREENCHA AQUI
 // ---------------------------------------------------------------------------
 
-export interface PlanoPiloto {
-  cidade: string;
-  profissionais: string;
-  prazo: string;
-  metricas: string[];
-}
-
-export interface DadoComFonte {
-  /** O número grande da tela, ex.: "7 em cada 10". */
-  numero: string;
-  /** A frase embaixo do número. */
-  texto: string;
-  /** O que você fala nessa tela (até ~23 palavras). */
-  fala: string;
-}
-
 export interface ConfigPitch {
   apresentador: string;
-  /** PENDENTE: nome da equipe. */
-  equipe: string | null;
-  /** PENDENTE: saudação curta antes de se apresentar, ex.: "Boa noite!". */
-  saudacao: string | null;
-  /** PENDENTE: dado da tela 5. Só aparece se `fonteTela5` também estiver preenchida. */
-  dadoTela5: DadoComFonte | null;
-  /** PENDENTE: fonte do dado da tela 5 (instituição, pesquisa, ano). */
-  fonteTela5: string | null;
-  /** PENDENTE: plano de piloto da tela 14. */
-  planoPiloto: PlanoPiloto | null;
-  /** PENDENTE: o que estamos pedindo (tela 15). Uma frase. */
-  pedido: string | null;
+  cidade: string;
+  /** PENDENTE: o caso real que o apresentador viu, em uma frase (tela 4). */
+  casoReal: string | null;
+  /** Fonte do dado de informalidade da tela 4 (dada pelo apresentador). */
+  fonteInformalidade: string;
 }
 
 export const CONFIG_PITCH: ConfigPitch = {
-  apresentador: 'Matheus Henrique',
-  equipe: null,
-  saudacao: null,
-  dadoTela5: null,
-  fonteTela5: null,
-  planoPiloto: null,
-  pedido: null,
+  apresentador: 'João Washing',
+  cidade: 'Cruzeiro do Sul',
+  casoReal: null,
+  fonteInformalidade: 'IBGE',
 };
 
 // ---------------------------------------------------------------------------
@@ -68,13 +42,9 @@ export const CONFIG_PITCH: ConfigPitch = {
 
 /** Ritmo de referência da fala, em palavras por segundo. */
 export const PALAVRAS_POR_SEGUNDO = 2.3;
-/** Duração total do pitch, em segundos. */
-export const DURACAO_TOTAL = 180;
-/** No ensaio automático (?auto=1) o pitch termina aqui: entre 2:55 e 3:00. */
-export const FIM_ENSAIO_AUTO = 179;
 
 // ---------------------------------------------------------------------------
-// Demonstração ao vivo (telas 8 a 11)
+// Demonstração ao vivo (telas 7 a 9)
 // ---------------------------------------------------------------------------
 
 /**
@@ -84,8 +54,8 @@ export const FIM_ENSAIO_AUTO = 179;
 export const DEMO_CONTAS = {
   cliente: { email: 'cliente@demo.servicai.local', senha: 'pitch-demo-2026' },
   eletricista: { email: 'eletricista@demo.servicai.local', senha: 'pitch-demo-2026' },
-  cidade: 'Recife',
-  uf: 'PE',
+  cidade: 'Cruzeiro do Sul',
+  uf: 'AC',
 };
 
 /**
@@ -94,16 +64,18 @@ export const DEMO_CONTAS = {
  * Sem OPENAI_API_KEY, o /solicitar usa o fallback heurístico da API: a 1ª mensagem
  * precisa ter a palavra "eletricista" (vira categoria, descrição e orçamento) e a
  * cidade vem na 2ª mensagem. Não use outros números além do orçamento na 1ª
- * mensagem: "20h" viraria orçamento de R$ 20. Também sem "hoje": o mural do app mostra essa
- * data um dia antes (grava meia-noite UTC e exibe no fuso local). Um teste da API confere.
+ * mensagem: "20h" viraria orçamento de R$ 20. Também sem "hoje": o mural do app
+ * mostra essa data um dia antes (grava meia-noite UTC e exibe no fuso local).
+ * Um teste da API confere o resultado.
  */
 export const DEMO_ROTEIRO = {
   pedido: {
     mensagem1: 'Preciso de um eletricista, o chuveiro queimou. Pago até R$ 200.',
-    mensagem2: 'Recife, PE',
-    esperado: { categoria: 'Eletricista', cidade: 'Recife', uf: 'PE', orcamentoMax: 200 },
-    tempos: { digitar1: 0.6, digitar2: 6.2, publicar: 11.5 },
+    mensagem2: 'Cruzeiro do Sul, AC',
+    esperado: { categoria: 'Eletricista', cidade: 'Cruzeiro do Sul', uf: 'AC', orcamentoMax: 200 },
+    tempos: { digitar1: 0.4, digitar2: 4.0, publicar: 6.6 },
   },
+  /** Não está mais no roteiro do telão; fica para o teste da busca na API. */
   busca: {
     termo: 'eletricista urgente para o chuveiro',
     tempos: { digitar: 0.4, abrirPerfil: 5.0, rolarGaleria: 8.0, rolarAvaliacoes: 10.5 },
@@ -112,12 +84,13 @@ export const DEMO_ROTEIRO = {
     valor: '180',
     prazo: 'Hoje',
     disponivel: 'Hoje, às 21h',
-    mensagem: 'Boa noite! Sou eletricista em Recife e troco a resistência hoje ainda.',
+    mensagem: 'Boa noite! Sou eletricista em Cruzeiro do Sul e troco a resistência ainda hoje.',
     respostaCliente: 'Pode vir às 21h? Obrigada!',
-    tempos: { tenhoInteresse: 0.4, enviar: 4.0, abrirSino: 5.0, abrirPedido: 6.0, conversar: 7.2, responder: 8.6 },
+    tempos: { tenhoInteresse: 0.3, enviar: 3.6, abrirSino: 4.6, abrirPedido: 5.6, conversar: 6.8, responder: 8.2 },
   },
-  privacidade: {
-    tempos: { destacar: 0.6 },
+  gestao: {
+    /** Páginas do painel do prestador, na ordem da fala. */
+    tempos: { agenda: 0, inicio: 3.6, metas: 7.4 },
   },
 };
 
@@ -126,28 +99,32 @@ export const DEMO_ROTEIRO = {
 // ---------------------------------------------------------------------------
 
 export type IdTela =
-  | 'abertura'
-  | 'apresentacao'
-  | 'problema-cliente'
-  | 'problema-prestador'
-  | 'numero'
-  | 'virada'
-  | 'servicai'
+  | 'problema'
+  | 'onde'
+  | 'quem-sofre'
+  | 'evidencia'
+  | 'consequencia'
+  | 'solucao'
   | 'demo-pedido'
-  | 'demo-busca'
-  | 'demo-proposta'
-  | 'demo-privacidade'
-  | 'modelo'
-  | 'estagio'
-  | 'piloto'
-  | 'pedido'
+  | 'demo-resposta'
+  | 'demo-gestao'
+  | 'beneficiados'
+  | 'por-que-resolve'
+  | 'resultado'
+  | 'etapas'
+  | 'recursos'
+  | 'quem-onde'
+  | 'metricas'
   | 'fechamento';
 
-export type IdDemo = 'pedido' | 'busca' | 'proposta' | 'privacidade';
+export type IdDemo = 'pedido' | 'proposta' | 'gestao' | 'busca' | 'privacidade';
+
+export type Secao = 'Problema' | 'Solução' | 'Execução';
 
 export interface Tela {
   n: number;
   id: IdTela;
+  secao: Secao;
   titulo: string;
   tipo: 'dados' | 'demo';
   /** Segundos que a tela fica no ar. */
@@ -163,191 +140,233 @@ export const PENDENTE_TELA = '—';
 const pendente = (rotulo: string) => `[__ ${rotulo}]`;
 
 export const TEXTOS = {
-  abertura: { grande: 'Sábado, 20h.' },
-  problemaCliente: {
-    titulo: 'Achar alguém de confiança depende de',
-    frases: ['Indicação.', 'Grupo.', 'Sorte.'],
+  problema: {
+    titulo: 'Em Cruzeiro do Sul, quem presta serviço',
+    itens: ['depende quase só de recomendação', 'não tem estrutura para organizar o trabalho'],
   },
-  problemaPrestador: { titulo: 'Bom de serviço.', subtitulo: 'Mas ninguém encontra.' },
-  numero: { semFonte: 'Quem é bom nem sempre é quem aparece.' },
-  virada: { pergunta: 'E se pedir um serviço fosse tão simples quanto contar o problema?' },
-  servicai: {
-    frase: 'Conecta quem precisa com quem resolve.',
-    passos: [
-      { rotulo: 'Pedir', detalhe: 'em texto livre' },
-      { rotulo: 'Comparar', detalhe: 'Score de 0 a 100' },
-      { rotulo: 'Contratar', detalhe: 'proposta e chat' },
+  onde: {
+    titulo: 'Do Centro aos bairros mais afastados',
+    profissoes: ['Eletricista', 'Encanador', 'Diarista', 'Pedreiro', 'Manicure'],
+    rodape: 'Todo mundo vive do boca a boca e do WhatsApp.',
+  },
+  quemSofre: {
+    colunas: [
+      { titulo: 'Prestadores', texto: 'sem previsibilidade de renda' },
+      { titulo: 'Moradores', texto: 'sem saber em quem confiar' },
     ],
   },
-  modelo: {
-    titulo: 'O cliente não paga nada.',
-    planos: [
-      { nome: 'Grátis', preco: 'R$ 0', detalhe: '5 propostas por mês' },
-      { nome: 'Profissional', preco: 'R$ 29,90', detalhe: '60 propostas por mês' },
-      { nome: 'Premium', preco: 'R$ 59,90', detalhe: 'propostas ilimitadas' },
-      { nome: 'Impulso', preco: 'R$ 5', detalhe: 'topo da busca por 7 dias' },
-    ],
-    nota: 'No ranking, a avaliação pesa tanto quanto o plano.',
+  evidencia: {
+    numero: 'Mais da metade',
+    texto: 'dos trabalhadores da Região Norte está na informalidade.',
   },
+  consequencia: {
+    frases: ['O bom profissional continua invisível.', 'O morador continua contratando no escuro.'],
+  },
+  solucao: {
+    subtitulo: 'Intermediação de serviços + gestão',
+    frase: 'Toda a estrutura do prestador, em um lugar só.',
+  },
+  beneficiados: {
+    colunas: [
+      { titulo: 'Prestadores', texto: 'ganham clientes e organização' },
+      { titulo: 'Moradores', texto: 'encontram profissionais com mais facilidade e segurança' },
+    ],
+  },
+  porQueResolve: {
+    antes: 'Depender só de recomendação',
+    depois: ['Ser encontrado pelo app', 'O negócio organizado na palma da mão'],
+  },
+  resultado: {
+    titulo: 'Resultado esperado',
+    linhas: [
+      { quem: 'Quem presta', texto: 'mais clientes e mais renda' },
+      { quem: 'Quem contrata', texto: 'atendimento mais rápido e confiável' },
+    ],
+  },
+  etapas: [
+    { titulo: 'Piloto', texto: 'cadastrar os prestadores de Cruzeiro do Sul' },
+    { titulo: 'Clientes', texto: 'abrir o app e coletar avaliações' },
+    { titulo: 'Expansão', texto: 'mais serviços e outras cidades do Juruá' },
+  ],
+  recursos: {
+    titulo: 'Vamos precisar de',
+    itens: ['Servidor para o aplicativo', 'Divulgação local', 'Parcerias com quem já reúne prestadores'],
+  },
+  quemOnde: {
+    quem: { titulo: 'Quem', texto: 'desenvolvimento e operação' },
+    onde: { titulo: 'Onde', texto: 'começando pelos bairros com mais prestadores cadastrados' },
+  },
+  metricas: {
+    titulo: 'Como vamos saber se deu certo',
+    itens: ['Prestadores ativos', 'Serviços fechados por mês', 'Tempo até o cliente ser atendido', 'Nota média das avaliações'],
+  },
+  fechamento: { frase: 'Toda a estrutura do prestador em um lugar só.', obrigado: 'Obrigado!' },
+  demo: {
+    /** Aviso fixo nas telas de demo: os perfis e dados são do seed. */
+    selo: 'Sistema real · dados de demonstração',
+  },
+  /** Mantido para a tela de estágio, se voltar ao roteiro; testado contra o README. */
   estagio: {
-    /** Só itens que o README lista como funcionando. */
     jaFunciona: [
       'Pedido em texto livre, montado pela IA',
       'Busca inteligente com ranking',
-      'Score de 0 a 100 com avaliações por critério',
       'Mural de oportunidades e propostas',
       'Chat e notificações em tempo real',
-      'Verificação de documento com revisão',
+      'Agenda com lembretes',
+      'Entradas, saídas, metas e lucro calculados',
     ],
-    /** Roadmap do README. Sempre com "Próximo". */
-    proximo: [
-      'Próximo: pagamento seguro na plataforma',
-      'Próximo: verificação por selfie',
-      'Próximo: app nativo',
-    ],
-  },
-  piloto: {
-    rotulos: { cidade: 'Cidade', profissionais: 'Profissionais', prazo: 'Prazo', metricas: 'O que vamos medir' },
-  },
-  fechamento: { grande: 'Sábado, 20h.', frase: 'Você conta o problema. O ServiçAi encontra quem resolve.' },
-  demo: {
-    /** Aviso fixo nas telas de demo: os perfis e avaliações são do seed. */
-    selo: 'Sistema real · dados de demonstração',
+    proximo: [] as string[],
   },
 };
 
-/** Dado da tela 5 só aparece com fonte. */
-export function dadoTela5Valido(config: ConfigPitch = CONFIG_PITCH): (DadoComFonte & { fonte: string }) | null {
-  if (!config.dadoTela5 || !config.fonteTela5) return null;
-  return { ...config.dadoTela5, fonte: config.fonteTela5 };
-}
-
 export function montarTelas(config: ConfigPitch = CONFIG_PITCH): Tela[] {
-  const dado = dadoTela5Valido(config);
-  const piloto = config.planoPiloto;
+  const caso = config.casoReal ?? pendente('um caso real que você viu, em uma frase');
 
   const telas: Omit<Tela, 'n'>[] = [
+    // ------------------------------------------------------------ PROBLEMA
     {
-      id: 'abertura',
-      titulo: 'Abertura',
+      id: 'problema',
+      secao: 'Problema',
+      titulo: 'O problema',
+      tipo: 'dados',
+      duracao: 14,
+      fala: `O problema é que quem trabalha prestando serviço em ${config.cidade} depende quase só de recomendação para conseguir cliente, [pausa] e não tem nenhuma estrutura para organizar o próprio trabalho.`,
+    },
+    {
+      id: 'onde',
+      secao: 'Problema',
+      titulo: 'Onde acontece',
+      tipo: 'dados',
+      duracao: 11,
+      fala: 'Acontece na cidade toda, do Centro aos bairros mais afastados. [pausa] Eletricista, encanador, diarista, pedreiro, manicure: todo mundo vive do boca a boca e do WhatsApp.',
+    },
+    {
+      id: 'quem-sofre',
+      secao: 'Problema',
+      titulo: 'Quem sofre',
       tipo: 'dados',
       duracao: 12,
-      fala: 'Sábado, oito da noite. [pausa] O chuveiro queima. [pausa] Você abre o WhatsApp e pergunta no grupo: alguém conhece um eletricista?',
+      fala: 'Quem sofre com isso são os prestadores, que ficam sem previsibilidade de renda, [pausa] e os moradores, que não sabem em quem confiar quando precisam de alguém.',
     },
     {
-      id: 'apresentacao',
-      titulo: 'Apresentação',
+      id: 'evidencia',
+      secao: 'Problema',
+      titulo: 'Como eu sei',
       tipo: 'dados',
-      duracao: 6,
-      fala: `${config.saudacao ?? pendente('saudação')} Eu sou o ${config.apresentador}, e este é o ServiçAi.`,
+      duracao: 15,
+      fala: `Eu sei disso porque, segundo o ${config.fonteInformalidade}, mais da metade dos trabalhadores da Região Norte está na informalidade. [pausa] E ${caso}`,
     },
     {
-      id: 'problema-cliente',
-      titulo: 'Problema do cliente',
+      id: 'consequencia',
+      secao: 'Problema',
+      titulo: 'Se nada for feito',
       tipo: 'dados',
-      duracao: 16,
-      fala: 'Hoje, achar um profissional de confiança depende de indicação, de grupo e de sorte. [pausa] Você não sabe o preço, não sabe se ele é bom e não sabe se vai aparecer.',
+      duracao: 9,
+      fala: 'Se nada for feito, o bom profissional continua invisível, perde cliente e dinheiro, [pausa] e o morador continua contratando no escuro.',
     },
+    // ------------------------------------------------------------ SOLUÇÃO
     {
-      id: 'problema-prestador',
-      titulo: 'Problema do prestador',
+      id: 'solucao',
+      secao: 'Solução',
+      titulo: 'A solução',
       tipo: 'dados',
-      duracao: 12,
-      fala: 'Do outro lado, o bom profissional vive do boca a boca. [pausa] Ele é bom, mas ninguém encontra ele.',
-    },
-    {
-      id: 'numero',
-      titulo: 'Número',
-      tipo: 'dados',
-      duracao: 10,
-      fala: dado ? dado.fala : TEXTOS.numero.semFonte,
-    },
-    {
-      id: 'virada',
-      titulo: 'Virada',
-      tipo: 'dados',
-      duracao: 8,
-      fala: '[pausa] E se pedir um serviço fosse tão simples quanto contar o problema?',
-    },
-    {
-      id: 'servicai',
-      titulo: 'ServiçAi',
-      tipo: 'dados',
-      duracao: 8,
-      fala: 'O ServiçAi conecta quem precisa com quem resolve, com avaliação de verdade e reputação.',
+      duracao: 13,
+      fala: 'A minha solução é o ServiçAi, um aplicativo de intermediação de serviços e gestão [pausa] que dá ao prestador toda a estrutura de que ele precisa, em um lugar só.',
     },
     {
       id: 'demo-pedido',
-      titulo: 'Demo 1 — cliente pede',
+      secao: 'Solução',
+      titulo: 'Demo — o cliente pede',
       tipo: 'demo',
       demo: 'pedido',
-      duracao: 16,
-      fala: 'O cliente só escreve o que precisa, do jeito dele. [pausa] O sistema entende a categoria, a cidade e o orçamento e monta o pedido sozinho.',
-      legenda: 'O cliente descreve o problema; o rascunho do pedido se monta ao lado.',
+      duracao: 10,
+      fala: 'Funciona assim: o cliente busca um profissional ou envia um pedido,',
+      legenda: 'O cliente descreve o problema; o pedido se monta sozinho.',
     },
     {
-      id: 'demo-busca',
-      titulo: 'Demo 2 — cliente compara',
-      tipo: 'demo',
-      demo: 'busca',
-      duracao: 14,
-      fala: 'Ele também pode buscar. [pausa] Cada profissional tem uma nota de 0 a 100, feita de avaliações de clientes: pontualidade, qualidade, preço e atendimento.',
-      legenda: 'Busca em linguagem natural, lista ranqueada e perfil com o Score ServiçAi.',
-    },
-    {
-      id: 'demo-proposta',
-      titulo: 'Demo 3 — prestador recebe',
+      id: 'demo-resposta',
+      secao: 'Solução',
+      titulo: 'Demo — o prestador responde',
       tipo: 'demo',
       demo: 'proposta',
-      duracao: 14,
-      fala: 'O eletricista recebe a oportunidade da cidade dele, manda a proposta com valor e prazo, [pausa] e os dois conversam na hora.',
-      legenda: 'O mesmo pedido chega ao eletricista; a proposta avisa o cliente na hora.',
-    },
-    {
-      id: 'demo-privacidade',
-      titulo: 'Demo 4 — confiança',
-      tipo: 'demo',
-      demo: 'privacidade',
-      duracao: 8,
-      fala: 'E o pedido chega sem o nome, o telefone e o endereço do cliente.',
-      legenda: 'O que o eletricista recebe da API: nenhum dado pessoal do cliente.',
-    },
-    {
-      id: 'modelo',
-      titulo: 'Modelo de negócio',
-      tipo: 'dados',
-      duracao: 14,
-      fala: 'O cliente não paga nada. [pausa] O profissional usa de graça ou assina para mandar mais propostas. [pausa] Mas o ranking não é só dinheiro: a avaliação pesa tanto quanto o plano.',
-    },
-    {
-      id: 'estagio',
-      titulo: 'Estágio',
-      tipo: 'dados',
       duracao: 12,
-      fala: 'Tudo o que vocês viram já funciona. [pausa] O próximo passo é o pagamento seguro dentro da plataforma e a verificação por selfie.',
+      fala: 'e os prestadores recebem e respondem pelo app.',
+      legenda: 'O prestador recebe o pedido e responde; o cliente é avisado na hora.',
     },
     {
-      id: 'piloto',
-      titulo: 'Plano de piloto',
+      id: 'demo-gestao',
+      secao: 'Solução',
+      titulo: 'Demo — a gestão do prestador',
+      tipo: 'demo',
+      demo: 'gestao',
+      duracao: 11,
+      fala: 'Dentro do mesmo aplicativo, o prestador tem a agenda com lembretes, o controle de entradas e saídas, as metas e as finanças calculadas automaticamente.',
+      legenda: 'No mesmo app: agenda, entradas e saídas, lucro e metas.',
+    },
+    {
+      id: 'beneficiados',
+      secao: 'Solução',
+      titulo: 'Quem se beneficia',
+      tipo: 'dados',
+      duracao: 11,
+      fala: 'Quem se beneficia são os prestadores de serviço, que ganham clientes e organização, [pausa] e os moradores, que encontram profissionais com mais facilidade e segurança.',
+    },
+    {
+      id: 'por-que-resolve',
+      secao: 'Solução',
+      titulo: 'Por que resolve',
+      tipo: 'dados',
+      duracao: 13,
+      fala: 'Ele resolve o problema porque o prestador deixa de depender somente de recomendação: [pausa] passa a ser encontrado pelo app e a ter o negócio organizado na palma da mão.',
+    },
+    {
+      id: 'resultado',
+      secao: 'Solução',
+      titulo: 'Resultado esperado',
       tipo: 'dados',
       duracao: 10,
-      fala: piloto
-        ? `Vamos começar em ${piloto.cidade}, com ${piloto.profissionais} profissionais, em ${piloto.prazo}. [pausa] Vamos medir ${piloto.metricas.join(', ')}.`
-        : pendente('plano de piloto: cidade, nº de profissionais, prazo e métricas'),
+      fala: 'O resultado esperado é mais clientes e mais renda para quem presta o serviço, [pausa] e atendimento mais rápido e confiável para quem contrata.',
+    },
+    // ------------------------------------------------------------ EXECUÇÃO
+    {
+      id: 'etapas',
+      secao: 'Execução',
+      titulo: 'Etapas',
+      tipo: 'dados',
+      duracao: 17,
+      fala: `Primeiro, vamos cadastrar os prestadores de ${config.cidade} em um piloto. [pausa] Depois, abrir o app para os clientes e coletar avaliações. [pausa] Depois, ampliar os tipos de serviço e levar o ServiçAi para outras cidades do Juruá.`,
     },
     {
-      id: 'pedido',
-      titulo: 'Pedido',
+      id: 'recursos',
+      secao: 'Execução',
+      titulo: 'Recursos',
       tipo: 'dados',
       duracao: 8,
-      fala: config.pedido ?? pendente('o que estamos pedindo'),
+      fala: 'Vamos precisar de servidor para o aplicativo, divulgação local e parcerias com quem já reúne prestadores na cidade.',
+    },
+    {
+      id: 'quem-onde',
+      secao: 'Execução',
+      titulo: 'Quem e onde',
+      tipo: 'dados',
+      duracao: 12,
+      fala: `Quem vai fazer sou eu, ${config.apresentador}, cuidando do desenvolvimento e da operação. [pausa] Vai ser feito em ${config.cidade}, começando pelos bairros com mais prestadores cadastrados.`,
+    },
+    {
+      id: 'metricas',
+      secao: 'Execução',
+      titulo: 'Como medir',
+      tipo: 'dados',
+      duracao: 13,
+      fala: 'Vamos saber se deu certo medindo o número de prestadores ativos, os serviços fechados por mês, o tempo até o cliente ser atendido e a nota média das avaliações.',
     },
     {
       id: 'fechamento',
+      secao: 'Execução',
       titulo: 'Fechamento',
       tipo: 'dados',
-      duracao: 12,
-      fala: 'Sábado, oito da noite. [pausa] O chuveiro queima. [pausa] Dessa vez, você conta o problema, e o ServiçAi encontra quem resolve.',
+      duracao: 6,
+      fala: 'ServiçAi: toda a estrutura do prestador em um lugar só. [pausa] Obrigado!',
     },
   ];
 
@@ -355,6 +374,14 @@ export function montarTelas(config: ConfigPitch = CONFIG_PITCH): Tela[] {
 }
 
 export const TELAS: Tela[] = montarTelas();
+
+/** Duração total do pitch, em segundos (soma das telas). */
+export const DURACAO_TOTAL = TELAS.reduce((s, t) => s + t.duracao, 0);
+/** No ensaio automático (?auto=1) o pitch termina 1 s antes do total. */
+export const FIM_ENSAIO_AUTO = DURACAO_TOTAL - 1;
+
+/** Telas de demo em sequência (a gravação do plano B cobre da primeira à última). */
+export const TELAS_DEMO = TELAS.filter((t) => t.tipo === 'demo').map((t) => t.n);
 
 /** Segundo (desde o começo do pitch) em que cada tela começa. */
 export function inicioDaTela(n: number, telas: Tela[] = TELAS): number {
@@ -395,10 +422,6 @@ export function palavrasQueCabem(tela: Tela): number {
 /** O que ainda falta preencher no CONFIG_PITCH. */
 export function listarPendentes(config: ConfigPitch = CONFIG_PITCH): string[] {
   const faltando: string[] = [];
-  if (!dadoTela5Valido(config)) faltando.push('Dado e fonte da tela 5 (CONFIG_PITCH.dadoTela5 e fonteTela5)');
-  if (!config.planoPiloto) faltando.push('Plano de piloto: cidade, nº de profissionais, prazo e métricas (CONFIG_PITCH.planoPiloto)');
-  if (!config.pedido) faltando.push('O que estamos pedindo (CONFIG_PITCH.pedido)');
-  if (!config.equipe) faltando.push('Nome da equipe (CONFIG_PITCH.equipe)');
-  if (!config.saudacao) faltando.push('Saudação (CONFIG_PITCH.saudacao)');
+  if (!config.casoReal) faltando.push('O caso real da tela 4, em uma frase (CONFIG_PITCH.casoReal)');
   return faltando;
 }

@@ -15,7 +15,9 @@ import { chromium } from 'playwright';
 
 const BASE = process.env.PITCH_URL ?? 'http://localhost:3000';
 const DESTINO = fileURLToPath(new URL('../public/pitch/', import.meta.url));
-const DURACOES = { 8: 16, 9: 14, 10: 14, 11: 8 };
+// Telas de demo e durações vêm do próprio roteiro (o Node lê o .ts direto).
+const { TELAS, TELAS_DEMO } = await import('../src/pitch/pitch-dados.ts');
+const DURACOES = Object.fromEntries(TELAS_DEMO.map((n) => [n, TELAS[n - 1].duracao]));
 
 const temp = mkdtempSync(join(tmpdir(), 'pitch-video-'));
 let navegador;

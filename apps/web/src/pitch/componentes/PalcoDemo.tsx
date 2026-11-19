@@ -38,6 +38,8 @@ const LAYOUTS: Record<IdDemo, Layout> = {
     principal: 'prestador',
   },
   privacidade: { janelas: { privacidade: { ret: ESQUERDA, tipo: 'navegador' } }, principal: 'privacidade', painel: 'privacidade' },
+  // A 4ª janela é o painel do eletricista, carregado escondido durante a demo da resposta.
+  gestao: { janelas: { privacidade: { ret: CHEIA, tipo: 'navegador' } }, principal: 'privacidade' },
 };
 
 const ORDEM: IdJanela[] = ['cliente', 'busca', 'prestador', 'privacidade'];

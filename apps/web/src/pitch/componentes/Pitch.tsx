@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { abrirCanal, type ComandoPitch, type EstadoPitch, type MensagemCanal } from '../canal';
-import { DURACAO_TOTAL, FIM_ENSAIO_AUTO, TELAS, inicioDaTela, telaNoTempo } from '../pitch-dados';
+import { DURACAO_TOTAL, FIM_ENSAIO_AUTO, TELAS, TELAS_DEMO, inicioDaTela, telaNoTempo } from '../pitch-dados';
 import { JanelaApp } from '../demo/iframe';
 import { DiretorDemo, INFO_VAZIA, type IdJanela, type InfoDemo } from '../demo/roteiros';
 import { API_E_LOCAL, apiNoAr } from '../demo/sessao';
@@ -31,7 +31,7 @@ function lerParametros() {
   const tela = Math.min(TELAS.length, Math.max(1, Number(p.get('tela')) || 1));
   const modo: Modo = p.get('gravar') === '1' ? 'gravar' : p.get('auto') === '1' ? 'auto' : 'normal';
   return {
-    tela: modo === 'gravar' ? 8 : tela,
+    tela: modo === 'gravar' ? TELAS_DEMO[0] : tela,
     modo,
     comecarJa: p.has('tela') && modo === 'normal',
     forcarVideo: p.get('video') === '1',
@@ -185,7 +185,9 @@ export function Pitch() {
       setAgora(ms);
       if (inicioMs === null || ensaioDuracaoMs !== null || modo === 'normal') return;
       const s = (ms - inicioMs) / 1000;
-      const fim = modo === 'auto' ? FIM_ENSAIO_AUTO : inicioDaTela(12);
+      // A gravação do plano B cobre da primeira à última tela de demo.
+      const ultimaDemo = TELAS_DEMO[TELAS_DEMO.length - 1];
+      const fim = modo === 'auto' ? FIM_ENSAIO_AUTO : inicioDaTela(ultimaDemo) + TELAS[ultimaDemo - 1].duracao;
       if (s >= fim) {
         const dur = ms - inicioMs;
         setEnsaioDuracaoMs(dur);
@@ -334,7 +336,7 @@ export function Pitch() {
     >
       <div className="p-quadro">
         <div className="p-seguro">
-          {iniciado && !ehDemo && <TelaDados key={`${tela}-${versao}`} id={atual.id} />}
+          {iniciado && !ehDemo && <TelaDados key={`${tela}-${versao}`} id={atual.id} secao={atual.secao} />}
           {!modoVideo && (
             <PalcoDemo
               demo={iniciado && ehDemo ? atual.demo! : null}

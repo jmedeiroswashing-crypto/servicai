@@ -691,3 +691,15 @@ nextjs-portal {
   margin: 4px 0 0;
   padding-left: 18px;
 }
+
+/* Etiqueta da seção do roteiro (Problema / Solução / Execução). */
+.p-secao {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: calc(var(--u) * 1.15);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--azul);
+}
