@@ -24,7 +24,7 @@
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
-    "seed:pitch": "tsx src/pitch/rodar-seed-pitch.ts"
+    "seed:pitch": "nest build && node dist/pitch/rodar-seed-pitch.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
@@ -74,7 +74,6 @@
     "prisma": "7.10.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
-    "tsx": "^4.23.15",
     "typescript": "^6.0.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.1.2"
