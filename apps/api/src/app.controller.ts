@@ -1,4 +1,4 @@
-import { Controller, Get, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { AppService } from './app.service.js';
 import { PrismaService } from './prisma/prisma.service.js';
 
@@ -31,9 +31,7 @@ export class AppController {
       // Log explícito pra diagnosticar na Vercel em vez de só devolver um 500
       // genérico sem contexto — esse endpoint já existe só pra detectar isso.
       this.logger.error('Falha no health check (banco inacessível?)', err as Error);
-      // TEMPORÁRIO: devolve a mensagem real na resposta pra diagnosticar sem
-      // acesso aos logs da Vercel — reverter depois de identificar a causa.
-      throw new InternalServerErrorException((err as Error)?.message ?? String(err));
+      throw err;
     }
   }
 }
