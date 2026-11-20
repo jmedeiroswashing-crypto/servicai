@@ -3,10 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Socket } from 'socket.io-client';
 import { ArrowLeft, Send } from 'lucide-react';
 import { api } from '@/lib/api';
-import { createChatSocket } from '@/lib/socket';
 import { useAuthStore, hasSession } from '@/store/auth-store';
 import type { ChatConversation, ChatMessage } from '@/lib/types';
 import { loginUrl } from '@/lib/redirect';
@@ -57,40 +55,33 @@ function ConversationList({
 }
 
 function Thread({ conversationId, onBack }: { conversationId: string; onBack: () => void }) {
-  const { user, token } = useAuthStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
-  const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations } = useQuery<ChatConversation[]>({ queryKey: ['chat', 'conversations'] });
   const conversation = conversations?.find((c) => c.id === conversationId);
   const peerName = conversation?.provider?.user.name ?? conversation?.client?.name ?? 'Conversa';
 
+  // Sem servidor de WebSocket persistente (API roda em serverless), as
+  // mensagens novas chegam por polling em vez de push em tempo real.
   const { data: messages } = useQuery({
     queryKey: ['chat', 'messages', conversationId],
     queryFn: async () => (await api.get<ChatMessage[]>(`/chat/conversations/${conversationId}/messages`)).data,
+    refetchInterval: 4000,
   });
 
-  useEffect(() => {
-    if (!token) return;
-    const socket = createChatSocket(token);
-    socketRef.current = socket;
-
-    socket.emit('join', { conversationId });
-
-    socket.on('message', (message: ChatMessage) => {
-      if (message.conversationId !== conversationId) return;
+  const sendMutation = useMutation({
+    mutationFn: async (content: string) =>
+      (await api.post<ChatMessage>(`/chat/conversations/${conversationId}/messages`, { content })).data,
+    onSuccess: (message) => {
       queryClient.setQueryData<ChatMessage[]>(['chat', 'messages', conversationId], (old) =>
         old ? [...old, message] : [message],
       );
       queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [conversationId, token, queryClient]);
+    },
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -98,9 +89,9 @@ function Thread({ conversationId, onBack }: { conversationId: string; onBack: ()
 
   function handleSend() {
     const content = draft.trim();
-    if (!content || !socketRef.current) return;
-    socketRef.current.emit('message', { conversationId, content });
+    if (!content || sendMutation.isPending) return;
     setDraft('');
+    sendMutation.mutate(content);
   }
 
   return (
@@ -165,6 +156,7 @@ function MensagensContent() {
     queryKey: ['chat', 'conversations'],
     enabled: !!token,
     queryFn: async () => (await api.get<ChatConversation[]>('/chat/conversations')).data,
+    refetchInterval: 6000,
   });
 
   useEffect(() => {

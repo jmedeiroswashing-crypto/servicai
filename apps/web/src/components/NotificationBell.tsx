@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import type { Socket } from 'socket.io-client';
 import { Bell } from 'lucide-react';
 import { api } from '@/lib/api';
-import { createNotificationsSocket } from '@/lib/socket';
 import { useAuthStore } from '@/store/auth-store';
 import type { NotificationItem } from '@/lib/types';
 
@@ -25,29 +23,15 @@ export function NotificationBell() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
 
+  // Sem servidor de WebSocket persistente (API roda em serverless), as
+  // notificações novas chegam por polling em vez de push em tempo real.
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
     enabled: !!token,
     queryFn: async () => (await api.get<NotificationItem[]>('/notifications')).data,
+    refetchInterval: 20000,
   });
-
-  useEffect(() => {
-    if (!token) return;
-    const socket = createNotificationsSocket(token);
-    socketRef.current = socket;
-
-    socket.on('notification', (notification: NotificationItem) => {
-      queryClient.setQueryData<NotificationItem[]>(['notifications'], (old) =>
-        old ? [notification, ...old] : [notification],
-      );
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [token, queryClient]);
 
   const markReadMutation = useMutation({
     mutationFn: async (id: string) => api.post(`/notifications/${id}/read`),
