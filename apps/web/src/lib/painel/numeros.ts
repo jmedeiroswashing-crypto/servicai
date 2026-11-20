@@ -193,3 +193,22 @@ export function mensagensDoDia(bookings: Booking[], clientes: ClientSummary[], h
 
 export const linkWhats = (telefone: string, texto?: string) =>
   `https://wa.me/55${telefone.replace(/\D/g, '')}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;
+
+/**
+ * Regra simples de saúde financeira pro autônomo: trata o lucro do mês como
+ * o "salário" dele e sugere guardar pelo menos 10% (investimento/reserva) e
+ * não passar de 85% em gastos — os 5% que sobram ficam de folga, sem precisar
+ * virar uma categoria própria no orçamento.
+ */
+export interface SugestaoGastos {
+  lucro: number;
+  investir: number;
+  gastar: number;
+  folga: number;
+}
+
+export function sugestaoGastos(lucro: number): SugestaoGastos {
+  const investir = lucro * 0.1;
+  const gastar = lucro * 0.85;
+  return { lucro, investir, gastar, folga: lucro - investir - gastar };
+}

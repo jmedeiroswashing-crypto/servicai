@@ -8,7 +8,19 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { GraficoBarras, Esqueleto, ErroAoCarregar, Kpi, Mini } from '@/components/painel/pecas';
 import { useBookings, useClientes, useExpenses, useGoals, useIncomes, useIntervalo, useProvider } from '@/components/painel/dados';
-import { alertasDoDia, aReceber, brl, linkWhats, mensagensDoDia, pct, resumo, serie, type Alerta, type Mensagem } from '@/lib/painel/numeros';
+import {
+  alertasDoDia,
+  aReceber,
+  brl,
+  linkWhats,
+  mensagensDoDia,
+  pct,
+  resumo,
+  serie,
+  sugestaoGastos,
+  type Alerta,
+  type Mensagem,
+} from '@/lib/painel/numeros';
 import { temCaptacao, temFinanceiro } from '@/lib/painel/modulos';
 import { dataCurta, hoje, nomeMes, somaDias } from '@/lib/painel/periodo';
 import { UNLIMITED, type CashRegister, type ProviderProfile, type Subscription } from '@/lib/types';
@@ -79,6 +91,34 @@ function Alertas({ alertas }: { alertas: Alerta[] }) {
       ) : (
         <p className="e-mut">Nenhum serviço atrasado e nenhum pedido esperando resposta.</p>
       )}
+    </section>
+  );
+}
+
+function SugestaoGastos({ lucro, mes }: { lucro: number; mes: string }) {
+  const s = sugestaoGastos(lucro);
+  return (
+    <section className="e-painel" aria-labelledby="sugestao-t">
+      <div className="e-painel-t">
+        <h2 id="sugestao-t">Quanto você pode gastar esse mês</h2>
+        <span>com base no lucro de {nomeMes(mes)}</span>
+      </div>
+      <div className="e-resumo">
+        <span>Lucro do mês</span>
+        <b>R$ {brl(s.lucro, true)}</b>
+      </div>
+      <div className="e-resumo">
+        <span>Invista pelo menos 10%</span>
+        <b>R$ {brl(s.investir, true)}</b>
+      </div>
+      <div className="e-resumo">
+        <span>Pode gastar de forma saudável até 85%</span>
+        <b>R$ {brl(s.gastar, true)}</b>
+      </div>
+      <p className="e-nota">
+        Os outros 5% (R$ {brl(s.folga, true)}) ficam de folga — uma reserva pra imprevistos, sem comprometer o mês
+        seguinte.
+      </p>
     </section>
   );
 }
@@ -273,6 +313,8 @@ export default function PainelPage() {
           </p>
         </section>
       )}
+
+      {financeiro && doMes.lucro > 0 && <SugestaoGastos lucro={doMes.lucro} mes={mes} />}
 
       <div className="e-grade-2">
         <div className="e-coluna">
