@@ -14,6 +14,8 @@ export interface PlanConfig {
   proposalsPerMonth: number;
   hasPerformanceStats: boolean;
   hasAdvancedInsights: boolean;
+  // Busca de leads (Google Places) por mês — 0 = sem acesso ao recurso.
+  leadSearchesPerMonth: number;
   verifiedBadge: boolean;
   highlight?: string;
   benefits: string[];
@@ -45,6 +47,7 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
     proposalsPerMonth: 5,
     hasPerformanceStats: false,
     hasAdvancedInsights: false,
+    leadSearchesPerMonth: 0,
     verifiedBadge: false,
     benefits: [
       'Perfil profissional completo',
@@ -68,6 +71,7 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
     proposalsPerMonth: 60,
     hasPerformanceStats: true,
     hasAdvancedInsights: false,
+    leadSearchesPerMonth: 0,
     verifiedBadge: false,
     highlight: 'Mais escolhido',
     benefits: [
@@ -94,6 +98,7 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
     proposalsPerMonth: UNLIMITED,
     hasPerformanceStats: true,
     hasAdvancedInsights: true,
+    leadSearchesPerMonth: 30,
     verifiedBadge: true,
     benefits: [
       'Tudo do Profissional',
@@ -116,6 +121,7 @@ export const PLAN_CATALOG: Record<Plan, PlanConfig> = {
     proposalsPerMonth: UNLIMITED,
     hasPerformanceStats: true,
     hasAdvancedInsights: true,
+    leadSearchesPerMonth: 30,
     verifiedBadge: true,
     benefits: [
       'Tudo do Profissional',

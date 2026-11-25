@@ -33,6 +33,7 @@ import { RepairModule } from './repair/repair.module.js';
 import { CashRegisterModule } from './cash-register/cash-register.module.js';
 import { CalendarModule } from './calendar/calendar.module.js';
 import { CategoriesModule } from './categories/categories.module.js';
+import { LeadsModule } from './leads/leads.module.js';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { CategoriesModule } from './categories/categories.module.js';
     RepairModule,
     CashRegisterModule,
     CalendarModule,
+    LeadsModule,
   ],
   controllers: [AppController],
   // Limite geral contra abuso (spam de cadastro, força bruta de login, custo de IA)

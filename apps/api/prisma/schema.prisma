@@ -256,9 +256,30 @@ model ProviderProfile {
   appointments  Appointment[]
   financialGoals FinancialGoal[]
   cashRegisters CashRegister[]
+  savedLeads    SavedLead[]
 
   @@index([city])
   @@index([isTest, profileComplete])
+}
+
+// Lead salvo da busca de prospecção (Google Places) — dado público de uma
+// empresa externa, nada a ver com usuários do ServiçAi.
+model SavedLead {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  name        String
+  phone       String?
+  address     String?
+  website     String?
+  rating      Float?
+  ratingCount Int?
+  mapsUrl     String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([providerId])
 }
 
 // Taxonomia pública de serviços (ver src/categories/taxonomy.ts). Prestadores e
@@ -401,6 +422,11 @@ model Subscription {
 
   proposalsUsedCount  Int              @default(0)
   proposalsUsedPeriod String           @default("")
+
+  // Busca de leads (Google Places) — cada consulta tem custo real na API do
+  // Google, por isso tem limite mensal mesmo no Premium.
+  leadSearchesUsedCount  Int           @default(0)
+  leadSearchesUsedPeriod String        @default("")
 
   // Marca que esse prestador já usou o período de teste gratuito — só dá pra
   // usar uma vez, nunca mais reseta mesmo depois de voltar pro Grátis.

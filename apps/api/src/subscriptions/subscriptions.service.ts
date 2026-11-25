@@ -301,6 +301,39 @@ export class SubscriptionsService {
     });
   }
 
+  /**
+   * Busca de leads (Google Places) — exclusiva do plano Premium e com teto
+   * mensal mesmo lá, porque cada consulta tem custo real na API do Google.
+   */
+  async assertLeadSearchLimit(providerId: string) {
+    const subscription = await this.getOrCreateForProvider(providerId);
+    const config = getPlanConfig(getEffectivePlan(subscription));
+    const period = currentPeriod();
+    const usedSoFar = subscription.leadSearchesUsedPeriod === period ? subscription.leadSearchesUsedCount : 0;
+
+    if (config.leadSearchesPerMonth === 0) {
+      throw new ForbiddenException(
+        'A busca de leads é exclusiva do plano Premium. Assine o Premium para encontrar empresas reais pra prospectar.',
+      );
+    }
+    if (usedSoFar >= config.leadSearchesPerMonth) {
+      throw new ForbiddenException(
+        `Você usou suas ${config.leadSearchesPerMonth} buscas de leads deste mês. O limite renova no próximo mês.`,
+      );
+    }
+    return { usedSoFar, limit: config.leadSearchesPerMonth, period };
+  }
+
+  async consumeLeadSearch(providerId: string) {
+    const { period, usedSoFar, limit } = await this.assertLeadSearchLimit(providerId);
+    const subscription = await this.prisma.subscription.findUniqueOrThrow({ where: { providerId } });
+    await this.prisma.subscription.update({
+      where: { id: subscription.id },
+      data: { leadSearchesUsedPeriod: period, leadSearchesUsedCount: usedSoFar + 1 },
+    });
+    return { usedSoFar: usedSoFar + 1, limit };
+  }
+
   async findProviderIdByUserId(userId: string) {
     const provider = await this.prisma.providerProfile.findUnique({ where: { userId } });
     if (!provider) throw new NotFoundException('Perfil de prestador não encontrado');

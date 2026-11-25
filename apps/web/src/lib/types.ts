@@ -537,3 +537,32 @@ export interface PublicRepairTracking {
   updatedAt: string;
   shop: { name: string };
 }
+
+export interface LeadResult {
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  website?: string | null;
+  rating?: number | null;
+  ratingCount?: number | null;
+  mapsUrl?: string | null;
+  likelyWhatsapp: boolean;
+}
+
+export interface LeadSearchResponse {
+  results: LeadResult[];
+  usage: { usedSoFar: number; limit: number };
+}
+
+export interface SavedLead {
+  id: string;
+  providerId: string;
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  website?: string | null;
+  rating?: number | null;
+  ratingCount?: number | null;
+  mapsUrl?: string | null;
+  createdAt: string;
+}
