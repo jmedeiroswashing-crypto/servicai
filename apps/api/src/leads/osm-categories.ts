@@ -62,13 +62,28 @@ export function normalizeTexto(texto: string): string {
     .trim();
 }
 
+// Plural em português normalmente só acrescenta "s" no fim de cada palavra
+// ("clínica odontológica" -> "clínicas odontológicas"). Isso quebra a
+// comparação por substring quando o "s" cai bem antes de um espaço no meio da
+// frase, então tiramos o "s" final de cada palavra antes de comparar.
+function singularizarPalavra(palavra: string): string {
+  // "salão" -> "salões", "ação" -> "ações": plural irregular em -ão vira -oes.
+  if (palavra.length > 4 && palavra.endsWith('oes')) return `${palavra.slice(0, -3)}ao`;
+  if (palavra.length > 3 && palavra.endsWith('s')) return palavra.slice(0, -1);
+  return palavra;
+}
+
+function singularizar(texto: string): string {
+  return texto.split(' ').map(singularizarPalavra).join(' ');
+}
+
 // Se o que o prestador digitou bater com um nicho conhecido, devolve as
 // palavras alternativas pra tentar na busca (incluindo a original). Se não
 // reconhecer nada, devolve [] e a busca segue só com o texto literal digitado.
 export function matchSearchTerms(query: string): string[] {
-  const q = normalizeTexto(query);
+  const q = singularizar(normalizeTexto(query));
   for (const group of CATEGORIES) {
-    if (group.keywords.some((k) => q.includes(k) || k.includes(q))) {
+    if (group.keywords.some((k) => { const kn = singularizar(k); return q.includes(kn) || kn.includes(q); })) {
       return group.keywords;
     }
   }
