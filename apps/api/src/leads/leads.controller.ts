@@ -19,8 +19,9 @@ export class LeadsController {
     private providersService: ProvidersService,
   ) {}
 
-  // Cada busca custa de verdade na API do Google — limite curto mesmo além
-  // da cota mensal, pra não deixar um loop de cliques virar uma conta alta.
+  // O OpenStreetMap é um serviço público gratuito e com política de uso
+  // restrita — limite curto mesmo além da cota mensal, pra não sobrecarregar
+  // o servidor deles nem arriscar bloqueio do nosso IP.
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Get('search')
   async search(@CurrentUser() user: AuthUser, @Query() dto: SearchLeadsDto) {

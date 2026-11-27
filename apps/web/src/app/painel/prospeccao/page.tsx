@@ -15,14 +15,13 @@ import { Vazio } from '@/components/painel/pecas';
 import type { LeadResult, LeadSearchResponse, SavedLead } from '@/lib/types';
 
 const RECENTES_KEY = 'servicai:leads-recentes';
-type Filtro = 'todos' | 'whatsapp' | 'telefone' | 'site' | 'avaliacao';
+type Filtro = 'todos' | 'whatsapp' | 'telefone' | 'site';
 
 const FILTROS: { valor: Filtro; rotulo: string }[] = [
   { valor: 'todos', rotulo: 'Todos' },
   { valor: 'whatsapp', rotulo: 'Com WhatsApp' },
   { valor: 'telefone', rotulo: 'Com telefone' },
   { valor: 'site', rotulo: 'Com site' },
-  { valor: 'avaliacao', rotulo: 'Melhor avaliação' },
 ];
 
 function lerRecentes(): { query: string; location: string }[] {
@@ -133,8 +132,6 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
         return lista.filter((l) => !!l.phone);
       case 'site':
         return lista.filter((l) => !!l.website);
-      case 'avaliacao':
-        return [...lista].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
       default:
         return lista;
     }
@@ -149,7 +146,7 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
           </p>
           <h1 className="font-display text-3xl text-ink">Encontrar novos clientes</h1>
           <p className="mt-2 text-foreground-muted">
-            Busque empresas reais perto de você (dados públicos do Google) e monte sua própria lista de prospecção.
+            Busque empresas reais perto de você (dados públicos do OpenStreetMap) e monte sua própria lista de prospecção.
           </p>
         </>
       )}
@@ -179,7 +176,7 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
         {resultado && (
           <p className="e-nota mt-3">
             Você usou {resultado.usage.usedSoFar} de {resultado.usage.limit} buscas deste mês. O &quot;Com
-            WhatsApp&quot; é uma estimativa pelo formato do número — o Google não confirma isso.
+            WhatsApp&quot; é só uma estimativa pelo formato do número — nenhuma fonte confirma isso de verdade.
           </p>
         )}
 
@@ -222,7 +219,9 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
         </div>
       )}
 
-      {indisponivel && <p className="e-nota mt-6">A busca de leads ainda está sendo configurada — volte em breve.</p>}
+      {indisponivel && (
+        <p className="e-nota mt-6">{errMessage ?? 'Não foi possível buscar agora. Tente novamente em instantes.'}</p>
+      )}
 
       {resultado && (
         <section className="e-painel mt-6">
@@ -253,10 +252,7 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
                   <div key={leadKey(lead) + (lead.address ?? '')} className="e-linha">
                     <div>
                       <b>{lead.name}</b>
-                      <small>
-                        {lead.address}
-                        {lead.rating != null && ` · ⭐ ${lead.rating.toFixed(1)} (${lead.ratingCount ?? 0})`}
-                      </small>
+                      <small>{lead.address}</small>
                     </div>
                     <div className="e-linha-fim">
                       {lead.phone && lead.likelyWhatsapp && (
@@ -317,7 +313,6 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
                 { titulo: 'Telefone', valor: (l) => l.phone ?? '' },
                 { titulo: 'Endereço', valor: (l) => l.address ?? '' },
                 { titulo: 'Site', valor: (l) => l.website ?? '' },
-                { titulo: 'Avaliação', valor: (l) => l.rating ?? '' },
               ])
             }
           >
