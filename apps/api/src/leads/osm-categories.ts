@@ -43,6 +43,7 @@ const CATEGORIES: CategoryGroup[] = [
   { keywords: ['lavanderia'] },
   { keywords: ['estudio de tatuagem', 'tatuador'] },
   { keywords: ['clinica de estetica', 'estetica', 'spa'] },
+  { keywords: ['manicure', 'pedicure', 'salao de unhas', 'nail designer'] },
   { keywords: ['banco'] },
   { keywords: ['seguradora', 'corretora de seguros'] },
   { keywords: ['agencia de publicidade', 'agencia de marketing'] },
