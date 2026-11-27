@@ -262,13 +262,13 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
                     <div className="e-linha-fim">
                       {lead.phone && lead.likelyWhatsapp && (
                         <a
-                          className="e-bt e-bt--p"
+                          className="e-bt e-bt--p e-bt--forte"
                           href={linkWhats(lead.phone, 'Olá! Vi o contato da sua empresa e gostaria de oferecer meus serviços.')}
                           target="_blank"
                           rel="noopener noreferrer"
-                          aria-label={`WhatsApp de ${lead.name}`}
+                          aria-label={`Entrar em contato com ${lead.name} pelo WhatsApp`}
                         >
-                          <MessageCircle size={14} aria-hidden="true" />
+                          <MessageCircle size={14} aria-hidden="true" /> Entrar em contato
                         </a>
                       )}
                       {lead.phone && (
@@ -341,13 +341,13 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
                 <div className="e-linha-fim">
                   {s.phone && (
                     <a
-                      className="e-bt e-bt--p"
+                      className="e-bt e-bt--p e-bt--forte"
                       href={linkWhats(s.phone, 'Olá! Vi o contato da sua empresa e gostaria de oferecer meus serviços.')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={`WhatsApp de ${s.name}`}
+                      aria-label={`Entrar em contato com ${s.name} pelo WhatsApp`}
                     >
-                      <MessageCircle size={14} aria-hidden="true" />
+                      <MessageCircle size={14} aria-hidden="true" /> Entrar em contato
                     </a>
                   )}
                   <button
