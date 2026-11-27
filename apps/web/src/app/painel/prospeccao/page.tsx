@@ -253,6 +253,11 @@ export default function ProspeccaoPage({ embedded = false }: { embedded?: boolea
                     <div>
                       <b>{lead.name}</b>
                       <small>{lead.address}</small>
+                      <small className="block text-foreground-muted/70">
+                        {lead.phone ? (lead.likelyWhatsapp ? 'Com WhatsApp (estimado)' : 'Com telefone') : 'Sem telefone cadastrado'}
+                        {' · '}
+                        {lead.website ? 'Com site' : 'Sem site cadastrado'}
+                      </small>
                     </div>
                     <div className="e-linha-fim">
                       {lead.phone && lead.likelyWhatsapp && (

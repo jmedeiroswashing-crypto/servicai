@@ -30,6 +30,10 @@ interface NominatimPlace {
 
 const NOMINATIM_USER_AGENT = 'ServicAi-Leads/1.0 (+https://servicai.app)';
 const ENTRE_CHAMADAS_MS = 1100; // Nominatim pede no máximo 1 requisição por segundo.
+// A função na Vercel (plano Hobby) morre depois de 10s — pra nunca chegar
+// perto disso mesmo em nichos com muitos termos alternativos, paramos de
+// tentar mais termos depois desse orçamento de tempo, mesmo com poucos leads.
+const ORCAMENTO_MS = 6000;
 
 function looksLikeBrazilianMobile(phone: string | null | undefined): boolean {
   if (!phone) return false;
@@ -80,6 +84,7 @@ export class LeadsService {
     const limit = dto.limit ?? 20;
 
     let results: LeadResult[] = [];
+    const inicio = Date.now();
     try {
       // "Salão de beleza" quase nunca aparece literalmente no nome de um
       // estabelecimento — mas "cabeleireiro" ou "barbearia" sim. Se o nicho
@@ -87,13 +92,13 @@ export class LeadsService {
       // até juntar leads suficientes, em vez de só a frase genérica original.
       const termos = matchSearchTerms(dto.query);
       for (const termo of termos) {
-        if (results.length >= limit) break;
+        if (results.length >= limit || Date.now() - inicio > ORCAMENTO_MS) break;
         const novos = await this.buscarNoNominatim(termo, dto.location, limit);
         results = this.mesclar(results, novos, limit);
         if (termos.indexOf(termo) < termos.length - 1) await sleep(ENTRE_CHAMADAS_MS);
       }
 
-      if (results.length === 0) {
+      if (results.length === 0 && Date.now() - inicio <= ORCAMENTO_MS) {
         if (termos.length) await sleep(ENTRE_CHAMADAS_MS);
         const novos = await this.buscarNoNominatim(dto.query, dto.location, limit);
         results = this.mesclar(results, novos, limit);
