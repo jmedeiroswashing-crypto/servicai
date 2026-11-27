@@ -423,8 +423,8 @@ model Subscription {
   proposalsUsedCount  Int              @default(0)
   proposalsUsedPeriod String           @default("")
 
-  // Busca de leads (Google Places) — cada consulta tem custo real na API do
-  // Google, por isso tem limite mensal mesmo no Premium.
+  // Busca de leads (OpenStreetMap) — serviço público gratuito e com cota
+  // própria de uso, por isso mantemos limite mensal mesmo no Premium.
   leadSearchesUsedCount  Int           @default(0)
   leadSearchesUsedPeriod String        @default("")
 

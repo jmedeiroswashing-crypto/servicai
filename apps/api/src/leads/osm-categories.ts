@@ -54,12 +54,23 @@ const CATEGORIES: CategoryGroup[] = [
   { keywords: ['construtora', 'empreiteira'] },
 ];
 
+// Troca direta de caractere acentuado -> sem acento. Evita depender de
+// String.prototype.normalize('NFD'), que em alguns runtimes de produção não
+// se comportou igual ao ambiente local durante os testes.
+const MAPA_ACENTOS: Record<string, string> = {
+  á: 'a', à: 'a', â: 'a', ã: 'a', ä: 'a',
+  é: 'e', è: 'e', ê: 'e', ë: 'e',
+  í: 'i', ì: 'i', î: 'i', ï: 'i',
+  ó: 'o', ò: 'o', ô: 'o', õ: 'o', ö: 'o',
+  ú: 'u', ù: 'u', û: 'u', ü: 'u',
+  ç: 'c', ñ: 'n',
+};
+
 export function normalizeTexto(texto: string): string {
   return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
-    .trim();
+    .trim()
+    .replace(/[áàâãäéèêëíìîïóòôõöúùûüçñ]/g, (c) => MAPA_ACENTOS[c] ?? c);
 }
 
 // Plural em português normalmente só acrescenta "s" no fim de cada palavra
